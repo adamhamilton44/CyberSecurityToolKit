@@ -1,4 +1,4 @@
-![Cyber Security Tool Kit](https://github.com/user-attachments/assets/6ee2e788-b578-4a37-abff-15650fd1af8a)
+![Cyber Security Tool Kit](https://github.com/user-attachments/assets/bccc925c-d373-4c6a-9ac0-226cde5edd7e)
 
 # CyberSecurityToolKit - A Beginner Friendly Tool Kit for Hackers, Red Teamers, and Penetration testers 
 
