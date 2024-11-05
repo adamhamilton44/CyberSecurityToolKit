@@ -1,0 +1,98 @@
+# Authentication_and_Access_Control
+inurl:wp-login.php							Finds WordPress login pages								Locating login portals for WordPress sites
+intitle:"Login" site:gov					Searches for government login pages						Identifying access points for government websites
+inurl:admin.asp								Locates ASP admin pages									Accessing administrative pages for ASP websites
+inurl:admin.aspx							Finds ASPX-based admin pages							Locating ASPX-based administrative pages
+inurl:admin.jsp								Finds JSP-based admin pages								Accessing JSP-based admin login portals
+inurl:admin.html							Finds HTML-based admin pages							Locating HTML-based administrative pages
+inurl:login.aspx							Finds ASPX login pages									Identifying ASPX login portals for security checks
+inurl:manager/html							Finds Tomcat manager pages								Accessing Tomcat server management interfaces
+inurl:routerlogin.asp						Finds router login pages								Securing router interfaces from unauthorized access
+inurl:"/admin/index.php"					Locates admin index pages								Accessing index pages of admin sections
+
+#_Ecommerce_and_Financial
+inurl:/shop/								Finds online shop directories							Locating e-commerce platforms for analysis
+filetype:sql inurl:"/db/"					Searches for SQL database files							Identifying exposed database files
+inurl:/payment/								Finds payment processing pages							Securing payment gateways to prevent fraud
+filetype:csv inurl:"/data/"					Searches for CSV data files								Extracting data from publicly available spreadsheets
+inurl:/checkout/							Finds checkout pages									Locating checkout portals that need protection
+filetype:xml inurl:"/config/"				Searches for XML configuration files					Identifying exposed XML configuration settings
+inurl:/cart/								Finds shopping cart pages								Securing shopping cart functionalities
+filetype:json inurl:"/api/"					Searches for JSON API files								Accessing exposed API endpoints
+inurl:/secure/transactions/					Finds secure transaction pages							Protecting transaction processing areas
+filetype:bak inurl:"/backup/"				Searches for backup files in e-commerce sites			Accessing backup copies of important financial data
+inurl:/orders/								Finds order management pages							Securing order processing systems
+filetype:log inurl:"/logs/"					Searches for log files in financial systems				Accessing server logs that may contain sensitive information
+inurl:/invoice/								Finds invoice pages										Locating invoice management systems
+filetype:pdf inurl:"/docs/"					Searches for PDF documents in e-commerce sites			Finding publicly available PDF documents related to finances
+inurl:/billing/								Finds billing pages										Securing billing information portals
+
+#_File_and_Directory
+inurl:/uploads/								Finds upload directories								Identifying directories where files are uploaded
+filetype:xls site:example.com				Searches for Excel files on a specific site				Extracting data from publicly available spreadsheets
+filetype:doc								Searches for Word documents								Finding publicly available Word files
+filetype:pdf								Searches for PDF files									Locating publicly accessible PDF documents
+filetype:zip								Searches for ZIP archives								Accessing compressed files containing multiple documents
+filetype:sql								Searches for SQL database files							Identifying exposed database files
+filetype:log								Searches for log files									Accessing server log information
+filetype:ini								Searches for INI configuration files					Finding INI files that may contain sensitive settings
+filetype:bak								Searches for backup files								Accessing backup copies of important files
+intitle:"index of /public"					Locates public directories								Accessing publicly available directories
+inurl:/config/								Finds configuration directories							Identifying directories containing configuration files
+filetype:txt								Searches for text files									Locating publicly available text documents
+inurl:/private/								Finds private directories								Accessing private folders on servers
+filetype:csv								Searches for CSV files									Extracting data from publicly available spreadsheets
+
+#_Information_Disclosure
+intitle:"index of"							Finds directory listings								Locating open directories on servers
+filetype:pdf								Searches for PDF files									Finding publicly available PDF documents
+inurl:wp-config.php							Locates WordPress configuration files					Accessing WordPress site settings
+inurl:phpinfo.php							Finds PHP info pages									Viewing PHP configuration details
+filetype:xls								Searches for Excel spreadsheets							Extracting data from publicly available spreadsheets
+inurl:/backup/								Finds backup directories								Identifying backup files on servers
+inurl:/admin/								Locates admin directories								Finding administrative access points
+intitle:"index of" "/private"				Finds private directory listings						Locating private folders on servers
+inurl:config								Locates configuration files								Accessing server configuration settings
+inurl:/test/								Finds test directories									Identifying test environments on servers
+
+#_Network_and_System
+inurl:/cgi-bin/								Locates CGI script directories							Finding CGI scripts that may have vulnerabilities
+intitle:"Network Configuration"				Searches for network configuration files				Accessing network settings and configurations
+inurl:/console/								Finds system consoles									Accessing administrative consoles for systems
+inurl:/status								Locates status pages									Monitoring server status and performance
+intitle:"Network Map"						Searches for network maps								Viewing network topology and connections
+inurl:/server-status						Finds server status pages								Checking server health and activity
+inurl:adminconsole							Locates admin consoles									Managing administrative settings and controls
+intitle:"Network Tools"						Finds network tool pages								Accessing tools for network management
+inurl:/system/								Locates system directories								Identifying system-related directories
+inurl:/sysadmin/							Finds system admin pages								Accessing system administration interfaces
+inurl:/secure/admin/						Locates secure admin directories						Securing administrative access points
+filetype:conf								Searches for configuration files						Finding server and application configuration files
+filetype:cfg								Searches for configuration files						Locating configuration settings
+filetype:ini								Searches for INI configuration files					Accessing INI files that contain sensitive settings
+filetype:yaml								Searches for YAML config files							Finding YAML configuration files for applications
+filetype:xml								Searches for XML configuration files					Locating XML files for system and network settings
+filetype:log								Searches for log files									Accessing server logs that may contain system information
+inurl:/monitoring/							Finds monitoring directories							Identifying directories used for system monitoring
+inurl:/manage/								Locates management pages								Accessing management interfaces for systems
+intitle:"System Dashboard"					Finds system dashboards									Viewing system performance and metrics dashboards
+inurl:/admin/system							Finds system admin pages								Securing system administration access points
+inurl:/manager/html							Finds Tomcat manager pages								Accessing Tomcat server management interfaces
+
+#_Vulnerability_Identification
+inurl:"/admin/login.php"					Finds admin login pages									Identifying potential admin panels for testing
+intitle:"phpMyAdmin"						Locates phpMyAdmin interfaces							Checking for unsecured database management tools
+inurl:"/login.php"							Finds general login pages								Identifying login pages that may need security updates
+intitle:"webadmin"							Locates web admin pages									Searching for web administration interfaces
+inurl:"/manager/html"						Finds Tomcat manager pages								Accessing Tomcat server management interfaces
+inurl:"/console"							Finds admin consoles									Locating administrative consoles for systems
+inurl:"/user/login"							Finds user login pages									Identifying user authentication pages
+inurl:"/secure/login"						Finds secure login pages								Locating secure login portals that require protection
+inurl:"/admin/index.php"					Finds admin index pages									Accessing index pages of admin sections
+intitle:"admin console"						Locates admin console pages								Searching for administrative console interfaces
+inurl:"admin.asp"							Finds admin ASP pages									Identifying ASP-based admin access points
+inurl:"admin.aspx"							Finds admin ASPX pages									Locating ASPX-based administrative pages
+inurl:"admin.jsp"							Finds admin JSP pages									Accessing JSP-based admin login portals
+inurl:"administrator"						Finds administrator pages								Locating administrator access points
+inurl:"wp-admin"							Finds WordPress admin pages								Identifying WordPress administration panels
+inurl:"/admin/login.html"					Finds admin login pages									Accessing HTML-based admin login interfaces

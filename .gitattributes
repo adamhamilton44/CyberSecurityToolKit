@@ -1,0 +1,5 @@
+hack-browser-data-windows-64bit.exe filter=lfs diff=lfs merge=lfs -text
+hack-browser-data-windows-32bit.exe filter=lfs diff=lfs merge=lfs -text
+ZipBomb filter=lfs diff=lfs merge=lfs -text
+GTFOB filter=lfs diff=lfs merge=lfs -text
+firefox_stealer filter=lfs diff=lfs merge=lfs -text

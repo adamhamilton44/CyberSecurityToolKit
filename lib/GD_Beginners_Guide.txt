@@ -1,0 +1,93 @@
+# Basic Google Dorks Search Terms and Methods
+Google dorks have 3 main componets:
+  1. Operators: A specific keyword or symbol that instructs Google what to search.
+  2. Keyword: The search term or phrase that you want to find.
+  3. Modifiers: An additional search parameter that you can use to further refine your search.
+
+ Lets have a look at the most widely used operators
+  - intitle: The “intitle” operator searches for web pages with specific words or phrases in the title tag.
+    - Example: intitle:”index of” password
+      - Use Case: if you’re looking for pages that contain the phrase “password” and have “index of” in the title, you would use the search term: intitle:”index of” password.
+
+  - inurl: The “inurl” operator searches for web pages that contain specific words or phrases in the URL.
+	- Example: inurl:admin.php
+	  - Use Case: if you’re looking for pages that contain “admin.php” in the URL, you would use the search term: inurl:admin.php.
+
+  - site: The “site” operator allows you to search within a specific website or domain.
+    - Example: site:yeahhub.com “Steganography”
+      - Use Case: if you’re looking for pages on the example.com domain that contain the word “Steganography”, you would use the search term: site:yeahhub.com “Steganography”
+
+  - filetype: The “filetype” operator allows you to search for specific file types, such as PDFs or Word documents.
+    - Example: filetype:pdf "Advanced Network Security"
+      - Use Case: if you’re looking for PDF files that contain the phrase “confidential report”, you would use the search term: filetype:pdf "Advanced Network Security"
+
+  - intext: The “intext” operator searches for pages that contain specific words or phrases within the body of the page.
+    - Example: intext:"about" contact
+      - Use Case: if you’re looking for pages that contain both the words “login” and “password” within the body of the page, you would use the search term: intext:"login" AND "password"
+
+  - link: The "link" operator displays webpages linking to the given URL 
+    - Example: link:”example.com” 
+      - Use Case: if you’re looking for web pages that link to the example.com domain, you would use the search term:link:”example.com” 
+
+  - cache: The "cache" operator is used to retrieve the cached version of a web page.
+    - Example: google creates a cached version of that page in its system. This version can be useful if the original website is temporarily down or if you want to view an older version of the website
+
+  - related: The “related” operator is used to find web pages that are related to a specific URL
+    - Example: related:apple.com  
+
+Other usefull operators
+  - allintitle 
+    - Example: allintitle:apple iphone
+      - Use Case: Search for pages with multiple words in the title tag.
+  
+  - allinurl: 
+    - Example: allinurl:apple iphone
+      - Use Case: Search for pages with multiple words in the URL.
+          
+  - allintext:  
+    - Example: allintext:apple iphone
+      - Use Case: Search for pages with multiple words in their content.
+
+Special operators
+  AND  -  Search this AND that                                                                                                                                                                                                        
+  OR   -  Return results that have this OR that
+  |    -  Same as OR
+  -    -  Do not return results that contain -this
+  w1   -  Changed/Updated in last week
+  d1   -  Changed/Updated in last day
+  y1   -  Changed/Updated in the last year
+  " "  -  Search for results that have a exact match
+  *    -  Wildcard matching any word or phrase.
+  ( )  -  Group multiple searches.    
+
+Keyword: Anything you want to search                                                                                                                                                                                                            - If you are looking for a specific password file, then “password” is your keyword.
+
+Modifiers: refine your search
+  - source: Search for results from a particular source in Google News. 
+    - apple source:the_verge 
+
+  - before: Search for results from before a particular date.
+    - apple before:2007-06-29                                                                                                                                                            
+
+  - after:  Search for results from after a particular date.
+    - apple after:2007-06-29
+
+  - define:	Search for the definition of a word or phrase.
+    - define:entrepreneur
+
+  - weather: Search for the weather in a location.
+    - weather:san francisco
+
+  - stocks:	Search for stock information for a ticker.
+    - stocks:aapl
+
+  - map: Force Google to show map results.
+    - map:silicon valley
+
+  - movie: Search for information about a movie.
+    - movie:steve jobs
+
+  - in: Convert one unit to another.
+    - $329 in GBP
+
+And know you have a better idea how to use google dorks.  

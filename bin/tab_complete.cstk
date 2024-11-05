@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+_cstk_completion() {
+    local cur prev opts cmd_opts
+
+    # Get the current and previous words
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Define the first argument options
+    opts="--osint --payload --postex --etc"
+
+    # Define the second argument options for each first argument
+    case "$prev" in
+        --osint|-o|-O)
+            cmd_opts="findip ipsweep nmap breached-email google-dorks email-search"
+            ;;
+		--payload|-p|-P)
+	    	cmd_opts="nc linux-shell ransomware all-shells no-touch kill-computer denial-of-service"
+	    	;;
+		--postex|-x|-X)
+	    	cmd_opts="vm browser-thief crypto file-exploit kernal-exploit on-start brute-force files-of-interest deploy-rootkit"
+	    	;;
+        --etc|-e|-E)
+            cmd_opts="user-shells webserver file-extract openssl secret-note create-binary"
+            ;;
+        --help|-h|-H)
+            cmd_opts=""
+            ;;
+		--class|-c|-C)
+	    	cmd_opts=""
+	    	;;
+		--tool|-t|-T)
+	    	cmd_opts=""
+	    	;;
+        *)
+            cmd_opts=""
+            ;;
+    esac
+
+    # Provide the completions for the current word
+    if [[ ${COMP_CWORD} -eq 1 ]]; then
+        COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+    else
+        COMPREPLY=( $(compgen -W "$cmd_opts" -- "$cur") )
+    fi
+}
+
+
+# Register the completion function for the cstk script
+complete -F _cstk_completion cstk
+
