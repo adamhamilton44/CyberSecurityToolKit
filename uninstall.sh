@@ -9,8 +9,8 @@ check_root() {
 }
 
 remove_shc() {
-	if [ -d /opt/compiler ] && [ -e /opt/compiler/shc ]; then
-		rm -rf /opt/compiler &>/dev/null
+	if [ -d /opt/cstk ] && [ -e /opt/cstk/shc ]; then
+		rm -rf /opt/cstk &>/dev/null
 		if [ -f /usr/local/bin/shc ]; then
 			rm -rf /usr/local/bin/shc &>/dev/null
 		fi
