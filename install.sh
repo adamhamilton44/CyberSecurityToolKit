@@ -9,15 +9,28 @@ keep_sudo_alive() {
 }
 
 # Start the keep-alive function in the background
+trap 'jobs -p | xargs -r kill' EXIT
 keep_sudo_alive &
 # Ensure that the background process is stopped when the script finishes
+
+link_main_script() {
+        
+        chmod +x ./cstk.sh
+        ln -sr ./cstk.sh /usr/local/bin/cstk
+        echo "The main script cstk.sh is now accessible globally. You can  run it using 'cstk'."
+        REAL_PATH="$(realpath /usr/local/bin/cstk)"
+        declare -g home_dir
+        home_dir="$(dirname "$REAL_PATH")"
+
+}
 if ! [ -h /usr/local/bin/cstk ]; then
-    move_or_link_main_script
+    link_main_script
 else
     REAL_PATH="$(realpath /usr/local/bin/cstk)"
     home_dir="$(dirname "$REAL_PATH")"
 fi
-log="$home_dir/log"
+
+
 bin="$home_dir/bin"
 data="$home_dir/data"
 cstk_tab_complete="$bin/tab_complete.cstk"
@@ -30,7 +43,7 @@ TORRENT_FILE="magnet:?xt=urn:btih:7ffbcd8cee06aba2ce6561688cf68ce2addca0a3&dn=Br
 LOG_FILE="$cstk_install"
 trap 'echo "An error occurred. Exiting."; exit 1' ERR
 
-echo -e "Todays Date: $DATE \nUser who installed CyberSecurityToolKit: $USER \nHome Path: $HOME \nUsers default shell: $shell \nInstall Output:" &>/dev/null
+
 
 need_root() {
     if [[ "$EUID" -ne 0 ]]; then
@@ -40,7 +53,7 @@ need_root() {
 }
 
 bash_version() {
-	exec > >(tee -a "$LOG_FILE") 2>&1
+
 	# Minimum Bash version required
 	min_bash_version=4.0
 	# Get current Bash version
@@ -52,32 +65,32 @@ bash_version() {
 	fi
 }
 
-required_commands=( bc cargo rustup git npm coreutils  python3 python3-pip openssl john curl jq grep fzf nc autoconf xxd netcat tar rlwrap bunzip2 ncat unrar gunzip unzip uncompress dpkg 7z nmap )
+required_commands=( basez build-essential gcc libc6-dev golang bc cargo rustup git npm coreutils  python3 python3-pip openssl john curl jq grep fzf autoconf xxd tar rlwrap bzip2 netcat-openbsd unrar gzip unzip dpkg 7zip nmap )
 
 install_command() {
-	exec > >(tee -a "$LOG_FILE") 2>&1
-  local cmd=$1
-  if ! command -v "$cmd" &> /dev/null; then
-    echo "Installing $cmd..."
-    if command -v apt &> /dev/null; then
-      apt install -y "$cmd"
-    elif command -v yum &> /dev/null; then
-      yum install -y "$cmd"
-    elif command -v dnf &> /dev/null; then
-      dnf install -y "$cmd"
-    elif command -v brew &> /dev/null; then
-      brew install "$cmd"
-    else
-      echo "Error: Package manager not found. Please install $cmd manually."
-      exit 13
-     fi
+	
+    local cmd=$1
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "Installing $cmd..."
+        if command -v apt &> /dev/null; then
+            apt install -qq -y "$cmd"
+        elif command -v yum &> /dev/null; then
+            yum install -y "$cmd"
+        elif command -v dnf &> /dev/null; then
+            dnf install -y "$cmd"
+        elif command -v brew &> /dev/null; then
+            brew install "$cmd"
+        else
+            echo "Error: Package manager not found. Please install $cmd manually."
+            exit 13
+        fi
   else
     echo "$cmd is already installed."
   fi
 }
 
 install_vulscan() {
-		exec > >(tee -a "$LOG_FILE") 2>&1
+		
 	    if ! [ -d /usr/share/nmap/scripts/vulscan ]; then
 		    pushd /usr/share/nmap/scripts || return
 		    git clone https://github.com/scipag/vulscan
@@ -91,10 +104,10 @@ install_vulscan() {
 }
 
 install_shc() {
-	exec > >(tee -a "$LOG_FILE") 2>&1
+	
     if ! command -v shc &>/dev/null ; then
         echo "Installing shc..."
-        mkdir -p /opt/compiler && pushd /opt/compiler || return
+        mkdir -p /opt/cstk && pushd /opt/cstk || return
         git clone https://github.com/neurobin/shc.git
         cd shc || return
         ./configure
@@ -115,79 +128,92 @@ install_shc() {
 }
 
 breached_parser() {
-    	if ! [ -d "$data" ]; then
-		space_available=$(df -h . | awk '{print $4}' | awk 'NR%3==2')
-		available_size=$(echo "$space_available" | grep -oE '[0-9]+') # Extract numeric value and unit (e.g., 124G -> 124 and G)
-		available_unit=$(echo "$space_available" | grep -oE '[A-Za-z]')
-		case "$available_unit" in  # Convert size to gigabytes for easier comparison
-	    	G) available_gb=$available_size ;; # Already in gigabytes, no conversion needed
-	    	M) available_gb=$(awk "BEGIN {print $available_size / 1024}") ;; # Convert from megabytes to gigabytes
-	    	T) available_gb=$(awk "BEGIN {print $available_size * 1024}") ;; # Convert from terabytes to gigabytes
-	    	*) available_gb=0 ;; # If it is not G, M, or T, it is too small
-		esac
+    if ! [ -d "$data" ]; then
+        space_available=$(df -h . | awk 'NR==2 {print $4}') # Simplified space extraction
+        available_size=$(echo "$space_available" | grep -oE '[0-9]+')
+        available_unit=$(echo "$space_available" | grep -oE '[A-Za-z]')
+        
+        # Convert size to gigabytes
+        case "$available_unit" in
+            G) available_gb=$available_size ;; # Already in gigabytes
+            M) available_gb=$(awk "BEGIN {print $available_size / 1024}") ;; # Convert MB to GB
+            T) available_gb=$(awk "BEGIN {print $available_size * 1024}") ;; # Convert TB to GB
+            *) available_gb=0 ;; # Unrecognized unit
+        esac
 
-		if (( $(echo "$available_gb < 42" | bc -l) )); then # Check if available space is less than 42GB
-			space="f"
-		else
-			space="t"
-		fi
-		if [[ "$space" = t ]]; then
-			echo "There is a tool in the CyberSecurityToolKit program that will enable you to quickly search through millions of breached emails with there corresponding password."
-			echo "The file once downloaded and extracted is 42 GB and because of the size is only available through a bittorrent."
-			echo "You are only seeing this message if you have the available space in the current directory."
-			echo "I will need to use a CLI bittorrent for the download and it does take some time to finish."
-			echo "And of course you can decline to download the breached email/password combo list if you choose, just keep in mind some tools will not work as intended."
-			echo "If aria2c is available and you want to include the email/passwords list, i will download the aria2c if not installed and then continue with the download of the breached emails."
-			echo "Would you like me to set this up for you now?"
-			echo "Please answer with only a Y|y for yes, or N|n for no"
-			read -r -n 1 -p "==> " ans
-			if [[ "$ans" =~ [Nn] ]]; then
-				echo "Not downloading email/password word list"
-				echo "Keep in mind you can not run the breached emails tool in the OSINT class."
-			elif [[ "$ans" =~ [Yy] ]]; then
-				if ! command -v aria2c &> /dev/null; then
-					if command -v apt &> /dev/null; then
-      					apt install -y aria2
-    				elif command -v yum &> /dev/null; then
-      					yum install -y aria2
-    				elif command -v dnf &> /dev/null; then
-      					dnf install -y aria2
-    				elif command -v brew &> /dev/null; then
-      					brew install aria2
-    				else
-      					echo "Error: Package manager not found. Please install $cmd manually."
-      					return 13
-    				fi
-				else
-					aria2c="t"
-				fi
-			else
-				echo "Bad Option"
-				breached_parser
-			fi
+        # Check if available space is less than 42GB
+        if (( $(echo "$available_gb < 42" | bc -l) )); then
+            echo "Insufficient space available. Exiting."
+            return
+        fi
 
-			if [[ "$aria2c" = t ]]; then
-		    	download="$(aria2c --dir="$home_dir" --seed-time=0 "$TORRENT_FILE")"
-		    	eval "$download"
-		    	sleep 10
-				exec > >(tee -a "$LOG_FILE") 2>&1
-		    	if [ -d "$home_dir/BreachCompilation" ] && [ -d "$home_dir/BreachCompilation/data" ]; then
-		    		mv "$home_dir/BreachCompilation/data" "."
-		    		if [ -d "$home_dir/data" ]; then
-		    			rm -rf "$home_dir/BreachComplation" &> /dev/null
-		    		fi
-		    	fi
-			else
-		    	echo "No supported torrent client installed."
-			fi
-		else
-			echo -e "After checking the available space on your drive \nYou do not have enough room to download the email/password parser tool."
-			echo "Keep in mind you can not run the breached emails tool in the OSINT class."
-		fi
-	fi
+        echo "This tool requires 42GB of space for the breached email/password list."
+        echo "Would you like to proceed with the download? (Y/N)"
+        read -r -n 1 -p "==> " ans
+        echo # Add a newline for cleaner output
+        
+        if [[ "$ans" =~ [Nn] ]]; then
+            echo "Skipping download. The tool will not function without the list."
+            return
+        elif [[ "$ans" =~ [Yy] ]]; then
+            # Check and install aria2 if not already available
+            if ! command -v aria2c &> /dev/null; then
+                echo "Installing aria2..."
+                if command -v apt &> /dev/null; then
+                    apt install -qq -y aria2
+                elif command -v yum &> /dev/null; then
+                    yum install -y aria2
+                elif command -v dnf &> /dev/null; then
+                    dnf install -y aria2
+                elif command -v brew &> /dev/null; then
+                    brew install aria2
+                else
+                    echo "Error: Package manager not found. Please install aria2 manually."
+                    return 13
+                fi
+            fi
+
+            aria2c="t" # Ensure aria2c is flagged as available
+            
+            if [[ "$aria2c" = t ]]; then
+                download_torrent() {
+                    aria2c --dir="$home_dir" --seed-time=0 "$TORRENT_FILE"
+                }
+
+                # Start the download in the background
+                download_torrent &
+                download_pid=$!
+                echo "Download started (PID: $download_pid). Waiting for it to complete..."
+                wait $download_pid
+
+                if [[ $? -eq 0 ]]; then
+                    echo "Download completed successfully."
+                else
+                    echo "Download failed."
+                    return 14
+                fi
+            else
+                echo "aria2c not available."
+                return 15
+            fi
+
+            # Post-download operations
+            if [ -d "$home_dir/BreachCompilation" ] && [ -d "$home_dir/BreachCompilation/data" ]; then
+                mv "$home_dir/BreachCompilation/data" "$home_dir"
+                rm -rf "$home_dir/BreachCompilation" &> /dev/null
+            fi
+        else
+            echo "Invalid option. Please respond with Y or N."
+            return 16
+        fi
+    else
+        echo "Data directory already exists."
+    fi
 }
 
+
 create_wrapper() {
+    
     INSTALL_DIR="$home_dir"
     BIN_DIR="$INSTALL_DIR/bin"
     WRAPPER_PATH="/usr/local/bin/cstk_wrapper"
@@ -209,7 +235,7 @@ create_wrapper() {
     	# Check if the wrapper script was successfully created
     	if [[ -f "$WRAPPER_PATH" ]]; then
         	chmod 500 "$WRAPPER_PATH"
-        	exec > >(tee -a "$LOG_FILE") 2>&1
+        	
         	echo "I installed a Wrapper script in /usr/local/bin/ folder, Please dont move or change or this program will not work."
 			echo "I did this for 3 reasons."
 			echo "1 - so we dont need to source the full bin directory in your bashrc."
@@ -226,14 +252,14 @@ create_wrapper() {
 
 
 install_obs() {
-	exec > >(tee -a "$LOG_FILE") 2>&1
+	
 	if ! command -v bash-obfuscate &> /dev/null; then
 		npm install -g bash-obfuscate &>/dev/null
 	fi
 }
 
 holehe_install() {
-	exec > >(tee -a "$LOG_FILE") 2>&1
+	
     holehe_path="$home_dir/Malware_Of_All_Types/OSINT_Email-Social"
     pw="$(echo 'RlBjWnV6SnVQNW00SWdIRmZobTNUR3dWWDdtQW1peVNjMmlUbVhLeAo=' | base64 -d)"
     pw2="$(echo 'IFCECTKBIRAU2QKEJVAU2RCBJVCECRCNIFGUITKBIRGUCTKEJVCE2QKEJVAU2RCLIFCEWQKOJNAU4QKLIRHECS2EJZFUCTSBIRAUSRCBJFHUISCJIRHUQQKPJFEEISKPJBAU6SKBJBCE6SKIIREU6QJTGMZAU===' | base32plain -d)"
@@ -241,7 +267,7 @@ holehe_install() {
         pip install holehe &> /dev/null
         status=$?
         if [[ "$status" != 0 ]]; then
-            cd "$home_dir/Malware_Of_All_Types/OSINT_Email-Social" || return &> /dev/null
+            cd "$PWD/Malware_of_All_Types/OSINT_Email-Social" || return &> /dev/null
             git clone https://github.com/megadose/holehe.git &> /dev/null
             cd holehe &> /dev/null || return
             status=$?
@@ -269,7 +295,7 @@ holehe_install() {
 
 
 link_dir_structure() {
-	exec > >(tee -a "$LOG_FILE") 2>&1
+	
     # Create necessary directories first unless this is a update
     if ! [ -d /usr/local/lib/CyberSecurityToolKit ]; then
     	mkdir -p /usr/local/lib/CyberSecurityToolKit
@@ -313,11 +339,10 @@ link_dir_structure() {
     fi
 }
 
-move_or_link_main_script() {
-	exec > >(tee -a "$LOG_FILE") 2>&1
-	temp_home="$PWD"
+link_main_script() {
+	
 	chmod +x ./cstk.sh
-	ln -sr "$temp_home/cstk.sh" /usr/local/bin/cstk
+	ln -sr ./cstk.sh /usr/local/bin/cstk
 	echo "The main script cstk.sh is now accessible globally. You can  run it using 'cstk'."
 	REAL_PATH="$(realpath /usr/local/bin/cstk)"
     	declare -g home_dir
@@ -326,22 +351,22 @@ move_or_link_main_script() {
 }
 
 install_tab_completion() {
-	exec > >(tee -a "$LOG_FILE") 2>&1
+	
 
         if [ "$shell" = "zsh" ]; then
-	    rc="/root/.zshrc"
+	        rc="/root/.zshrc"
             complete="$(grep 'tab_complete.cstk' $rc)"
         elif [ "$shell" = "bash" ]; then
-	    rc="/root/bashrc"
+	        rc="/root/bashrc"
             complete="$(grep 'tab_complete.cstk' $rc)"
         elif [ "$shell" = "fish" ]; then
-	    rc="/root/.config/fish/config.fish"
+	        rc="/root/.config/fish/config.fish"
             complete="$(grep 'tab_complete.cstk' $rc)"
         elif [ "$shell" = "ksh" ]; then
-	    rc="/root/.kshrc"
+	        rc="/root/.kshrc"
             complete="$(grep 'tab_complete.cstk' $rc)"
         elif [ "$shell" = "tcsh" ]; then
-	    rc="/root/.tcshrc"
+	        rc="/root/.tcshrc"
             complete="$(grep 'tab_complete.cstk' $rc)"
         else
             echo "Unknown shell detected. Please manually add the line 'source $cstk_tab_complete' to your shell configuration file."
@@ -383,7 +408,7 @@ install_tab_completion() {
     	fi
 }
 set_hashes() {
-	exec > >(tee -a "$LOG_FILE") 2>&1
+	
 	K_ROOT_KITS="$home_dir/Malware_of_All_Types/RootKits/kernel"
 	U_ROOT_KITS="$home_dir/Malware_of_All_Types/RootKits/userland"
 	P_BOMBS="$home_dir/Malware_of_All_Types/DOS_Bombs/Image-Bombs"
@@ -398,8 +423,8 @@ set_hashes() {
 #######################
 need_root @
 bash_version
-move_or_link_main_script
 link_dir_structure
+link_main_script
 create_wrapper
 install_tab_completion
 for cmd in "${required_commands[@]}"; do
@@ -411,11 +436,10 @@ install_shc
 holehe_install
 breached_parser
 set_hashes
-chmod 750 ./cstk.sh
-chmod 750 /usr/local/bin/cstk
+chmod 750 cstk.sh
 chmod 750 /usr/local/bin/cstk_wrapper
-find . -type d -exec chmod 750 {} \;
+find "$home_dir" -type d -exec chmod 750 {} \;
 read -r -n 1 -p "Install script is done, Press any key to finish, If you had any errors while running this script then check the log directory for futher information."
 rm -- "$0"
-trap cleanup EXIT
+
 exit 0

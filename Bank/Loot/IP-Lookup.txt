@@ -1,0 +1,14 @@
+
+
+Date and Time: 			  Fri Jan 24 03:09:39 PM CST 2025 
+User Name:			  adam 
+Program ran:			  IP Search 
+Searched IP:			  172.86.35.28 
+---------------------------------------- 
+City:				  Winthrop 
+State:				  Iowa 
+Country:			  United States 
+Zip:				  50682 
+Latitude:			  42.4733 
+Longitude:			  -91.7343 
+Internet Service Provider:	  Eastern Iowa IP, LLC

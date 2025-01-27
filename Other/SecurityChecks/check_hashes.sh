@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Run the script as root if not already
 [[ "$EUID" -ne 0 ]] && exec sudo "$0" "$@"
@@ -95,9 +95,9 @@ check_hash() {
         echo -e "Files hashes do not match!\nDO NOT RUN any executables in this program!\nFiles may have been tampered with. Please reinstall to ensure safety."
         echo "The program will now exit."
         # Uncomment to remove the program completely
-        # remove_shc
-        # remove_links
-        # remove_all
+        remove_shc
+        remove_links
+        remove_all
         exit 1
     else
         echo "All files are verified. No compromise detected."

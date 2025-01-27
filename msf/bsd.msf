@@ -1,0 +1,47 @@
+> bsd/bsdi
+> X64/X86
+> shell
+> bind/reverse
+
+# PAYLOADS
+# BSD-X64-StagedLess
+payload/bsd/x64/shell_bind_tcp
+payload/bsd/x64/shell_reverse_tcp
+
+# BSD-X86_Staged
+payload/bsd/x86/shell/bind_tcp
+payload/bsd/x86/shell/reverse_tcp
+
+# BSD-X86-StagedLess
+payload/bsd/x86/shell_bind_tcp
+payload/bsd/x86/shell_reverse_tcp
+
+# BSDI-X86-Staged
+payload/bsdi/x86/shell/bind_tcp
+payload/bsdi/x86/shell/reverse_tcp
+
+# BSDI-X86-StagedLess
+payload/bsdi/x86/shell_bind_tcp
+payload/bsdi/x86/shell_reverse_tcp
+
+
+# EXPLOITS
+exploit/bsd/finger/morris_fingerd_bof
+exploit/bsdi/softcart/mercantec_softcart
+exploit/freebsd/ftp/proftp_telnet_iac
+exploit/freebsd/http/citrix_dir_traversal_rce
+exploit/freebsd/http/citrix_formssso_target_rce
+exploit/freebsd/http/junos_phprc_auto_prepend_file
+exploit/freebsd/http/watchguard_cmd_exec
+exploit/freebsd/local/intel_sysret_priv_esc
+exploit/freebsd/local/ip6_setpktopt_uaf_priv_esc
+exploit/freebsd/local/mmap
+exploit/freebsd/local/rtld_execl_priv_esc
+exploit/freebsd/local/watchguard_fix_corrupt_mail
+exploit/freebsd/misc/citrix_netscaler_soap_bof
+exploit/freebsd/samba/trans2open
+exploit/freebsd/tacacs/xtacacsd_report
+exploit/freebsd/telnet/telnet_encrypt_keyid
+exploit/freebsd/webapp/spamtitan_unauth_rce
+exploit/openbsd/local/dynamic_loader_chpass_privesc
+exploit/unix/local/netbsd_mail_local

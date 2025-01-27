@@ -1,0 +1,31 @@
+> aarch64/armle
+> meterpreter/shell
+> reverse
+
+# PAYLOADS
+# Meterpreter-Staged
+payload/apple_ios/aarch64/meterpreter_reverse_http
+payload/apple_ios/aarch64/meterpreter_reverse_https
+payload/apple_ios/aarch64/meterpreter_reverse_tcp
+
+# Shell-Staged
+payload/apple_ios/aarch64/shell_reverse_tcp
+
+# Meterpreter-StageLess
+payload/apple_ios/armle/meterpreter_reverse_http
+payload/apple_ios/armle/meterpreter_reverse_https
+payload/apple_ios/armle/meterpreter_reverse_tcp
+
+
+
+
+
+
+
+# EXPLOITS
+exploit/apple_ios/browser/safari_jit
+exploit/apple_ios/browser/safari_libtiff
+exploit/apple_ios/browser/webkit_createthis
+exploit/apple_ios/browser/webkit_trident
+exploit/apple_ios/email/mobilemail_libtiff
+exploit/apple_ios/ssh/cydia_default_ssh

@@ -1,0 +1,24 @@
+# PAYLOADS
+payload/firefox/exec
+payload/firefox/shell_bind_tcp
+payload/firefox/shell_reverse_tcp
+
+
+
+
+# EXPLOITS
+exploit/firefox/local/exec_shellcode
+exploit/linux/http/selenium_greed_firefox_rce_cve_2022_28108
+exploit/multi/browser/firefox_escape_retval
+exploit/multi/browser/firefox_jit_use_after_free
+exploit/multi/browser/firefox_pdfjs_privilege_escalation
+exploit/multi/browser/firefox_proto_crmfrequest
+exploit/multi/browser/firefox_proxy_prototype
+exploit/multi/browser/firefox_queryinterface
+exploit/multi/browser/firefox_svg_plugin
+exploit/multi/browser/firefox_tostring_console_injection
+exploit/multi/browser/firefox_webidl_injection
+exploit/multi/browser/firefox_xpi_bootstrapped_addon
+exploit/windows/browser/firefox_smil_uaf
+exploit/windows/browser/mozilla_firefox_onreadystatechange
+exploit/windows/browser/mozilla_firefox_xmlserializer
