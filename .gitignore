@@ -1,2 +1,6 @@
 data/
-
+etc/keys/*
+log/*
+Bank/Loot/*
+Bank/Malware/
+/msf/
