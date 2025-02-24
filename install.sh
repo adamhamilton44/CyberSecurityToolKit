@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -e  # Exit on any error
 
 # Function to keep sudo alive
 keep_sudo_alive() {
@@ -9,257 +11,130 @@ keep_sudo_alive() {
 }
 
 # Start the keep-alive function in the background
-trap 'jobs -p | xargs -r kill' EXIT
+trap "kill -- -$$" EXIT
 keep_sudo_alive &
-# Ensure that the background process is stopped when the script finishes
 
 link_main_script() {
-        
+    if ! [ -h /usr/local/bin/cstk ]; then
         chmod +x ./cstk.sh
         ln -sr ./cstk.sh /usr/local/bin/cstk
         echo "The main script cstk.sh is now accessible globally. You can  run it using 'cstk'."
         REAL_PATH="$(realpath /usr/local/bin/cstk)"
         declare -g home_dir
         home_dir="$(dirname "$REAL_PATH")"
-
+    else
+        REAL_PATH="$(realpath /usr/local/bin/cstk)"
+        home_dir="$(dirname "$REAL_PATH")"
+    fi
 }
-if ! [ -h /usr/local/bin/cstk ]; then
-    link_main_script
-else
-    REAL_PATH="$(realpath /usr/local/bin/cstk)"
-    home_dir="$(dirname "$REAL_PATH")"
-fi
 
 
+# Define variables
+USER=$(echo $SUDO_USER)
+HOME="${HOME:-$(getent passwd "$USER" 2>/dev/null | cut -d: -f6)}"
+log="$home_dir/logs"
 bin="$home_dir/bin"
 data="$home_dir/data"
 cstk_tab_complete="$bin/tab_complete.cstk"
 cstk_install="$log/cstk_install.log"
-DATE="$(date)"
-USER="$SUDO_USER"
-HOME="${HOME:-$(getent passwd "$USER" 2>/dev/null | cut -d: -f6)}" # get users home path
-shell=$(basename "$SHELL")
-TORRENT_FILE="magnet:?xt=urn:btih:7ffbcd8cee06aba2ce6561688cf68ce2addca0a3&dn=BreachCompilation&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fglotorrents.pw%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337"
 LOG_FILE="$cstk_install"
-trap 'echo "An error occurred. Exiting."; exit 1' ERR
+TORRENT_FILE="magnet:?xt=urn:btih:7ffbcd8cee06aba2ce6561688cf68ce2addca0a3&dn=BreachCompilation&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fglotorrents.pw%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337"
 
 
-
+# Function to check if running as root
 need_root() {
     if [[ "$EUID" -ne 0 ]]; then
-	echo "Enter Password"
-        sudo bash "$0" "$@"
+        echo "Enter Password"
+        exec sudo bash "$0" "$@"
     fi
 }
 
+# Function to check Bash version
 bash_version() {
-
-	# Minimum Bash version required
-	min_bash_version=4.0
-	# Get current Bash version
-	current_bash_version=$(bash --version | head -n 1 | awk '{print $4}' | awk -F '(' '{print $1}')
-	# Compare versions
-	if [[ "$min_bash_version" > "$current_bash_version" ]]; then
-	    echo "Error: This script requires Bash version $min_bash_version or higher. You are using version $current_bash_version."
-	    exit 12
-	fi
+    min_bash_version=4.0
+    current_bash_version=$(bash --version | head -n 1 | awk '{print $4}' | awk -F '(' '{print $1}')
+    if [[ "$(echo "$current_bash_version < $min_bash_version" | bc -l)" -eq 1 ]]; then
+        echo "Error: This script requires Bash $min_bash_version or higher. You have $current_bash_version."
+        exit 1
+    fi
 }
 
-required_commands=( basez build-essential gcc libc6-dev golang bc cargo rustup git npm coreutils  python3 python3-pip openssl john curl jq grep fzf autoconf xxd tar rlwrap bzip2 netcat-openbsd unrar gzip unzip dpkg 7zip nmap )
+# Function to install required commands in bulk
+install_dependencies() {
+    required_commands=( basez build-essential gcc libc6-dev golang bc cargo rustup git npm coreutils python3 python3-pip openssl john curl jq grep fzf autoconf xxd tar rlwrap bzip2 netcat-openbsd unrar gzip unzip dpkg 7zip nmap whois sublist3r nmap sqlmap nikto whatweb gobuster wpscan )
 
-install_command() {
-	
-    local cmd=$1
-    if ! command -v "$cmd" &> /dev/null; then
-        echo "Installing $cmd..."
-        if command -v apt &> /dev/null; then
-            apt install -qq -y "$cmd"
-        elif command -v yum &> /dev/null; then
-            yum install -y "$cmd"
-        elif command -v dnf &> /dev/null; then
-            dnf install -y "$cmd"
-        elif command -v brew &> /dev/null; then
-            brew install "$cmd"
-        else
-            echo "Error: Package manager not found. Please install $cmd manually."
-            exit 13
-        fi
-  else
-    echo "$cmd is already installed."
-  fi
+    if command -v apt &> /dev/null; then
+        apt update -qq && apt install -qq -y "${required_commands[@]}"
+    elif command -v yum &> /dev/null; then
+        yum install -y "${required_commands[@]}"
+    elif command -v dnf &> /dev/null; then
+        dnf install -y "${required_commands[@]}"
+    elif command -v brew &> /dev/null; then
+        brew install "${required_commands[@]}"
+    else
+        echo "Error: Unsupported package manager. Install dependencies manually."
+        exit 1
+    fi
 }
 
-install_vulscan() {
-		
-	    if ! [ -d /usr/share/nmap/scripts/vulscan ]; then
-		    pushd /usr/share/nmap/scripts || return
-		    git clone https://github.com/scipag/vulscan
-		    ln -s "$PWD/vulscan/vulscan.nse" "$PWD/vulscan"
-		    nmap --script-updatedb
-		    echo "vulscan nmap vulnability script added to nmap scripting engine in /usr/share/nmap/scripts/"
-		    popd || return
-		else
-			echo "Nmap vulscan looks to be installed"
-	    fi
-}
-
+# Function to install SHC
 install_shc() {
-	
-    if ! command -v shc &>/dev/null ; then
+    if ! command -v shc &>/dev/null; then
         echo "Installing shc..."
         mkdir -p /opt/cstk && pushd /opt/cstk || return
         git clone https://github.com/neurobin/shc.git
         cd shc || return
+        autoreconf -fiv  # Ensures correct configuration
         ./configure
-		if ! [ -f config/config.guess ] || ! [ -f config/config.sub ]; then
-			automake --add-missing
-		fi
-		make
-		success="$?"
-		if [ "$success" -ne 0 ]; then
-			bash autogen.sh
-		fi
-        make install
-		popd || return
-        echo "shc installed successfully."
+        make && make install
+        popd || return
     else
         echo "shc is already installed."
     fi
 }
 
+# Function to download BreachedParser database
 breached_parser() {
-    if ! [ -d "$data" ]; then
-        space_available=$(df -h . | awk 'NR==2 {print $4}') # Simplified space extraction
-        available_size=$(echo "$space_available" | grep -oE '[0-9]+')
-        available_unit=$(echo "$space_available" | grep -oE '[A-Za-z]')
-        
-        # Convert size to gigabytes
-        case "$available_unit" in
-            G) available_gb=$available_size ;; # Already in gigabytes
-            M) available_gb=$(awk "BEGIN {print $available_size / 1024}") ;; # Convert MB to GB
-            T) available_gb=$(awk "BEGIN {print $available_size * 1024}") ;; # Convert TB to GB
-            *) available_gb=0 ;; # Unrecognized unit
-        esac
+    local space_available=$(df --output=avail -BG . | tail -n 1 | grep -o '[0-9]\+')
+    if (( space_available < 42 )); then
+        echo "Insufficient space. Need at least 42GB. Exiting."
+        return
+    fi
 
-        # Check if available space is less than 42GB
-        if (( $(echo "$available_gb < 42" | bc -l) )); then
-            echo "Insufficient space available. Exiting."
-            return
-        fi
+    echo "Download 42GB BreachCompilation? (Y/N)"
+    read -r -n 1 ans
+    echo
+    [[ "$ans" =~ [Nn] ]] && return
 
-        echo "This tool requires 42GB of space for the breached email/password list."
-        echo "Would you like to proceed with the download? (Y/N)"
-        read -r -n 1 -p "==> " ans
-        echo # Add a newline for cleaner output
-        
-        if [[ "$ans" =~ [Nn] ]]; then
-            echo "Skipping download. The tool will not function without the list."
-            return
-        elif [[ "$ans" =~ [Yy] ]]; then
-            # Check and install aria2 if not already available
-            if ! command -v aria2c &> /dev/null; then
-                echo "Installing aria2..."
-                if command -v apt &> /dev/null; then
-                    apt install -qq -y aria2
-                elif command -v yum &> /dev/null; then
-                    yum install -y aria2
-                elif command -v dnf &> /dev/null; then
-                    dnf install -y aria2
-                elif command -v brew &> /dev/null; then
-                    brew install aria2
-                else
-                    echo "Error: Package manager not found. Please install aria2 manually."
-                    return 13
-                fi
-            fi
+    if ! command -v aria2c &>/dev/null; then
+        install_dependencies "aria2"
+    fi
 
-            aria2c="t" # Ensure aria2c is flagged as available
-            
-            if [[ "$aria2c" = t ]]; then
-                download_torrent() {
-                    aria2c --dir="$home_dir" --seed-time=0 "$TORRENT_FILE"
-                }
+    aria2c --dir="$home_dir" --seed-time=0 "magnet_link_here"
 
-                # Start the download in the background
-                download_torrent &
-                download_pid=$!
-                echo "Download started (PID: $download_pid). Waiting for it to complete..."
-                wait $download_pid
+    if [ -d "$home_dir/BreachCompilation" ] && [ -d "$home_dir/BreachCompilation/data" ]; then
+        mv "$home_dir/BreachCompilation/data" "$home_dir"
+        rm -rf "$home_dir/BreachCompilation" &> /dev/null
+    fi
 
-                if [[ $? -eq 0 ]]; then
-                    echo "Download completed successfully."
-                else
-                    echo "Download failed."
-                    return 14
-                fi
-            else
-                echo "aria2c not available."
-                return 15
-            fi
+}
 
-            # Post-download operations
-            if [ -d "$home_dir/BreachCompilation" ] && [ -d "$home_dir/BreachCompilation/data" ]; then
-                mv "$home_dir/BreachCompilation/data" "$home_dir"
-                rm -rf "$home_dir/BreachCompilation" &> /dev/null
-            fi
-        else
-            echo "Invalid option. Please respond with Y or N."
-            return 16
-        fi
-    else
-        echo "Data directory already exists."
+# Function to install Nmap Vulscan
+install_vulscan() {
+    if ! [ -d /usr/share/nmap/scripts/vulscan ]; then
+        git clone https://github.com/scipag/vulscan /usr/share/nmap/scripts/vulscan
+        nmap --script-updatedb
     fi
 }
 
-
-create_wrapper() {
-    
-    INSTALL_DIR="$home_dir"
-    BIN_DIR="$INSTALL_DIR/bin"
-    WRAPPER_PATH="/usr/local/bin/cstk_wrapper"
-    if ! [ -f "$WRAPPER_PATH" ]; then
-
-    	{
-		echo '#!/bin/bash'
-		echo '[[ $- == *i* ]] && { echo "This script cannot be run interactively"; exit 1; }'
-		echo 'if [[ -z "$CSTK_MAIN_RUNNER" ]]; then'
-    	echo '		echo "This option is not available."'
-    	echo '		exit 1'
-		echo 'else'
-		echo '		CSTK_WRAPPER_RUNNER=1'
-		echo "		export PATH=$BIN_DIR:\$PATH"
-		echo '		exec "$@"'
-		echo 'fi'
-    	} > "$WRAPPER_PATH"
-
-    	# Check if the wrapper script was successfully created
-    	if [[ -f "$WRAPPER_PATH" ]]; then
-        	chmod 500 "$WRAPPER_PATH"
-        	
-        	echo "I installed a Wrapper script in /usr/local/bin/ folder, Please dont move or change or this program will not work."
-			echo "I did this for 3 reasons."
-			echo "1 - so we dont need to source the full bin directory in your bashrc."
-			echo "2 - so we dont need to add multipal files to PATH."
-			echo "3 - Should you ever decide to remove this program the cleanup process is much easier and safer."
-    	else
-        	echo "Failed to create the wrapper script at $WRAPPER_PATH"
-        	echo "This program will not work without the script."
-        	echo "Best option is to run the uninstall.sh script."
-        	exit 9
-		fi
-    fi
-}
-
-
+# Function to install Obfuscator
 install_obs() {
-	
-	if ! command -v bash-obfuscate &> /dev/null; then
-		npm install -g bash-obfuscate &>/dev/null
-	fi
+    if ! command -v bash-obfuscate &>/dev/null; then
+        npm install -g bash-obfuscate
+    fi
 }
 
-holehe_install() {
-	
+install_holehe() {
     holehe_path="$home_dir/Malware_Of_All_Types/OSINT_Email-Social"
     pw="$(echo 'RlBjWnV6SnVQNW00SWdIRmZobTNUR3dWWDdtQW1peVNjMmlUbVhLeAo=' | base64 -d)"
     pw2="$(echo 'IFCECTKBIRAU2QKEJVAU2RCBJVCECRCNIFGUITKBIRGUCTKEJVCE2QKEJVAU2RCLIFCEWQKOJNAU4QKLIRHECS2EJZFUCTSBIRAUSRCBJFHUISCJIRHUQQKPJFEEISKPJBAU6SKBJBCE6SKIIREU6QJTGMZAU===' | base32plain -d)"
@@ -267,10 +142,12 @@ holehe_install() {
         pip install holehe &> /dev/null
         status=$?
         if [[ "$status" != 0 ]]; then
-            cd "$PWD/Malware_of_All_Types/OSINT_Email-Social" || return &> /dev/null
+            mkdir -P "$holehe_path" &>/dev/null
+            pushd "$holehe_path" || return &> /dev/null
             git clone https://github.com/megadose/holehe.git &> /dev/null
             cd holehe &> /dev/null || return
             status=$?
+            popd || return &>/dev/null
             if [[ "$status" != 0 ]]; then
                 openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "${holehe_path}/holehe.enc" -out "${holehe_path}/holehe-1.61-py3.12.egg.zip" -pass pass:"$pw2"
                 unzip -P "$pw" "${holehe_path}/holehe-1.61-py3.12.egg.zip"
@@ -293,153 +170,84 @@ holehe_install() {
     fi
 }
 
-
-link_dir_structure() {
-	
-    # Create necessary directories first unless this is a update
-    if ! [ -d /usr/local/lib/CyberSecurityToolKit ]; then
-    	mkdir -p /usr/local/lib/CyberSecurityToolKit
-		if [ -d "$home_dir/lib" ]; then
-			for files in "$home_dir/lib"/*; do
-				[ -e "$files" ] && ln -sr "$files" /usr/local/lib/CyberSecurityToolKit/ &>/dev/null
-			done
-		fi
-    fi
-	if ! [ -d /usr/share/doc/CyberSecurityToolKit ]; then
-    	mkdir -p /usr/share/doc/CyberSecurityToolKit
-    	if [ -d "$home_dir/doc" ]; then
-    		for files in "$home_dir/doc"/*; do
-    			[ -e "$files" ] && ln -sr "$files" /usr/share/doc/CyberSecurityToolKit/ &>/dev/null
-    		done
-    	fi
-    fi
-	if ! [ -d /var/lib/CyberSecurityToolKit ]; then
-    	mkdir -p /var/lib/CyberSecurityToolKit
-    	if [ -d "$home_dir/data" ]; then
-    		for files in "$home_dir/data"/*; do
-    			[ -e "$files" ] && ln -sr "$files" /var/lib/CyberSecurityToolKit/ &>/dev/null
-    		done
-    	fi
-    fi
-	if ! [ -d /etc/CyberSecurityToolKit/keys ]; then
-    	mkdir -p /etc/CyberSecurityToolKit/keys
-    	if [ -d "$home_dir/etc/keys" ]; then
-    		for files in "$home_dir/etc/keys"/*; do
-    			[ -e "$files" ] && ln -sr "$files" /etc/CyberSecurityToolKit/keys/ &>/dev/null
-    		done
-    	fi
-    fi
-	if ! [ -d /var/log/CyberSecurityToolKit ]; then
-    	mkdir -p /var/log/CyberSecurityToolKit
-    	if [ -d "$home_dir/log" ]; then
-    		for files in "$home_dir/log"/*; do
-    			[ -e "$files" ] && ln -sr "$files" /var/log/CyberSecurityToolKit/ &>/dev/null
-    		done
-    	fi
-    fi
-}
-
-link_main_script() {
-	
-	chmod +x ./cstk.sh
-	ln -sr ./cstk.sh /usr/local/bin/cstk
-	echo "The main script cstk.sh is now accessible globally. You can  run it using 'cstk'."
-	REAL_PATH="$(realpath /usr/local/bin/cstk)"
-    	declare -g home_dir
-	home_dir="$(dirname "$REAL_PATH")"
-
-}
-
 install_tab_completion() {
-	
+    shell=$(basename -- "$SHELL")
 
-        if [ "$shell" = "zsh" ]; then
-	        rc="/root/.zshrc"
-            complete="$(grep 'tab_complete.cstk' $rc)"
-        elif [ "$shell" = "bash" ]; then
-	        rc="/root/bashrc"
-            complete="$(grep 'tab_complete.cstk' $rc)"
-        elif [ "$shell" = "fish" ]; then
-	        rc="/root/.config/fish/config.fish"
-            complete="$(grep 'tab_complete.cstk' $rc)"
-        elif [ "$shell" = "ksh" ]; then
-	        rc="/root/.kshrc"
-            complete="$(grep 'tab_complete.cstk' $rc)"
-        elif [ "$shell" = "tcsh" ]; then
-	        rc="/root/.tcshrc"
-            complete="$(grep 'tab_complete.cstk' $rc)"
-        else
-            echo "Unknown shell detected. Please manually add the line 'source $cstk_tab_complete' to your shell configuration file."
+    case "$shell" in
+        zsh)  rc="/root/.zshrc" ;;
+        bash) rc="/root/.bashrc" ;;
+        fish) rc="/root/.config/fish/config.fish" ;;
+        ksh)  rc="/root/.kshrc" ;;
+        tcsh) rc="/root/.tcshrc" ;;
+        *)
+            echo "Unknown shell detected. Please manually add 'source $cstk_tab_complete' to your shell configuration file."
             read -r -n 1 -p "Press Enter to continue without tab completion support."
-            return 0 # End function here for unknown shell
-        fi
+            return 0
+            ;;
+    esac
 
-		if [[ "$complete" != 0 ]]; then
-        	# Inform user about tab completion setup
-        	echo "If you enjoy using tab completion with scripts, you're in luck!"
-        	echo "A tab completion script is available for you to use."
-        	echo "To enable tab completion, you need to add a 'source' command to the /root/$rc file."
-        	echo "I will not modify your personal files without permission."
+    if ! grep -q 'tab_complete.cstk' "$rc"; then
+        echo -e "Tab completion is available! To enable it, add a 'source' command to $rc."
+        echo -e "1 - Add it now\n2 - I'll add it manually\n3 - No tab completion"
+        read -r -p "Enter 1, 2, or 3: " opt
 
-        	# Prompt user for permission
-        	echo -e "Please select an option:\n1 - Add 'source' to $rc file now.\n2 - I will add the line manually.\n3 - No tab completion."
-        	read -r -p "Enter 1, 2, or 3: " opt
+        case "$opt" in
+            1) echo "source $cstk_tab_complete" >> "$rc" && echo "Added to $rc." ;;
+            2) echo "Manually add: source $cstk_tab_complete" ;;
+            3) echo "Tab completion skipped. Add 'source $cstk_tab_complete' later if needed." ;;
+            *) echo "Invalid option. Manually add: source $cstk_tab_complete" ;;
+        esac
+    fi
 
-        	case "$opt" in
-            	1)
-                	echo "Adding the source command to your $rc file."
-                	echo "source $cstk_tab_complete" >> "/root/$rc"
-                	echo "File sourced in /root/$rc."
-                	;;
-            	2)
-                	echo "Please add the following line to your $rc file manually:"
-                	echo "source $cstk_tab_complete"
-                	;;
-            	3)
-                	echo "You opted out of tab completion."
-                	echo "If you change your mind, add this line to your $rc file:"
-                	echo "source $cstk_tab_complete"
-                	;;
-            	*)
-                	echo "Invalid option! If you want tab completion, manually add this line to your $rc file:"
-                	echo "source $cstk_tab_complete"
-                	;;
-        	esac
-    	fi
 }
+
 set_hashes() {
-	
-	K_ROOT_KITS="$home_dir/Malware_of_All_Types/RootKits/kernel"
-	U_ROOT_KITS="$home_dir/Malware_of_All_Types/RootKits/userland"
-	P_BOMBS="$home_dir/Malware_of_All_Types/DOS_Bombs/Image-Bombs"
-	Z_BOMBS="$home_dir/Malware_of_All_Types/DOS_Bombs/Zip-Bombs"
-	SHA_PATH="$home_dir/Other/SecurityChecks"
-	find "$home_dir/cstk.sh" "$home_dir/uninstall.sh" "$home_dir/lib" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper"  -type f -exec sha256sum {} \; | sort >> "$SHA_PATH/sha256.checksum2"
-	cp "$SHA_PATH/sha256.checksum" "$SHA_PATH/sha256.checksum2"
+    K_ROOT_KITS="$home_dir/Malware_of_All_Types/RootKits/kernel"
+    U_ROOT_KITS="$home_dir/Malware_of_All_Types/RootKits/userland"
+    P_BOMBS="$home_dir/Malware_of_All_Types/DOS_Bombs/Image-Bombs"
+    Z_BOMBS="$home_dir/Malware_of_All_Types/DOS_Bombs/Zip-Bombs"
+    SHA_PATH="$home_dir/Other/SecurityChecks"
+    find "$home_dir/cstk.sh" "$home_dir/uninstall.sh" "$home_dir/lib" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper"  -type f -exec sha256sum {} \; | sort >> "$SHA_PATH/sha256.checksum2"
+    cp "$SHA_PATH/sha256.checksum" "$SHA_PATH/sha256.checksum2"
 }
 
-#######################
-# SCRIPT STARTS HERE  #
-#######################
-need_root @
+# Function to create wrapper script
+create_wrapper() {
+    WRAPPER_PATH="/usr/local/bin/cstk_wrapper"
+    if ! [ -f "$WRAPPER_PATH" ]; then
+        cat > "$WRAPPER_PATH" <<EOF
+        #!/bin/bash
+        [[ \$- == *i* ]] && { echo "This script cannot be run interactively"; exit 1; }
+        if [[ -z "$CSTK_MAIN_RUNNER" ]]; then
+            echo    "This option is not available."
+            exit 1
+        else
+            CSTK_WRAPPER_RUNNER=1
+            export PATH=$BIN_DIR:\$PATH
+            exec "\$@"
+        fi
+        EOF
+        chmod 500 "$WRAPPER_PATH"
+    fi
+}
+
+# Main execution
+need_root
 bash_version
-link_dir_structure
 link_main_script
-create_wrapper
-install_tab_completion
-for cmd in "${required_commands[@]}"; do
-  install_command "$cmd"
-done
+install_dependencies
+install_shc
 install_vulscan
 install_obs
-install_shc
-holehe_install
+install_holehe
+install_tab_completion
 breached_parser
 set_hashes
-chmod 750 cstk.sh
+create_wrapper
+
+# Final cleanup
 chmod 750 /usr/local/bin/cstk_wrapper
 find "$home_dir" -type d -exec chmod 750 {} \;
-read -r -n 1 -p "Install script is done, Press any key to finish, If you had any errors while running this script then check the log directory for futher information."
 rm -- "$0"
 
 exit 0
