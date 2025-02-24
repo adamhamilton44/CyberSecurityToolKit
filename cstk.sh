@@ -549,6 +549,7 @@ function execute_tool() {
 	        6) destroy_computer ;;
 	        7) dos_bomb_attack ;;
 	        8) ssh_attack ;;
+	        9) msf_payloads ;;
             X|x) main_menu ;;
             *) class_menu ;;
         esac ;;
