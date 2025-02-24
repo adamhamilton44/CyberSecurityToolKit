@@ -44,7 +44,7 @@ dos_bombs_bin="$bin/unzip_bomb"
 linux_exploit_checker_bin="$bin/linux_exploit_checker"
 ssh_attack_bin="$bin/make_ssh_keys"
 lecb="$bin/lece"
-msf_venom_bin="$bin/msf_payload_creater"y
+msfvenom_bin="$bin/msf_payload_creater"
 # Attempt to source the tab completion script in the bin folder
 source "$bin/tab_complete.cstk"
 # Other bin files not used by the wrapper
@@ -379,7 +379,7 @@ show_help() {
     echo -e "enum           auto-enum       auto_enum   $c  [ automated enumeration script against target website ]$b"
     echo -e "breached    	breached-email 		breached_email 	$c	[ search a domain name for breached email accounts ]$b"
 	echo -e "gd		google-dorks		google_dorks  $c  	[ get help using google dorks ]$b"
-	echo -e "email	email-search		email_search  $c	[ search hundreds of well known websites for a email account ]"
+	echo -e "email	email-search		email_search  $c	[ search hundreds of well known websites for a email account ]$x\n"
     echo -e "$c\nPayload Class:\n$b"
     echo -e "nc          	ncat 			netcat 	$c		[ create a netcat binding\treverse encrypted shell script ]$b"
     echo -e "linuxshell  	linux-shell 		linux_shell 	$c	[ create a multi reverse shell script for a linux system ]$b"
@@ -388,6 +388,7 @@ show_help() {
     echo -e "notouch     	no-touch 		no_touch 	$c	[ create a script to grab a file online and run in memory ]$b"
     echo -e "kill        	kill-computer 		kill_computer 	$c	[ create a executable script that will destroy a linux computer if ran ]$b"
     echo -e "ssh            ssh-attack          ssh_attack      $c  [ executable script to remove then add new .ssh folder/add your public key/restrict access ]$b"
+    echo -e "msf            venom               metasploit      $c  [ use msfvenom and metasploit to create a reverse or binding shell script ]$x \n"
     echo -e "$c\nPost Exploitation Class:\n$b"
     echo -e "vm          	check-vm 		check_vm 	$c	[ check if computer is running on a Virtual Machine ]$b"
     echo -e "browserthief	browser-thief 		browser_thief 	$c	[ search multiple web browser files for passwords, cookies, history much more ]$b"
@@ -397,14 +398,14 @@ show_help() {
     echo -e "onstart     	on-start 		on_start 	$c	[ embed a command that runs on startup ]$b"
     echo -e "bruteforce  	brute-force 		brute_force 	$c	[ brute force a zip or rar password protected archive ]$b"
     echo -e "foi         	files-of-interest 	files_of_interest $c	[ fast and automated interesting file search tool with ability to archive the results ]$b"
-	echo -e "drk         	deploy-rootkit 		deploy_rootkit 	$c	[ fast generation of a number of different rootkits both for userland and kernel ]$b"
+	echo -e "drk         	deploy-rootkit 		deploy_rootkit 	$c	[ fast generation of a number of different rootkits both for userland and kernel ]$x\n"
     echo -e "$c\nEtc Class:\n$b"
     echo -e "usershells  	user-shells 		user_shells 	$c	[ find all users and the default shells on a system ]$b"
     echo -e "webserver   	web-server 		web_server 	$c	[ start a webserver for easy file transfer to a remote host ]$b"
     echo -e "extract     	file-extract 		file_extract 	$c	[ extract many types of archive files ]$b"
     echo -e "openssl     	------------ 		---------- 	$c	[ openssl helper for hashing passwords, file encryption, generate keys much more ]$b"
     echo -e "secretnote  	secret-note 		secret_note $c		[ create a gpg key with a encoded secret message of your choice ]$b"
-    echo -e "binary      	binary-script 		binary_script $c		[ create a encoded - encrypted executable binary script from a bash script ]$x"
+    echo -e "binary      	binary-script 		binary_script $c		[ create a encoded - encrypted executable binary script from a bash script ]$x\n"
     echo -e "$c\nHelp Menu Options:\n "
     echo -e "$r \$0	$g		\$1 $r "
     echo -e "sudo cstk$g	-h|-H|--help 	$c				[ Show General Help Menu ]$r"
@@ -478,7 +479,9 @@ function handle_input() {
 
 		7 -$p Start a DoS Bomb$c 			(Start a zip bomb or picture bomb that will overload the memory causing computer to crash) $g
 
-		8 -$p SSH Payload script$c                  (malicious script to remove and create new .ssh directory adding your private key and restrict access to everyone) $r
+		8 -$p SSH Payload script$c                  (malicious script to remove and create new .ssh directory adding your private key and restrict access to everyone) $g
+
+		9 -$p Metasploit (msfvenom)$c               (create a shell script for remote connection using msfvenom and metasploit)$r
 
         	X - Back to main menu $x" ;;
         3) logo_postexploit ; echo -e "$g \n\n Enter Exploit Tool Number: $p
@@ -1168,6 +1171,16 @@ ssh_attack() {
     fi
 }
 
+# Class: PAYLOADS - Tool: metasploit (msfvenom) shell creater - Option 9 9Wrapper used)
+msf_payloads() {
+    payloads_msf_frame
+    sleep 3
+    getip
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$msfvenom_bin"
+    wait_and_return
+}
+
 ################################# POST EXPLOIT TOOLS ###############################
 
 # Class: POST EXPLOIT - Tools: Check if VM - Option 1
@@ -1802,7 +1815,8 @@ case $class in
 		    	notouch|no-touch|no_touch) no_touch_script ;;
 		    	kill|kill-computer|kill_computer) destroy_computer ;;
 		    	dos|denial_of_service|denial-of-service) dos_bomb_attack ;;
-		    	ssh|ssh_attack|ssh-attack) ssh_attack
+		    	ssh|ssh_attack|ssh-attack) ssh_attack ;;
+		    	msf|venom|metasplloit) msf_payloads ;;
         	    *) echo -e "Unknown Payload program: $2"; show_help; exit 18 ;;
         	esac
         	;;
