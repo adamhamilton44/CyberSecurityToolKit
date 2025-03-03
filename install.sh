@@ -226,7 +226,7 @@ create_wrapper() {
             export PATH=$BIN_DIR:\$PATH
             exec "\$@"
         fi
-        EOF
+EOF
         chmod 500 "$WRAPPER_PATH"
     fi
 }
