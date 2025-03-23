@@ -1,0 +1,19 @@
+OSINT 
+6 google dorks
+7 email search
+
+PAYLOADS
+netcat_shells_bind / reverse
+ransomware/all
+no_touch_script
+destroy_computer
+
+POST X
+crypto_catch
+gtfob
+startup_command
+brute_force_zip
+
+ETC
+
+create_exe_binary
