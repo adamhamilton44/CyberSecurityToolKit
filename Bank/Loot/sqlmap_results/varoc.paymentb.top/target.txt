@@ -1,1 +1,0 @@
-http://varoc.paymentb.top (GET)  # /usr/bin/sqlmap -u http://varoc.paymentb.top --batch --output-dir=/home/adam/Documents/Github/CyberSecurityToolKit/Bank/Loot/sqlmap_results

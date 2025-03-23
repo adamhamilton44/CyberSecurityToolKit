@@ -1,0 +1,9 @@
+./msf/msf_payload_creater.sh
+./CyberSecurityToolKit/cstk.sh
+./CyberSecurityToolKit/install.sh
+./CyberSecurityToolKit/Other/SecurityChecks/check_hashes.sh
+./CyberSecurityToolKit/uninstall.sh
+./cstk.sh
+./install.sh
+./Other/SecurityChecks/check_hashes.sh
+./uninstall.sh
