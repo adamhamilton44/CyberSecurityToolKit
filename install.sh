@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 set -e  # Exit on any error
-
+LOG_FILE="$PWD/log/install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
 # Function to keep sudo alive
 keep_sudo_alive() {
     while true; do
@@ -24,6 +25,7 @@ link_main_script() {
         home_dir="$(dirname "$REAL_PATH")"
     else
         REAL_PATH="$(realpath /usr/local/bin/cstk)"
+        declare -g home_dir
         home_dir="$(dirname "$REAL_PATH")"
     fi
 }
@@ -31,13 +33,15 @@ link_main_script() {
 
 # Define variables
 USER=$(echo $SUDO_USER)
-HOME="${HOME:-$(getent passwd "$USER" 2>/dev/null | cut -d: -f6)}"
-log="$home_dir/logs"
-bin="$home_dir/bin"
-data="$home_dir/data"
+HOME=$(eval echo ~$USER)
+log="${home_dir}/log"
+bin="${home_dir}/bin"
+data="${home_dir}/data"
+LOOT="${home_dir}/Bank/Loot"
+MALWARE="${home_dir}/Bank/Malware"
+KEYS="$home_dir}/etc/keys"
 cstk_tab_complete="$bin/tab_complete.cstk"
 cstk_install="$log/cstk_install.log"
-LOG_FILE="$cstk_install"
 TORRENT_FILE="magnet:?xt=urn:btih:7ffbcd8cee06aba2ce6561688cf68ce2addca0a3&dn=BreachCompilation&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fglotorrents.pw%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337"
 
 
@@ -59,9 +63,18 @@ bash_version() {
     fi
 }
 
+make_dir() {
+    folders=( "$LOOT" "$MALWARE" "$KEYS" )
+
+    for dir in "${folders[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            mkdir -p "$dir"
+        fi
+    done
+}
 # Function to install required commands in bulk
 install_dependencies() {
-    required_commands=( basez build-essential gcc libc6-dev golang bc cargo rustup git npm coreutils python3 python3-pip openssl john curl jq grep fzf autoconf xxd tar rlwrap bzip2 netcat-openbsd unrar gzip unzip dpkg 7zip nmap whois sublist3r nmap sqlmap nikto whatweb gobuster wpscan )
+    required_commands=( basez build-essential gcc libc6-dev golang metasploit-framework bc cargo rustup git npm coreutils python3 python3-pip openssl john curl jq grep fzf autoconf xxd tar rlwrap bzip2 netcat-openbsd unrar gzip unzip dpkg 7zip nmap whois sublist3r nmap sqlmap nikto whatweb gobuster wpscan )
 
     if command -v apt &> /dev/null; then
         apt update -qq && apt install -qq -y "${required_commands[@]}"
@@ -95,6 +108,7 @@ install_shc() {
 
 # Function to download BreachedParser database
 breached_parser() {
+    exec > >(tee -a /dev/null) 2>&1
     local space_available=$(df --output=avail -BG . | tail -n 1 | grep -o '[0-9]\+')
     if (( space_available < 42 )); then
         echo "Insufficient space. Need at least 42GB. Exiting."
@@ -110,7 +124,7 @@ breached_parser() {
         install_dependencies "aria2"
     fi
 
-    aria2c --dir="$home_dir" --seed-time=0 "magnet_link_here"
+    aria2c --dir="$home_dir" --seed-time=0 "$TORRENT_FILE"
 
     if [ -d "$home_dir/BreachCompilation" ] && [ -d "$home_dir/BreachCompilation/data" ]; then
         mv "$home_dir/BreachCompilation/data" "$home_dir"
@@ -213,27 +227,44 @@ set_hashes() {
 
 # Function to create wrapper script
 create_wrapper() {
+    INSTALL_DIR="$home_dir"
+    BIN_DIR="$INSTALL_DIR/bin"
     WRAPPER_PATH="/usr/local/bin/cstk_wrapper"
-    if ! [ -f "$WRAPPER_PATH" ]; then
-        cat > "$WRAPPER_PATH" <<EOF
-        #!/bin/bash
-        [[ \$- == *i* ]] && { echo "This script cannot be run interactively"; exit 1; }
-        if [[ -z "$CSTK_MAIN_RUNNER" ]]; then
-            echo    "This option is not available."
-            exit 1
+
+    if [[ ! -f "$WRAPPER_PATH" ]]; then
+        {
+            echo '#!/bin/bash'
+            echo '[[ $- == *i* ]] && { echo "This script cannot be run interactively"; exit 1; }'
+            echo 'if [[ -z "$CSTK_MAIN_RUNNER" ]]; then'
+            echo '    echo "This option is not available."'
+            echo '    exit 1'
+            echo 'else'
+            echo '    CSTK_WRAPPER_RUNNER=1'
+            echo '    export PATH="'"$BIN_DIR"':$PATH"'
+            echo '    exec env -i PATH="$PATH" "$@"'
+            echo 'fi'
+        } > "$WRAPPER_PATH"
+
+        # Verify wrapper creation
+        if [[ -f "$WRAPPER_PATH" ]]; then
+            chmod 500 "$WRAPPER_PATH"
+            echo "Wrapper script installed at /usr/local/bin/cstk_wrapper."
+            echo "Why this wrapper exists:"
+            echo "1 - No need to modify ~/.bashrc or ~/.zshrc."
+            echo "2 - Ensures only CSTK commands are executed when needed."
+            echo "3 - Simplifies uninstallation, as removing the wrapper removes PATH changes."
         else
-            CSTK_WRAPPER_RUNNER=1
-            export PATH=$BIN_DIR:\$PATH
-            exec "\$@"
+            echo "Failed to create wrapper at $WRAPPER_PATH."
+            echo "Program will not function without it. Run uninstall.sh to clean up."
+            exit 9
         fi
-EOF
-        chmod 500 "$WRAPPER_PATH"
     fi
 }
 
 # Main execution
 need_root
 bash_version
+make_dir
 link_main_script
 install_dependencies
 install_shc
