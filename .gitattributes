@@ -3,3 +3,7 @@ hack-browser-data-windows-32bit.exe filter=lfs diff=lfs merge=lfs -text
 ZipBomb filter=lfs diff=lfs merge=lfs -text
 GTFOB filter=lfs diff=lfs merge=lfs -text
 firefox_stealer filter=lfs diff=lfs merge=lfs -text
+lib/cstk_postxzipkit filter=lfs diff=lfs merge=lfs -text
+bin/hack-browser-data-linux-386 filter=lfs diff=lfs merge=lfs -text
+bin/hack-browser-data-linux-amd64 filter=lfs diff=lfs merge=lfs -text
+bin/hack-browser-data-linux-arm64 filter=lfs diff=lfs merge=lfs -text
