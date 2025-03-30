@@ -6,7 +6,6 @@
 # Paths and variables
 real_path="$(realpath /usr/local/bin/cstk)"
 base_dir="$(dirname "$real_path")"
-home="$base_dir/bin/"
 K_ROOT_KITS="$base_dir/Malware_of_All_Types/RootKits/kernel"
 U_ROOT_KITS="$base_dir/Malware_of_All_Types/RootKits/userland"
 P_BOMBS="$base_dir/Malware_of_All_Types/DOS_Bombs/Image-Bombs"
@@ -78,18 +77,14 @@ check_password() {
 
 # Reset file hashes
 reset_hash() {
-    sudo find "$base_dir/cstk.sh" "$base_dir/uninstall.sh" "$home" "$base_dir/lib/" \
-        "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" \
-        "/usr/local/bin/cstk_wrapper" -type f -exec sha256sum {} \; | sort > "$SHA_PATH/sha256.checksum"
+    sudo find "$base_dir/cstk.sh" "$base_dir/uninstall.sh" "$base_dir/bin/" "$base_dir/lib/" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper" -type f -exec sha256sum {} \; | sort > "$SHA_PATH/sha256.checksum"
     cp "$SHA_PATH/sha256.checksum" "$SHA_PATH/sha256.checksum2"
     echo "Hashes reset successfully."
 }
 
 # Check file hashes
 check_hash() {
-    sudo find "$base_dir/cstk.sh" "$base_dir/uninstall.sh" "$home" "$base_dir/lib/" \
-        "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" \
-        "/usr/local/bin/cstk_wrapper" -type f -exec sha256sum {} \; | sort > "$SHA_PATH/sha256.checksum2"
+    sudo find "$base_dir/cstk.sh" "$base_dir/uninstall.sh" "$base_dir/bin/" "$base_dir/lib/" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper" -type f -exec sha256sum {} \; | sort > "$SHA_PATH/sha256.checksum2"
 
     if ! diff "$SHA_PATH/sha256.checksum" "$SHA_PATH/sha256.checksum2"; then
         echo -e "Files hashes do not match!\nDO NOT RUN any executables in this program!\nFiles may have been tampered with. Please reinstall to ensure safety."
