@@ -14,23 +14,26 @@ Contributions are always welcome!
 
 ## Features
 
-There are 4 Classes OSINT, Payloads, Post Exploit, Etc.
+There are 4 Classes in total: OSINT, Payloads, Post Exploit, Etc.
 
 ### OSINT
-- IP address search tool
+- IP address lookup tool
 - Nmap helper script
 - ping sweeper tool
 - Compromised email/password parsing tool
 - Google dorks helper
+- automated enumeration script of a internet facing web site 
 
 ### Payloads
 - Netcat Reverse/Bind Shell Scripts
-- Backdoor creation tool
+- Linux reverse shell creation tool with 30+ shells
 - Ransomware encrypt/decrypt tool
 - Multi OS reverse shell creater
 - Run in memory payload tool
 - Destroy Computer Payload
 - DoS zip/Picture attacks
+- ssh payload script
+- msfvenom and metasploit helper
 
 ### Post Exploit
 - Check if on a VM
@@ -50,6 +53,7 @@ There are 4 Classes OSINT, Payloads, Post Exploit, Etc.
 - Openssl helper with random byte generator
 - Secret message creater
 - Turn a bash scrpt into a encrypted executable binary script
+- post exploit zip file with all the needed tools to open and run on remote host
 
 ## Run Locally
 Clone the project
