@@ -7,3 +7,4 @@ lib/cstk_postxzipkit filter=lfs diff=lfs merge=lfs -text
 bin/hack-browser-data-linux-386 filter=lfs diff=lfs merge=lfs -text
 bin/hack-browser-data-linux-amd64 filter=lfs diff=lfs merge=lfs -text
 bin/hack-browser-data-linux-arm64 filter=lfs diff=lfs merge=lfs -text
+Malware_of_All_Types/DOS_Bombs/Zip-Bombs/ZipBomb filter=lfs diff=lfs merge=lfs -text
