@@ -4,3 +4,5 @@ log/*
 Bank/Loot/*
 Bank/Malware/
 /msf/
+Other/SecurityChecks/sha256.checksum2
+Other/SecurityChecks/sha256.checksum
