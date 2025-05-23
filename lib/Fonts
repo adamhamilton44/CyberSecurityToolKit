@@ -1,0 +1,643 @@
+#!/bin/bash
+
+braille_fonts() {
+    p1() {
+    echo -n -e "$r
+    ⡎⠑ ⢇⢸ ⣏⡱ ⣏⡉ ⣏⡱
+    ⠣⠔  ⠇ ⠧⠜ ⠧⠤ ⠇⠱
+    "
+    }
+
+    p2() {
+    echo -n -e "$g
+    ⢎⡑ ⣏⡉ ⡎⠑ ⡇⢸ ⣏⡱ ⡇ ⢹⠁ ⢇⢸
+    ⠢⠜ ⠧⠤ ⠣⠔ ⠣⠜ ⠇⠱ ⠇ ⠸   ⠇
+    "
+    }
+
+    p3() {
+    echo -n -e "$p
+    ⢹⠁ ⡎⢱ ⡎⢱ ⡇
+    ⠸  ⠣⠜ ⠣⠜ ⠧⠤
+    "
+    }
+
+    p4() {
+    echo -n -e "$c
+    ⣇⠜ ⠄ ⢹⠁
+    ⠇⠱ ⠇ ⠸
+    $x
+    "
+    }
+    p1
+    p2
+    p3
+    p4
+    final_fonts
+}
+
+digital_fonts() {
+    p1() {
+    echo -e "
+    $g +-+-+-+-+-+$x
+    $g |C|y|b|e|r|$x
+    $g +-+-+-+-+-+$x
+    "
+    }
+
+    p2() {
+    echo -e "
+    $g               +-+-+-+-+-+-+-+-+$x
+    $g               |S|e|c|u|r|i|t|y|$x
+    $g               +-+-+-+-+-+-+-+-+$x
+    "
+    }
+
+    p3() {
+    echo -e "
+    $g                                   +-+-+-+-+$x
+    $g                                   |T|o|o|l|$x
+    $g                                   +-+-+-+-+$x
+    "
+    }
+
+    p4() {
+    echo -e "
+    $g                                               +-+-+-+ $x
+    $g                                               |K|i|t| $x
+    $g                                               +-+-+-+ $x
+    "
+    }
+
+    p12() {
+    echo -e "
+    $r +-+-+-+-+-+$x
+    $b |C|y|b|e|r|$x
+    $r +-+-+-+-+-+$x
+    "
+    }
+
+    p123() {
+    echo -e "
+    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$x
+    $b |C|y|b|e|r|$b |S|e|c|u|r|i|t|y|$x
+    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$x
+    "
+    }
+
+    p1234() {
+    echo -e "
+    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$r +-+-+-+-+$x
+    $b |C|y|b|e|r|$b |S|e|c|u|r|i|t|y|$b |T|o|o|l|$x
+    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$r +-+-+-+-+$x
+    "
+    }
+
+    pall() {
+    echo -e "
+    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$r +-+-+-+-+$r +-+-+-+ $x
+    $b |C|y|b|e|r|$b |S|e|c|u|r|i|t|y|$b |T|o|o|l|$b |K|i|t| $x
+    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$r +-+-+-+-+$r +-+-+-+ $x
+    "
+    }
+
+    ppart() {
+    echo -e "
+    $b |C|y|b|e|r| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+
+    ppart1() {
+    echo -e "
+    $b C|y|b|e|r| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart1a() {
+    echo -e "
+    $b Cy|b|e|r| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart1b() {
+    echo -e "
+    $b Cyb|e|r| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart1c() {
+    echo -e "
+    $b Cybe|r| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart1d() {
+    echo -e "
+    $b Cyber| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart1e() {
+    echo -e "
+    $b Cyber |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart2a() {
+    echo -e "
+    $b Cyber S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart2b() {
+    echo -e "
+    $b Cyber Se|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart2c() {
+    echo -e "
+    $b Cyber Sec|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart2d() {
+    echo -e "
+    $b Cyber Secu|r|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart2e() {
+    echo -e "
+    $b Cyber Secur|i|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart2f() {
+    echo -e "
+    $b Cyber Securi|t|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart2g() {
+    echo -e "
+    $b Cyber Securit|y| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart2h() {
+    echo -e "
+    $b Cyber Security| |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart2i() {
+    echo -e "
+    $b Cyber Security |T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart3a() {
+    echo -e "
+    $b Cyber Security T|o|o|l| |K|i|t| $x
+    "
+    }
+    ppart3b() {
+    echo -e "
+    $b Cyber Security To|o|l| |K|i|t| $x
+    "
+    }
+    ppart3c() {
+    echo -e "
+    $b Cyber Security Too|l| |K|i|t| $x
+    "
+    }
+    ppart3d() {
+    echo -e "
+    $b Cyber Security Tool| |K|i|t| $x
+    "
+    }
+    ppart3e() {
+    echo -e "
+    $b Cyber Security Tool |K|i|t| $x
+    "
+    }
+
+    ppart4a() {
+    echo -e "
+    $b Cyber Security Tool K|i|t| $x
+    "
+    }
+    ppart4b() {
+    echo -e "
+    $b Cyber Security Tool Ki|t| $x
+    "
+    }
+    ppart4c() {
+    echo -e "
+    $b Cyber Security Tool Kit| $x
+    "
+    }
+
+    clear
+    p1
+    sleep 0.5
+    clear
+    p1 && p2
+    sleep 0.5
+    clear
+    p1 && p2 && p3
+    sleep 0.5
+    clear
+    p1 && p2 && p3 && p4
+    sleep 0.5
+    clear
+
+    p12 && p2 && p3 && p4
+    sleep 0.5
+    clear
+
+    p123 && p3 && p4
+    sleep 0.5
+    clear
+
+    p1234 && p4
+    sleep 0.5
+    clear
+
+    pall
+    sleep 0.5
+    clear
+
+    ppart
+    sleep 0.5
+    clear
+    ppart1a
+    sleep 0.1
+    clear
+    ppart1b
+    sleep 0.1
+    clear
+    ppart1c
+    sleep 0.1
+    clear
+    ppart1d
+    sleep 0.1
+    clear
+    ppart1e
+    sleep 0.1
+    clear
+
+    ppart2a
+    sleep 0.1
+    clear
+    ppart2b
+    sleep 0.1
+    clear
+    ppart2c
+    sleep 0.1
+    clear
+    ppart2d
+    sleep 0.1
+    clear
+    ppart2e
+    sleep 0.1
+    clear
+    ppart2f
+    sleep 0.1
+    clear
+    ppart2g
+    sleep 0.1
+    clear
+    ppart2h
+    sleep 0.1
+    clear
+    ppart2i
+    sleep 0.1
+    clear
+    ppart3a
+    sleep 0.1
+    clear
+    ppart3b
+    sleep 0.1
+    clear
+    ppart3c
+    sleep 0.1
+    clear
+    ppart3d
+    sleep 0.1
+    clear
+    ppart3e
+    sleep 0.1
+    clear
+
+    ppart4a
+    sleep 0.1
+    clear
+    ppart4b
+    sleep 0.1
+    clear
+    ppart4c
+    sleep 0.1
+    clear
+    final_fonts
+}
+
+emboss_fonts() {
+    echo -e "
+    $b  ╔═╝║ ║╔═ ╔═╝╔═║$y  ╔═╝╔═╝╔═╝║ ║╔═║╝═╔╝║ ║$p  ═╔╝╔═║╔═║║  $c  ║ ║╝═╔╝
+    $b  ║  ═╔╝╔═║╔═╝╔╔╝$y  ══║╔═╝║  ║ ║╔╔╝║ ║ ═╔╝$p   ║ ║ ║║ ║║  $c  ╔╝ ║ ║
+    $b  ══╝ ╝ ══ ══╝╝ ╝$y  ══╝══╝══╝══╝╝ ╝╝ ╝  ╝ $p   ╝ ══╝══╝══╝$c  ╝ ╝╝ ╝
+    $x "
+    final_fonts
+}
+
+future_fonts() {
+    echo -e "
+    $r ┏━╸╻ ╻┏┓ ┏━╸┏━┓$b ┏━┓┏━╸┏━╸╻ ╻┏━┓╻╺┳╸╻ ╻$p ╺┳╸┏━┓┏━┓╻  $c ╻┏ ╻╺┳╸
+    $r ┃  ┗┳┛┣┻┓┣╸ ┣┳┛$b ┗━┓┣╸ ┃  ┃ ┃┣┳┛┃ ┃ ┗┳┛$p  ┃ ┃ ┃┃ ┃┃  $c ┣┻┓┃ ┃
+    $r ┗━╸ ╹ ┗━┛┗━╸╹┗╸$b ┗━┛┗━╸┗━╸┗━┛╹┗╸╹ ╹  ╹ $p  ╹ ┗━┛┗━┛┗━╸$c ╹ ╹╹ ╹
+    $x
+    "
+    final_fonts
+}
+
+letter_fonts() {
+    P1() {
+        local text="
+     CCC  Y   Y BBBB  EEEEE RRRR
+    C   C  Y Y  B   B E     R   R
+    C       Y   BBBB  EEEE  RRRR
+    C   C   Y   B   B E     R  R
+     CCC    Y   BBBB  EEEEE R   R
+    "
+    IFS=''  # Don't strip leading/trailing whitespace
+        for ((i=0; i<${#text}; i++)); do
+            printf "%s" "${text:$i:1}"
+            case "${text:$i:1}" in
+                " " | "C" | "Y" | "B" | "E" | "R") sleep 0.0003 ;;
+                "\n") sleep 0.05 ;;
+                *) sleep "$(awk -v min=0.0003 -v max=0.05 'BEGIN{srand(); print min+rand()*(max-min)}')" ;;
+            esac
+        done
+        echo
+    }
+
+    P2() {
+    echo -e "
+    $y  CCC  Y   Y BBBB  EEEEE RRRR
+    $y C   C  Y Y  B   B E     R   R
+    $y C       Y   BBBB  EEEE  RRRR
+    $y C   C   Y   B   B E     R  R
+    $y  CCC    Y   BBBB  EEEEE R   R
+    $x
+    "
+        local text="
+     SSSS EEEEE  CCC  U   U RRRR  III TTTTT Y   Y
+    S     E     C   C U   U R   R  I    T    Y Y
+     SSS  EEEE  C     U   U RRRR   I    T     Y
+        S E     C   C U   U R  R   I    T     Y
+    SSSS  EEEEE  CCC   UUU  R   R III   T     Y
+    "
+    IFS=''  # Don't strip leading/trailing whitespace
+        for ((i=0; i<${#text}; i++)); do
+            printf "%s" "${text:$i:1}"
+            case "${text:$i:1}" in
+                " " | "S" | "E" | "C" | "U" | "R" | "I" | "T" | "Y") sleep 0.0003 ;;
+                "\n") sleep 0.05 ;;
+                *) sleep "$(awk -v min=0.0003 -v max=0.05 'BEGIN{srand(); print min+rand()*(max-min)}')" ;;
+            esac
+        done
+        echo
+    }
+
+    P3() {
+    echo -e "
+    $y  CCC  Y   Y BBBB  EEEEE RRRR   $b    SSSS EEEEE  CCC  U   U RRRR  III TTTTT Y   Y
+    $y C   C  Y Y  B   B E     R   R  $b   S     E     C   C U   U R   R  I    T    Y Y
+    $y C       Y   BBBB  EEEE  RRRR   $b    SSS  EEEE  C     U   U RRRR   I    T     Y
+    $y C   C   Y   B   B E     R  R   $b       S E     C   C U   U R  R   I    T     Y
+    $y  CCC    Y   BBBB  EEEEE R   R  $b   SSSS  EEEEE  CCC   UUU  R   R III   T     Y
+    $x
+    "
+        local text="
+    TTTTT  OOO   OOO  L
+      T   O   O O   O L
+      T   O   O O   O L
+      T   O   O O   O L
+      T    OOO   OOO  LLLLL
+    "
+    IFS=''  # Don't strip leading/trailing whitespace
+        for ((i=0; i<${#text}; i++)); do
+            printf "%s" "${text:$i:1}"
+            case "${text:$i:1}" in
+                " " | "T" | "O" | "L" ) sleep 0.0003 ;;
+                "\n") sleep 0.05 ;;
+                *) sleep "$(awk -v min=0.0003 -v max=0.05 'BEGIN{srand(); print min+rand()*(max-min)}')" ;;
+            esac
+        done
+        echo
+    }
+
+    P4() {
+    echo -e "
+    $y  CCC  Y   Y BBBB  EEEEE RRRR   $b    SSSS EEEEE  CCC  U   U RRRR  III TTTTT Y   Y  $p   TTTTT  OOO   OOO  L
+    $y C   C  Y Y  B   B E     R   R  $b   S     E     C   C U   U R   R  I    T    Y Y   $p     T   O   O O   O L
+    $y C       Y   BBBB  EEEE  RRRR   $b    SSS  EEEE  C     U   U RRRR   I    T     Y    $p     T   O   O O   O L
+    $y C   C   Y   B   B E     R  R   $b       S E     C   C U   U R  R   I    T     Y    $p     T   O   O O   O L
+    $y  CCC    Y   BBBB  EEEEE R   R  $b   SSSS  EEEEE  CCC   UUU  R   R III   T     Y    $p     T    OOO   OOO  LLLLL
+    $x
+    "
+        local text="
+    K   K III TTTTT
+    K  K   I    T
+    KKK    I    T
+    K  K   I    T
+    K   K III   T
+    "
+    IFS=''  # Don't strip leading/trailing whitespace
+        for ((i=0; i<${#text}; i++)); do
+            printf "%s" "${text:$i:1}"
+            case "${text:$i:1}" in
+                " " | "K" | "I" | "T" ) sleep 0.0003 ;;
+                "\n") sleep 0.05 ;;
+                *) sleep "$(awk -v min=0.0003 -v max=0.05 'BEGIN{srand(); print min+rand()*(max-min)}')" ;;
+            esac
+        done
+        echo
+    }
+
+    P_full() {
+    echo -e "
+    $y  CCC  Y   Y BBBB  EEEEE RRRR    $b   SSSS EEEEE  CCC  U   U RRRR  III TTTTT Y   Y  $p   TTTTT  OOO   OOO  L     $c    K   K III TTTTT
+    $y C   C  Y Y  B   B E     R   R   $b  S     E     C   C U   U R   R  I    T    Y Y   $p     T   O   O O   O L     $c    K  K   I    T
+    $y C       Y   BBBB  EEEE  RRRR    $b   SSS  EEEE  C     U   U RRRR   I    T     Y    $p     T   O   O O   O L     $c    KKK    I    T
+    $y C   C   Y   B   B E     R  R    $b      S E     C   C U   U R  R   I    T     Y    $p     T   O   O O   O L     $c    K  K   I    T
+    $y  CCC    Y   BBBB  EEEEE R   R   $b  SSSS  EEEEE  CCC   UUU  R   R III   T     Y    $p     T    OOO   OOO  LLLLL $c    K   K III   T
+    $x
+    "
+    }
+    clear
+    P1
+    clear
+    P2
+    sleep 0.3
+    clear
+    P3
+    sleep 0.3
+    clear
+    P4
+    sleep 0.3
+    clear
+    P_full
+    final_fonts
+}
+
+pagga_fonts() {
+    echo -e "
+    $b ░█▀▀░█░█░█▀▄░█▀▀░█▀▄$y ░█▀▀░█▀▀░█▀▀░█░█░█▀▄░▀█▀░▀█▀░█░█$p ░▀█▀░█▀█░█▀█░█░░$c ░█░█░▀█▀░▀█▀
+    $b ░█░░░░█░░█▀▄░█▀▀░█▀▄$y ░▀▀█░█▀▀░█░░░█░█░█▀▄░░█░░░█░░░█░$p ░░█░░█░█░█░█░█░░$c ░█▀▄░░█░░░█░
+    $b ░▀▀▀░░▀░░▀▀░░▀▀▀░▀░▀$y ░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀▀▀░░▀░░░▀░$p ░░▀░░▀▀▀░▀▀▀░▀▀▀$c ░▀░▀░▀▀▀░░▀░
+    $x
+    "
+    final_fonts
+}
+
+script_fonts() {
+    P1() {
+        local text="
+      __       , _  __  , _  
+     / ()(|  |/|/_)/ ()/|/ \ 
+    |     |  | |  \>-   |__/ 
+     \___/ \/|/|(_/\___/| \_/
+            (|
+    "
+    IFS=''  # Don't strip leading/trailing whitespace
+        for ((i=0; i<${#text}; i++)); do
+            printf "%s" "${text:$i:1}"
+            case "${text:$i:1}" in
+                " " | "," | "_" | "|" | "/" | "(" | ")" ) sleep 0.002 ;;
+                "." | "\\" | "-") sleep 0.01 ;;
+                "\n") sleep 0.03 ;;
+                *) sleep "$(awk -v min=0.003 -v max=0.008 'BEGIN{srand(); print min+rand()*(max-min)}')" ;;
+            esac
+        done
+        echo
+    }
+
+    P2() {
+    echo -e "$p
+      __       , _  __  , _  
+     / ()(|  |/|/_)/ ()/|/ \ 
+    |     |  | |  \>-   |__/ 
+     \___/ \/|/|(_/\___/| \_/
+            (|
+    $x
+    "
+        local text="
+         __   __         , _       _____    
+     () / () / ()(|   | /|/ \   |\() |(|  | 
+     /\ >-  |     |   |  |__/ _ |/   | |  | 
+    /(_)\___/\___/ \_/\_/| \_/\_/\/(/   \/|/
+                                         (|
+    "
+    IFS=''  # Don't strip leading/trailing whitespace
+        for ((i=0; i<${#text}; i++)); do
+            printf "%s" "${text:$i:1}"
+            case "${text:$i:1}" in
+                " " | "," | "_" | "|" | "/") sleep 0.002 ;;
+                "." | "\\" | "-") sleep 0.01 ;;
+                "\n") sleep 0.03 ;;
+                *) sleep "$(awk -v min=0.003 -v max=0.008 'BEGIN{srand(); print min+rand()*(max-min)}')" ;;
+            esac
+        done
+        echo
+    }
+
+    P3() {
+    echo -e "
+    $p   __       , _  __  , _  $c      __   __         , _       _____    
+    $p  / ()(|  |/|/_)/ ()/|/ \ $c  () / () / ()(|   | /|/ \   |\() |(|  | 
+    $p |     |  | |  \>-   |__/ $c  /\ >-  |     |   |  |__/ _ |/   | |  | 
+    $p  \___/ \/|/|(_/\___/| \_/$c /(_)\___/\___/ \_/\_/| \_/\_/\/(/   \/|/
+    $p        (|                $c                                      (|
+    $x
+    "
+        local text="
+     _______    __        
+    () | /\_\/ /\_\/\_|)  
+       ||    ||    |  |   
+     (/  \__/  \__/  (\__/
+    "
+    IFS=''  # Don't strip leading/trailing whitespace
+        for ((i=0; i<${#text}; i++)); do
+            printf "%s" "${text:$i:1}"
+            case "${text:$i:1}" in
+                " " | "," | "_" | "|" | "/") sleep 0.002 ;;
+                "." | "\\" | "-") sleep 0.01 ;;
+                "\n") sleep 0.03 ;;
+                *) sleep "$(awk -v min=0.003 -v max=0.008 'BEGIN{srand(); print min+rand()*(max-min)}')" ;;
+            esac
+        done
+        echo
+    }
+
+    P4() {
+    echo -e "
+    $p   __       , _  __  , _  $c      __   __         , _       _____    $b  _______    __        
+    $p  / ()(|  |/|/_)/ ()/|/ \ $c  () / () / ()(|   | /|/ \   |\() |(|  | $b () | /\_\/ /\_\/\_|)  
+    $p |     |  | |  \>-   |__/ $c  /\ >-  |     |   |  |__/ _ |/   | |  | $b    ||    ||    |  |   
+    $p  \___/ \/|/|(_/\___/| \_/$c /(_)\___/\___/ \_/\_/| \_/\_/\/(/   \/|/$b  (/  \__/  \__/  (\__/
+    $p         (|               $c                                      (|
+    $x
+    "
+        local text="
+     ,  ,   _____
+    /|_/  o() |  
+     |\   |   |  
+     | \_/|/(/
+    "
+    IFS=''  # Don't strip leading/trailing whitespace
+        for ((i=0; i<${#text}; i++)); do
+            printf "%s" "${text:$i:1}"
+            case "${text:$i:1}" in
+                " " | "," | "_" | "|" | "/") sleep 0.002 ;;
+                "." | "\\" | "-") sleep 0.01 ;;
+                "\n") sleep 0.03 ;;
+                *) sleep "$(awk -v min=0.003 -v max=0.008 'BEGIN{srand(); print min+rand()*(max-min)}')" ;;
+            esac
+        done
+        echo
+    }
+
+    P_full() {
+    echo -e "
+    $p   __       , _  __  , _  $c      __   __         , _       _____    $b  _______    __        $g  ,  ,   _____
+    $p  / ()(|  |/|/_)/ ()/|/ \ $c  () / () / ()(|   | /|/ \   |\() |(|  | $b () | /\_\/ /\_\/\_|)  $g /|_/  o() |  
+    $p |     |  | |  \>-   |__/ $c  /\ >-  |     |   |  |__/ _ |/   | |  | $b    ||    ||    |  |   $g  |\   |   |  
+    $p  \___/ \/|/|(_/\___/| \_/$c /(_)\___/\___/ \_/\_/| \_/\_/\/(/   \/|/$b  (/  \__/  \__/  (\__/$g  | \_/|/(/
+    $p         (|               $c                                      (|
+    $x
+    "
+    }
+
+
+    clear
+    P1
+    clear
+    P2
+    sleep 0.3
+    clear
+    P3
+    sleep 0.3
+    clear
+    P4
+    sleep 0.3
+    clear
+    P_full
+    final_fonts
+}
+
+term_fonts() {
+    echo -e "
+    $p CYBER$c SECURITY$b TOOL$r KIT
+    "
+    final_fonts
+}
+
+final_fonts() {
+    echo -e "
+    $p Program Name: $b Cyber Security Tool Kit $x
+    $p Author Name: $b AdamHamilton44 $x
+    $p Used For: $r Cyber Security Personal $x
+    $p Help: $b -h $x
+    "
+    read -r -p "${p} Press any key when ready ${x}"
+}
+
+

