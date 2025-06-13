@@ -2,7 +2,7 @@ data/
 etc/keys/*
 log/*
 Bank/Loot/*
-Bank/Malware/
+Bank/Malware/*
 /msf/
-Other/SecurityChecks/sha256.checksum2
-Other/SecurityChecks/sha256.checksum
+Other/SecurityChecks/*
+Other/SecurityChecks/*
