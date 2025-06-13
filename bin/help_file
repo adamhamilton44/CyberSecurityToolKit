@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+
+frame_class() {
+echo '
+   ______________________________
+ / \                             \.
+|   | ==> Class: OSINT <==       |.
+ \_ |     -------------          |.
+    |                            |.
+    |   Tool: password cracker   |.
+    |   ----------------------   |.
+    |                            |.
+    |     Usage: cstk -o pc      |.
+    |     -----------------      |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |   _________________________|___
+    |  /                            /.
+    \_/____________________________/.
+'
+}
+
+frame_tool() {
+echo '
+   ______________________________
+ / \                             \.
+|   |     Class: OSINT           |.
+ \_ |     -------------          |.
+    |                            |.
+    |==>Tool: password cracker<==|.
+    |   ----------------------   |.
+    |                            |.
+    |     Usage: cstk -o pc      |.
+    |     -----------------      |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |   _________________________|___
+    |  /                            /.
+    \_/____________________________/.
+'
+}
+
+frame_usage() {
+echo '
+   ______________________________
+ / \                             \.
+|   |     Class: OSINT           |.
+ \_ |     -------------          |.
+    |                            |.
+    |   Tool: password cracker   |.
+    |   ----------------------   |.
+    |                            |.
+    | ==> Usage: cstk -o pc <==  |.
+    |     -----------------      |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |   _________________________|___
+    |  /                            /.
+    \_/____________________________/.
+'
+}
+
+
+frame_basic() {
+echo '
+   ______________________________
+ / \                             \.
+|   |     Class: OSINT           |.
+ \_ |     -------------          |.
+    |                            |.
+    |   Tool: password cracker   |.
+    |   ----------------------   |.
+    |                            |.
+    |     Usage: cstk -o pc      |.
+    |     -----------------      |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |                            |.
+    |   _________________________|___
+    |  /                            /.
+    \_/____________________________/.
+'
+}
+
+clear
+frame_basic
+echo -e "Once running a tool you will see a frame pop up for a few seconds with information about the class, tool and syntax for running from the command line.\n"
+read -p "Press Enter when ready"
+clear
+frame_class
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_class
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_class
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_class
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_class
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_class
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_class
+echo -e "As you see where we have the arrows pointing this is the classes line.\nEach class contains many tools. \nThere are 4 classes in total and they are the first arguement you use when running from the command line.\n" 
+echo '
+OSINT        -o
+Payloads     -p
+Post Exploit -x
+ETC          -e'
+echo
+read -p "Press Enter when ready"
+clear
+frame_tool
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_tool
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_tool
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_tool
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_tool
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_tool
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_tool
+echo -e "Here we have the tool that you are getting ready to use"
+read -p "Enter when ready"
+clear
+frame_basic
+sleep 0.2
+clear
+frame_usage
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_usage
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_usage
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_usage
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_usage
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_usage
+sleep 0.2
+clear
+frame_basic
+sleep 0.2
+clear
+frame_usage
+echo -e "Here is the bread and butter. \nThis is the arguements used when running the Cyber Security Tool Kit program from the command line \nExample: 'cstk -o (Class) pa (Tool)'\n"
+echo -e "Of course you can always run the command 'sudo cstk' to use the GUI."
+read -p "Press Enter when ready"

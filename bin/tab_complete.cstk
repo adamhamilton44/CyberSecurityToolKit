@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 _cstk_completion() {
     local cur prev opts cmd_opts
@@ -13,7 +13,7 @@ _cstk_completion() {
     # Define the second argument options for each first argument
     case "$prev" in
         --osint|-o|-O)
-            cmd_opts="findip ipsweep nmap enum breached-email google-dorks email-search"
+            cmd_opts="findip ipsweep nmap enum breached-email google-dorks email-search vuln-finder"
             ;;
 		--payload|-p|-P)
 	    	cmd_opts="nc linux-shell ransomware all-shells no-touch kill-computer denial-of-service ssh-attack metasploit"
@@ -24,15 +24,6 @@ _cstk_completion() {
         --etc|-e|-E)
             cmd_opts="user-shells webserver file-extract openssl secret-note create-binary post-x-2-go array-enc-script"
             ;;
-        --help|-h|-H)
-            cmd_opts=""
-            ;;
-		--class|-c|-C)
-	    	cmd_opts=""
-	    	;;
-		--tool|-t|-T)
-	    	cmd_opts=""
-	    	;;
         *)
             cmd_opts=""
             ;;
