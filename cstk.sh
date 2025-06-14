@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -o pipefail
+#set -o pipefail
 
 # colors
 r=$'\e[1;31m' # red
@@ -256,12 +256,10 @@ AE="${c}CSTK->ETC ==> ${x}"
 ae="${p}CSTK->ETC->"
 # Main Page when calling script with out any arguements
 function main_menu() {
-
-A="CSTK ==> "
 clear
 logo_main2
 check_root
-#check_hash
+check_hash
 echo -e "\n
 $g
 \t\t\t        Enter Class Number: \n\n $b
@@ -281,8 +279,8 @@ esac
 }
 # second option for tools usage options on main script
 function handle_input() {
-clear
-case "$1" in
+    clear
+    case "$1" in
 
         1) logo_osint ;A="$AO"; echo -e "$c \n\n Enter OSINT Tool Number: $b
 
@@ -392,7 +390,7 @@ case "$1" in
         8) pass_attack ;;
         X|x) main_menu ;;
         *) main_menu ;;
-    esac ;;
+       esac ;;
     2) case "$2" in
         1) netcat_choice ;;
         2) rev_shells ;;
@@ -406,7 +404,7 @@ case "$1" in
         A|a) apk_killer ;;
         X|x) main_menu ;;
         *) main_menu ;;
-    esac ;;
+       esac ;;
     3) case "$2" in
         1) check_vm ;;
         2) browser_data_wrapper ;;
@@ -420,7 +418,7 @@ case "$1" in
         A|a) inmem_password_stealer ;;
         X|x) main_menu ;;
         *) main_menu ;;
-    esac ;;
+       esac ;;
     4) case "$2" in
         1) users_and_shells ;;
         2) py_web_server ;;
@@ -433,9 +431,10 @@ case "$1" in
         9) log_cleaning_tool ;;
         X|x) main_menu ;;
         *) main_menu ;;
-    esac ;;
-        *) main_menu ;;
+       esac ;;
+    *) main_menu ;;
 esac
+
 }
 
 # Bad option function for tool numbered choices
@@ -448,18 +447,16 @@ error_font() {
 
 # Used to store user IP address and chosen port for Payloads, Shells, etc
 getip() {
-    A="$A"
     clear
     ans=""
     # Function to retrieve external IP
-    until [[ "$ans" =~ [Yy] ]]; do
-        X_ip=$(dig -4 @resolver1.opendns.com ANY myip.opendns.com +short)
-        L_ip=$(ip addr show | grep "inet " | grep -v "127.0.0.1" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
-        declare -a ARRAY
-        ARRAY=( "\n" "$X_ip" "\n" "$L_ip" "\n" "Other (Enter manually)" )
-        clear
-        echo -e "$c\nEnter the IP address to use. Options are: \n ${ARRAY[*]} $x"
-        read -r -p "${g} ${A} ${x}" chosen_ip
+    X_ip=$(dig -4 @resolver1.opendns.com ANY myip.opendns.com +short)
+    L_ip=$(ip addr show | grep "inet " | grep -v "127.0.0.1" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
+    declare -a ARRAY
+    ARRAY=( "\n" "$X_ip" "\n" "$L_ip" "\n" "Other (Enter manually)" )
+    clear
+    echo -e "$c\nEnter the IP address to use. Options are: \n ${ARRAY[*]} $x"
+    read -r -p "${g} ${A} ${x}" chosen_ip
 
     # Verify the chosen IP is either in the list or a valid format
     if [[ "$chosen_ip" != "$X_ip" && "$chosen_ip" != "$L_ip" ]]; then
@@ -471,42 +468,29 @@ getip() {
                 exit 3
             fi
         fi
+    fi
 
-        clear
-        # User selects port number
-        echo -e "$c Enter port number to use if needed. (1-65535): $x"
-        read -r -p "${b} ${A} ${x}" chosen_port
-        while ! [[ "$chosen_port" =~ ^[1-9][0-9]{0,4}$ && "$chosen_port" -ge 1 && "$chosen_port" -le 65535 ]]; do
-            echo -e "$r Incorrect option: Pick a number between 1 and 65535. $x"
-            read -r -p "Enter your port number choice for reverse connect back (1-65535): " chosen_port
-        done
-        clear
-        echo -e "\n$c You have selected IP and PORT: $chosen_ip:$chosen_port $x\n"
-        echo -e "$c Is this Correct? Y/N $x\n"
-        read -r -p "${c} ${A} ${x}" ans
-        while ! [[ "$ans" =~ [YyNn] ]]; do
-                echo -e "$r Invalid input. Please enter Y or N. $x"
-                read -r -p "${c} Enter Y/N: ${A}    ${x} " ans
-                if [[ "$ans" =~ [Nn] ]]; then
-                    break
-                fi
-        done
+    clear
+    # User selects port number
+    echo -e "$c Enter port number to use if needed. (1-65535): $x"
+    read -r -p "${b} ${A} ${x}" chosen_port
+    while ! [[ "$chosen_port" =~ ^[1-9][0-9]{0,4}$ && "$chosen_port" -ge 1 && "$chosen_port" -le 65535 ]]; do
+        echo -e "$r Incorrect option: Pick a number between 1 and 65535. $x"
+        read -r -p "Enter your port number choice for reverse connect back (1-65535): " chosen_port
     done
     clear
     echo -e "\n$c You have selected IP and PORT: $chosen_ip:$chosen_port $x\n"
     echo -e "$c Is this Correct? Y/N $x\n"
     read -r -p "${c}==> ${x}" ans
     while ! [[ "$ans" =~ [YyNn] ]]; do
-            echo -e "$r Invalid input. Please enter Y or N. $x"
-            read -r -p "Enter Y/N: " ans
-            if [[ "$ans" =~ [Nn] ]]; then
-                break
-            fi
+        echo -e "$r Invalid input. Please enter Y or N. $x"
+        read -r -p "Enter Y/N: " ans
+        if [[ "$ans" =~ [Nn] ]]; then
+            break
+        fi
     done
-done
-declare -g chosen_ip="$chosen_ip"
-declare -g chosen_port="$chosen_port"
-echo -e ""
+    declare -g chosen_ip="$chosen_ip"
+    declare -g chosen_port="$chosen_port"
 
 }
 
@@ -519,7 +503,6 @@ find_that_ip() {
     if ! command -v jq &> /dev/null; then
         echo -e 'Error: Looks as if jq is not installed. \nDid you delete? \nShould of downloaded with the install script.'
         exit 2
-
     fi
     echo -e "$g \nProvide A IP address for look up:\n $x"
     read -r -p "${c} ${A} ${x}" Ip
@@ -1160,22 +1143,23 @@ check_vm() {
         fi
     }
 
-# Check DMI information for VM-related product names
-if  grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/product_name 2>/dev/null ||
-    grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/sys_vendor 2>/dev/null; then
-    echo "VM detected via DMI product name or sys_vendor."
-    exit_or_stay
-fi
-# Check CPU flags for hypervisor presence
-if grep -q "^flags.*hypervisor" /proc/cpuinfo; then
-    echo "VM detected via CPU hypervisor flag."
-    exit_or_stay
-fi
-# Check manufacturer name using dmidecode (requires root)
-if command -v dmidecode &>/dev/null; then
-    if dmidecode -s system-manufacturer 2>/dev/null | grep -qiE "(VMware|VirtualBox|QEMU|Xen|Microsoft)"; then
-        echo "VM detected via dmidecode system manufacturer."
+    # Check DMI information for VM-related product names
+    if  grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/product_name 2>/dev/null ||
+        grep -qE "(VMware|VirtualBox|QEMU|KVM|Xen|Parallels|Microsoft)" /sys/class/dmi/id/sys_vendor 2>/dev/null; then
+        echo "VM detected via DMI product name or sys_vendor."
         exit_or_stay
+    fi
+    # Check CPU flags for hypervisor presence
+    if grep -q "^flags.*hypervisor" /proc/cpuinfo; then
+        echo "VM detected via CPU hypervisor flag."
+        exit_or_stay
+    fi
+    # Check manufacturer name using dmidecode (requires root)
+    if command -v dmidecode &>/dev/null; then
+        if dmidecode -s system-manufacturer 2>/dev/null | grep -qiE "(VMware|VirtualBox|QEMU|Xen|Microsoft)"; then
+            echo "VM detected via dmidecode system manufacturer."
+            exit_or_stay
+        fi
     fi
 
     # Check CPU flags for hypervisor presence
@@ -1757,29 +1741,7 @@ extract_arch() {
     else
         echo -e "$r '$archive' is not a valid file $x"
     fi
-done
-echo -e "$c Enter archive full file path $x"
-read -e -r -p "${c}==> ${x}" archive
-if [ -f "$archive" ]; then
-    case $archive in
-        *.tar.bz2) tar -x -j -f "$archive" ;;
-        *.tar.gz) tar -x -z -f "$archive" ;;
-        *.bz2) bunzip2 "$archive" ;;
-        *.rar) unrar x "$archive" ;;
-        *.gz) gunzip "$archive" ;;
-        *.tar) tar -x -f "$archive" ;;
-        *.zip) unzip "$archive" ;;
-        *.Z) uncompress "$archive" ;;
-        *.deb) dpkg -x "$archive" . ;;
-        *.7z) 7z x "$archive" ;;
-        *.tar.wz) tar -x -f "$archive" ;;
-        *) echo -e "$r '$archive' cannot be extracted by archive $x" ;;
-    esac
-else
-    echo -e "$r '$archive' is not a valid file $x"
-fi
-
-wait_and_return
+    wait_and_return
 }
 
 # Class: ETC - Tool: openssl helper - Option 4 (Wrapper Used)
