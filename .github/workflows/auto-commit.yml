@@ -16,7 +16,11 @@ jobs:
           if [ -n "$large_files" ]; then
             echo "$large_files" | xargs -I {} git lfs track {}
             git add .gitattributes
-            git commit -m "Track large files using Git LFS"
+            if ! git diff --cached --quiet; then
+              git commit -m "Track large files using Git LFS"
+            else
+              echo "No changes to commit"
+            fi
           fi
       - name: Checkout Repository
         uses: actions/checkout@v4
