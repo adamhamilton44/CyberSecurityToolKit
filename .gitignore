@@ -6,3 +6,8 @@ Bank/Malware/*
 /msf/
 Other/SecurityChecks/*
 Other/SecurityChecks/*
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.vscode/
