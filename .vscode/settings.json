@@ -1,0 +1,4 @@
+{
+    "githubRepositories.indexing.cacheRepoLimit": 5,
+    "githubRepositories.indexing.cacheSizeLimit": 10000
+}
