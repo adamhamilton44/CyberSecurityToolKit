@@ -19,12 +19,6 @@ remove_shc() {
 
 remove_links() {
 	rm -f /usr/local/bin/cstk &>/dev/null
-    rm -rf /usr/local/lib/CyberSecurityToolKit &>/dev/null
-    rm -rf /usr/share/doc/CyberSecurityToolKit &>/dev/null
-    rm -rf /var/lib/CyberSecurityToolKit &>/dev/null
-    rm -rf /etc/CyberSecurityToolKit/keys &>/dev/null
-    rm -rf /var/log/CyberSecurityToolKit &>/dev/null
-    rm -rf /etc/CyberSecurityToolKit &>/dev/null
     echo "All symbolic links and directories related to CyberSecurityToolKit have been removed."
 }
 
