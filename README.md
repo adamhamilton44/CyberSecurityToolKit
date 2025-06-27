@@ -1,9 +1,11 @@
+# CyberSecurityToolKit - A Beginner Friendly Tool Kit for Hackers, Red Teamers, and Penetration testers
+
 ![Cyber Security Tool Kit](https://github.com/user-attachments/assets/bccc925c-d373-4c6a-9ac0-226cde5edd7e)
 
-# CyberSecurityToolKit - A Beginner Friendly Tool Kit for Hackers, Red Teamers, and Penetration testers 
-
 ## Author
+
 Adam Hamilton
+
 - [Github](https://www.github.com/adamhamilton44)
 
 - [Email](blacklisthacker@protonmail.com)
@@ -17,14 +19,16 @@ Contributions are always welcome!
 There are 4 Classes in total: OSINT, Payloads, Post Exploit, Etc.
 
 ### OSINT
+
 - IP address lookup tool
 - Nmap helper script
 - ping sweeper tool
 - Compromised email/password parsing tool
 - Google dorks helper
-- automated enumeration script of a internet facing web site 
+- automated enumeration script of a internet facing web site
 
 ### Payloads
+
 - Netcat Reverse/Bind Shell Scripts
 - Linux reverse shell creation tool with 30+ shells
 - Ransomware encrypt/decrypt tool
@@ -36,6 +40,7 @@ There are 4 Classes in total: OSINT, Payloads, Post Exploit, Etc.
 - msfvenom and metasploit helper
 
 ### Post Exploit
+
 - Check if on a VM
 - Web browser infomation stealer
 - Crypto wallet search tool
@@ -46,7 +51,8 @@ There are 4 Classes in total: OSINT, Payloads, Post Exploit, Etc.
 - Files of Interest search tool
 - Kernel/Userland Rootkits
 
-# Etc
+## Etc
+
 - Enumerate users and there shells
 - Python web server for easy file transfers
 - Multi archive file extracter
@@ -56,37 +62,44 @@ There are 4 Classes in total: OSINT, Payloads, Post Exploit, Etc.
 - post exploit zip file with all the needed tools to open and run on remote host
 
 ## Run Locally
+
 Clone the project
+
 ```bash
 git clone https://github.com/adamhamilton44/CyberSecurityToolKit.git
 ```
+
 Go to the project directory
+
 ```bash
 cd CyberSecurityToolKit
 ```
+
 Run the main script cstk.sh or chmod +x install.sh and then run install.sh script
+
 ```bash
 chmod +x install.sh
 sudo bash install.sh
 ```
-or
-```bash
-sudo bash cstk.sh
-```
+
 A Script will be added to /usr/local/bin/cstk
 Run anywhere
+
 ```bash
 sudo cstk
 ```
-A wrapper script is also added to /usr/local/bin/cstk_wrapper 
+
+A wrapper script is also added to /usr/local/bin/cstk_wrapper
 
 ## Tested on
+
 - Kali-Linux 6.11.2
 
 ## Install script works for
-- apt 
-- yum 
-- dnf 
+
+- apt
+- yum
+- dnf
 - brew
 
 ## Important Information
@@ -111,7 +124,7 @@ These are the files and/or folders that are safe for the user to move delete etc
 
 - CyberSecurityToolKit/etc/keys --> This is where user created important files are stored / Private-Public keys, hashed passwords, checksums, etc..
 
-- CyberSecurityToolKit/logs --> Detailed logs of most user events are stored here 
+- CyberSecurityToolKit/logs --> Detailed logs of most user events are stored here
 
 ## Netural Files and Folders
 
@@ -132,8 +145,8 @@ If you have any feedback, please reach out to me at [Email](blacklisthacker@prot
 💬 Ask me about anything
 
 ⚡️ Fun fact I am actually a Professional dog trainer.
-   [My website](https://good-happy-puppy.com) 
+[My website](https://good-happy-puppy.com)
 
-# Help Fund My Projects
+## Help Fund My Projects
 
 Bitcoin: 3ENrACvnNY7AYG7HUvcdwJgZjnpoaQ9Lbt
