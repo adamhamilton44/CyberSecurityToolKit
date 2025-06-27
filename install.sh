@@ -5,7 +5,7 @@ home_dir="$PWD"
 need_root() {
     if [[ "$EUID" -ne 0 ]]; then
         echo "Enter Password"
-        sudo exec bash -c "${BASH_SOURCE[0]}" "$@"
+        sudo bash -c "${BASH_SOURCE[0]}" 
     fi
 }
 
