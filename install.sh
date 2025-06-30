@@ -1,12 +1,13 @@
 #!/bin/bash
 
+home_dir="$PWD"
+
 need_root() {
     if [[ "$EUID" -ne 0 ]]; then
         echo "Enter Password"
-        exec sudo bash "$0" "$@"
+        sudo exec bash -c "${BASH_SOURCE[0]}" "$@"
     fi
 }
-
 
 bash_version() {
     min_bash_version=4.0
@@ -17,28 +18,37 @@ bash_version() {
     fi
 }
 
+check_working_dir() {
+    move_me=$(find / -type d -name CyberSecurityToolKit 2>/dev/null)
+    if [[ -d ./Bank ]] && [[ -d ../CyberSecurityToolKit ]]; then
+        echo ""
+    else
+        cd "$move_me"
+        if [[ -d ./Bank ]] && [[ -d ../CyberSecurityToolKit ]]; then
+            declare -g home_dir
+            home_dir="$PWD"
+        else
+            echo "There seem to be issues with the directory structure, Please remove this repo and download again."
+            exit 99
+        fi
+    fi
+}
+
 
 keep_sudo_alive() {
     while true; do
         sudo -v
         sleep 300
     done
-    A1="$$"
+
 }
 
 
 link_main_script() {
     if ! [ -h /usr/local/bin/cstk ]; then
-        chmod +x ./cstk.sh
-        ln -sr ./cstk.sh /usr/local/bin/cstk
+        chmod +x "${home_dir}"/cstk.sh
+        ln -sr "${home_dir}"/cstk.sh /usr/local/bin/cstk
         echo "The main script cstk.sh is now accessible globally. You can  run it using 'cstk'."
-        REAL_PATH="$(realpath /usr/local/bin/cstk)"
-        declare -g home_dir
-        home_dir="$(dirname "$REAL_PATH")"
-    else
-        REAL_PATH="$(realpath /usr/local/bin/cstk)"
-        declare -g home_dir
-        home_dir="$(dirname "$REAL_PATH")"
     fi
 }
 
@@ -56,22 +66,79 @@ make_dir() {
     done
 }
 
-
 install_dependencies() {
-    required_commands=( whiptail seclists hydra medusa ncrack john hashcat crackmapexec cewl basez build-essential gcc libc6-dev golang metasploit-framework bc cargo git npm coreutils python3 python3-pip openssl john curl jq grep fzf autoconf xxd tar rlwrap bzip2 netcat-openbsd unrar gzip unzip dpkg 7zip nmap whois sublist3r nmap sqlmap nikto whatweb gobuster wpscan )
+    # Spinner for aesthetics
+    spinner() {
+        local pid=$1
+        local delay=0.1
+        local spinstr='|/-\'
+        while kill -0 "$pid" 2>/dev/null; do
+            local temp=${spinstr#?}
+            printf " [%c]  " "$spinstr"
+            spinstr=$temp${spinstr%"$temp"}
+            sleep $delay
+            printf "\b\b\b\b\b\b"
+        done
+    }
 
-    if command -v apt &> /dev/null; then
-        apt update -qq && apt install -qq -y "${required_commands[@]}"
-    elif command -v yum &> /dev/null; then
-        yum install -y "${required_commands[@]}"
-    elif command -v dnf &> /dev/null; then
-        dnf install -y "${required_commands[@]}"
-    elif command -v brew &> /dev/null; then
-        brew install "${required_commands[@]}"
+    local required_commands=(
+        whiptail seclists hydra medusa ncrack john hashcat crackmapexec cewl basez
+        build-essential gcc libc6-dev golang metasploit-framework bc cargo git npm
+        coreutils python3 python3-pip openssl curl jq grep fzf autoconf xxd tar
+        rlwrap bzip2 netcat-openbsd unrar gzip unzip dpkg 7zip nmap whois sublist3r
+        sqlmap nikto whatweb gobuster wpscan
+    )
+
+    # Append extra args
+    [[ $# -gt 0 ]] && required_commands+=("$@")
+
+    # Setup colors
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    CYAN='\033[1;36m'
+    RESET='\033[0m'
+
+    echo -e "${YELLOW}🔧 Installing dependencies...${RESET}"
+
+    # Detect OS package manager
+    if command -v apt &>/dev/null; then
+        manager="apt"
+        install_cmd="apt install -y -qq"
+        check_cmd="dpkg -s"
+    elif command -v yum &>/dev/null; then
+        manager="yum"
+        install_cmd="yum install -y"
+        check_cmd="rpm -q"
+    elif command -v dnf &>/dev/null; then
+        manager="dnf"
+        install_cmd="dnf install -y"
+        check_cmd="rpm -q"
+    elif command -v brew &>/dev/null; then
+        manager="brew"
+        install_cmd="brew install"
+        check_cmd="brew list"
     else
-        echo "Error: Unsupported package manager. Install dependencies manually."
+        echo -e "${RED}❌ No supported package manager found!${RESET}"
         exit 1
     fi
+
+    for pkg in "${required_commands[@]}"; do
+        if $check_cmd "$pkg" &>/dev/null; then
+            echo -e "${GREEN}[✔] $pkg already installed.${RESET}"
+        else
+            echo -e "${CYAN}[...] Installing $pkg${RESET}"
+            bash -c "$install_cmd $pkg" &>/dev/null &
+            pid=$!
+            spinner $pid
+            wait $pid
+            if [[ $? -eq 0 ]]; then
+                echo -e "${GREEN}[+] Installed: $pkg${RESET}"
+            else
+                echo -e "${RED}[!] Failed to install: $pkg${RESET}"
+            fi
+        fi
+    done
 }
 
 
@@ -100,7 +167,7 @@ install_vulscan() {
 
 
 install_holehe() {
-    holehe_path="$home_dir/Malware_Of_All_Types/OSINT_Email-Social"
+    holehe_path="$home_dir/Malware_of_All_Types/OSINT_Email-Social"
     pw="$(echo 'RlBjWnV6SnVQNW00SWdIRmZobTNUR3dWWDdtQW1peVNjMmlUbVhLeAo=' | base64 -d)"
     pw2="$(echo 'IFCECTKBIRAU2QKEJVAU2RCBJVCECRCNIFGUITKBIRGUCTKEJVCE2QKEJVAU2RCLIFCEWQKOJNAU4QKLIRHECS2EJZFUCTSBIRAUSRCBJFHUISCJIRHUQQKPJFEEISKPJBAU6SKBJBCE6SKIIREU6QJTGMZAU===' | base32plain -d)"
     if command -v pip &> /dev/null; then
@@ -137,22 +204,8 @@ install_holehe() {
 
 
 install_tab_completion() {
-    cstk_tab_complete="${home_dir}/bin/tab_complete.cstk"
-    shell=$(basename -- "$SHELL")
-
-    case "$shell" in
-        zsh)  rc="/root/.zshrc" ;;
-        bash) rc="/root/.bashrc" ;;
-        fish) rc="/root/.config/fish/config.fish" ;;
-        ksh)  rc="/root/.kshrc" ;;
-        tcsh) rc="/root/.tcshrc" ;;
-        *)
-            echo "Unknown shell detected. Please manually add 'source $cstk_tab_complete' to your shell configuration file."
-            read -r -n 1 -p "Press Enter to continue without tab completion support."
-            return 0
-            ;;
-    esac
-
+    cstk_tab_complete="${home_dir}"/bin/tab_complete.cstk
+    rc="/root/.bashrc" ;;
     if ! grep -q 'tab_complete.cstk' "$rc"; then
         echo -e "Tab completion is available! To enable it, add a 'source' command to $rc."
         echo -e "1 - Add it now\n2 - I'll add it manually\n3 - No tab completion"
@@ -165,7 +218,6 @@ install_tab_completion() {
             *) echo "Invalid option. Manually add: source $cstk_tab_complete" ;;
         esac
     fi
-
 }
 
 
@@ -205,7 +257,6 @@ create_wrapper() {
 
 
 breached_parser() {
-    exec > >(tee -a /dev/null) 2>&1
     data="${home_dir}/data"
     TORRENT_FILE="magnet:?xt=urn:btih:7ffbcd8cee06aba2ce6561688cf68ce2addca0a3&dn=BreachCompilation&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fglotorrents.pw%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337"
 
@@ -225,10 +276,10 @@ breached_parser() {
                 install_dependencies "aria2"
         fi
 
-        aria2c --dir="$home_dir" --seed-time=0 "$TORRENT_FILE"
+        aria2c --dir="${home_dir/}" --seed-time=0 "$TORRENT_FILE"
 
         if [ -d "${home_dir}/BreachCompilation" ] && [ -d "{$home_dir}/BreachCompilation/data" ]; then
-                mv "${home_dir}/BreachCompilation/data" "$home_dir"
+                mv "${home_dir}/BreachCompilation/data" "${home_dir}"
                 rm -rf "${home_dir}/BreachCompilation" &> /dev/null
         fi
     fi
@@ -241,7 +292,7 @@ set_hashes() {
     P_BOMBS="${home_dir}/Malware_of_All_Types/DOS_Bombs/Image-Bombs"
     Z_BOMBS="${home_dir}/Malware_of_All_Types/DOS_Bombs/Zip-Bombs"
     SHA_PATH="${home_dir}/Other/SecurityChecks"
-    find "${home_dir}/cstk.sh" "${home_dir}/uninstall.sh" "${home_dir}/lib" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper"  -type f -exec sha256sum {} \; | sort >> "$SHA_PATH/sha256.checksum2"
+    find "${home_dir}/cstk.sh" "${home_dir}/uninstall.sh" "${home_dir}/lib" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper"  -type f -exec sha256sum {} \; | sort >> "$SHA_PATH/sha256.checksum"
     cp "$SHA_PATH/sha256.checksum" "$SHA_PATH/sha256.checksum2"
 }
 
@@ -251,21 +302,20 @@ finish_setup() {
 	find "$home_dir" -type d -exec chmod 750 {} \;
 }
 
-LOG_FILE="${home_dir}/log/install.log"
-exec > >(tee -a "$LOG_FILE") 2>&1
-
 
 need_root
 bash_version
-keep_sudo_alive &
-link_main_script
+check_working_dir
 make_dir
 install_dependencies
 install_shc
 install_vulscan
 install_holehe
-install_tab_complete
+install_tab_completion
 create_wrapper
+link_main_script
+keep_sudo_alive &
+check_working_dir
 breached_parser
 set_hashes
 finish_setup
