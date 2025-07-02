@@ -245,6 +245,90 @@ check_root() {
     fi
 }
 
+user_create_password() {
+    set -euo pipefail
+    get_new_user_pass() {
+        echo -e "\n🔐 Enter new username:"
+        read -r user
+        if grep -q "^${user}[[:space:]]" "$hash_file"; then
+            echo -e "\n⚠ User already exists. Try another.\n"
+            get_new_user_pass
+        fi
+        while true; do
+            echo -n "🔑 Enter new password: "
+            read -r -s password
+            echo
+            echo -n "🔁 Re-enter password to confirm: "
+            read -r -s password2
+            echo
+
+            [[ "$password" == "$password2" ]] && break
+            echo -e "\n❗ Passwords do not match. Try again.\n"
+        done
+
+        hash=$(echo -n "$password" | sha256sum | awk '{print $1}')
+        echo -e "$user\t\t$hash" >> "$hash_file"
+        echo -e "\n✅ User '$user' added successfully!\n"
+        sudo bash -c "${BASH_SOURCE[0]}" 
+        exit 0
+    }
+    
+
+    get_user_pass() {
+        echo -e "\n👤 Enter Username: "
+        read -r user
+
+        if ! grep -q "^${user}[[:space:]]" "$hash_file"; then
+            echo -e "\n⚠  Username not found. Register new user? (Y/n): "
+            read -r ans
+            ans=${ans,,}  # force lowercase
+            if [[ "$ans" == "y" ]]; then
+                get_new_user_pass
+            else
+                get_user_pass
+            fi
+        fi
+
+        local max_attempts=3
+        local attempts=0
+
+        while (( attempts < max_attempts )); do
+            echo -ne "\n🔐 Enter password: "
+            read -r -s pass
+            echo
+
+            entered=$(echo -n "$pass" | sha256sum | awk '{print $1}')
+            stored_hash=$(grep "^${user}[[:space:]]" "$hash_file" | awk '{print $2}')
+
+            if [[ "$entered" == "$stored_hash" ]]; then
+                echo -e "\n✅ Access granted"
+                sleep 3
+                return 0
+                header
+                main_menu
+            else
+                ((attempts++))
+                echo -e "\n❌ Incorrect password ($attempts/$max_attempts)"
+                echo "$user failed login at $(date)" >> "$home/login_attempts.log"
+                [[ $attempts -lt $max_attempts ]] && sleep 5
+            fi
+        done
+
+        echo -e "\n🔒 Too many failed attempts. Access denied."
+        cooldown=600  # seconds
+        trap '' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
+        echo -e "\n⏱ Locking out for $cooldown seconds..."
+        sleep "$cooldown"
+        get_user_pass
+    }
+
+
+    hash_file="$log/hash_list.txt"
+    [[ -f "$hash_file" ]] || touch "$hash_file" && chmod 600 "$hash_file"
+
+    get_user_pass 
+}
+
 A="${p}CSTK ==> ${x}"
 AO="${c}CSTK->OSINT ==> ${x}"
 ao="${p}CSTK->OSINT->"
@@ -1948,7 +2032,8 @@ if [[ $# -ne 2 ]]; then
         show_help
     fi
     header
-    main_menu
+    user_create_password
+    
 fi
 # Parse the first argument (class)
 case $1 in
