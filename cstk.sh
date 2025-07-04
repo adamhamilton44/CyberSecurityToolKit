@@ -266,7 +266,7 @@ user_create_password() {
             echo -e "\n❗ Passwords do not match. Try again.\n"
         done
 
-        hash=$(echo -n "$password" | sha256sum | awk '{print $1}')
+        hash=$(echo -n "$password" | openssl dgst -sha256 -binary | openssl enc -base64 -A | awk '{print $1}')
         echo -e "$user\t\t$hash" >> "$hash_file"
         echo -e "\n✅ User '$user' added successfully!\n"
         sudo bash -c "${BASH_SOURCE[0]}" 
@@ -297,19 +297,19 @@ user_create_password() {
             read -r -s pass
             echo
 
-            entered=$(echo -n "$pass" | sha256sum | awk '{print $1}')
+            entered=$(echo -n "$pass" | openssl dgst -sha256 -binary | openssl enc -base64 -A | awk '{print $1}')
             stored_hash=$(grep "^${user}[[:space:]]" "$hash_file" | awk '{print $2}')
 
             if [[ "$entered" == "$stored_hash" ]]; then
                 echo -e "\n✅ Access granted"
-                sleep 3
+                sleep 1
                 return 0
                 header
                 main_menu
             else
                 ((attempts++))
                 echo -e "\n❌ Incorrect password ($attempts/$max_attempts)"
-                echo "$user failed login at $(date)" >> "$home/login_attempts.log"
+                echo "$user failed login at $(date)" >> "$log/login_attempts.log"
                 [[ $attempts -lt $max_attempts ]] && sleep 5
             fi
         done
