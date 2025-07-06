@@ -13,16 +13,16 @@ _cstk_completion() {
     # Define the second argument options for each first argument
     case "$prev" in
         --osint|-o|-O)
-            cmd_opts="findip ipsweep nmap enum breached-email google-dorks email-search vuln-finder"
+            cmd_opts="findip ipsweep nmap enum breached-email google-dorks email-search password-attack vuln-finder"
             ;;
 		--payload|-p|-P)
-	    	cmd_opts="nc linux-shell ransomware all-shells no-touch kill-computer denial-of-service ssh-attack metasploit"
+	    	cmd_opts="nc linux-shell ransomware all-shells no-touch kill-computer denial-of-service ssh-attack metasploit apk-builder"
 	    	;;
 		--postex|-x|-X)
-	    	cmd_opts="check-vm browser-thief crypto-search file-exploit kernal-exploit on-start brute-force files-of-interest deploy-rootkit"
+	    	cmd_opts="check-vm browser-thief crypto-search file-exploit kernal-exploit on-start brute-force files-of-interest deploy-rootkit in-memory"
 	    	;;
         --etc|-e|-E)
-            cmd_opts="user-shells webserver file-extract openssl secret-note create-binary post-x-2-go array-enc-script"
+            cmd_opts="user-shells webserver file-extract openssl secret-note create-binary post-x-2-go array-enc-script log-cleaner"
             ;;
         *)
             cmd_opts=""

@@ -8,7 +8,11 @@ G=$'\e[1;32m' # green
 Y=$'\e[1;33m' # yellow
 C=$'\e[1;36m' # cyan
 RE=$'\e[0m' # reset
-home_dir="$PWD"
+# 📌 Get absolute path to script and its directory
+script_path="$(realpath "$0")"
+home_dir="$(dirname "$script_path")"      # Full path to the folder
+base_dir="$(basename "$home_dir")"        # Just the folder name
+expected_dir="CyberSecurityToolKit"       # What we expect the folder to be
 # Function to check if the script is run as root
 # If not, it will prompt for the password and re-run the script with sudo.
 # This is necessary for installing packages and creating directories in system locations.
@@ -36,18 +40,8 @@ bash_version() {
 # It also sets the global variable home_dir to the current working directory.
 # This is important for the script to function correctly, as it relies on this variable for paths
 check_working_dir() {
-    move_me=$(find / -type d -name CyberSecurityToolKit 2>/dev/null)
-    if [[ -d ./Bank ]] && [[ -d ../CyberSecurityToolKit ]]; then
-        echo ""
-    else
-        cd "$move_me"
-        if [[ -d ./Bank ]] && [[ -d ../CyberSecurityToolKit ]]; then
-            declare -g home_dir
-            home_dir="$PWD"
-        else
-            echo -e "${R}There seem to be issues with the directory structure, Please remove this repo and download again.${RE}"
-            exit 99
-        fi
+    if [[ "$base_dir" != "$expected_dir" ]]; then
+        cd "$home_dir"
     fi
 }
 
@@ -77,7 +71,7 @@ keep_sudo_alive() {
 # This function is called at the end of the installation process to finalize the setup.
 link_main_script() {
     if ! [ -h /usr/local/bin/cstk ]; then
-        ln -s "${PWD}/cstk.sh" /usr/local/bin/cstk
+        ln -s "${home_dir}/cstk.sh" /usr/local/bin/cstk
         echo -e "${G}The main script cstk.sh is now accessible globally. You can  run it using 'cstk'.${RE}"
         read -r -p "Press Enter to continue..."
     fi
@@ -197,19 +191,19 @@ install_dependencies() {
 install_shc() {
     if ! command -v shc &>/dev/null; then
         echo -e "${G}Installing shc...${RE}"
-        mkdir -p /opt/cstk && pushd /opt/cstk || return
+        mkdir -p /opt/cstk && cd /opt/cstk || return
         git clone https://github.com/neurobin/shc.git
         cd shc || return
         autoreconf -fiv  # Ensures correct configuration
         ./configure
         make && make install
         if [[ $? -eq 0 ]]; then
-            echo -e "${G}[✔] shc installed successfully.${RE}"
+            echo -e "${G}[+] shc installed successfully.${RE}"
         else
             echo -e "${R}[!] Failed to install shc. Please check the output for errors.${RE}"
             exit 1
         fi
-        popd || return
+        cd "${home_dir}" || return
     else
         echo -e "${G}[✔] shc is already installed.${RE}"
     fi
@@ -239,7 +233,7 @@ install_vulscan() {
 # It uses base64 and base32plain to decode the password and the egg file.
 # This function is called during the installation process to ensure that Holehe is available for use.
 install_holehe() {
-    holehe_path="$home_dir/Malware_of_All_Types/OSINT_Email-Social"
+    holehe_path="${home_dir}/Malware_of_All_Types/OSINT_Email-Social"
     pw="$(echo 'RlBjWnV6SnVQNW00SWdIRmZobTNUR3dWWDdtQW1peVNjMmlUbVhLeAo=' | base64 -d)"
     pw2="$(echo 'IFCECTKBIRAU2QKEJVAU2RCBJVCECRCNIFGUITKBIRGUCTKEJVCE2QKEJVAU2RCLIFCEWQKOJNAU4QKLIRHECS2EJZFUCTSBIRAUSRCBJFHUISCJIRHUQQKPJFEEISKPJBAU6SKBJBCE6SKIIREU6QJTGMZAU===' | base32plain -d)"
     if command -v pip &> /dev/null; then
@@ -286,18 +280,34 @@ install_holehe() {
 # It is called during the installation process to ensure that tab completion is available for CSTK commands.
 # The tab completion script is located in the bin directory of the home directory.
 install_tab_completion() {
-    cstk_tab_complete="${home_dir}"/bin/tab_complete.cstk
+    local cstk_tab_complete
+    cstk_tab_complete="${home_dir}/bin/tab_complete.cstk"
+    local rc
     rc="/root/.bashrc"
+    if [[ ! -f "$cstk_tab_complete" ]]; then
+        echo -e "${R}Tab completion script not found at $cstk_tab_complete.${RE}"
+        echo -e "${Y}Please ensure that the script is present in the bin directory.${RE}"
+        return
+    fi
     if ! grep -q 'tab_complete.cstk' "$rc"; then
-        echo -e "{C}Tab completion is available! To enable it, add a 'source' command to $rc."
-        echo -e "${G}1 - Add it now\n${Y}2 - I'll add it manually\n${R}3 - No tab completion${RE}"
+        echo -e "${C}Tab completion is available! To enable it, add a 'source' command to $rc.${RE}"
+        echo -e "${G}1 - Add it now\n${Y}2 - I would rather add it manually\n${R}3 - Dont touch my $rc file${RE}"
         read -r -p "Enter 1, 2, or 3: " opt
-        
+
         case "$opt" in
-            1) echo "source $cstk_tab_complete" >> "$rc" && echo -e "${G}Added to $rc.${RE}" ;;
-            2) echo -e "${Y}Manually add:${R} source $cstk_tab_complete ${RE}" ;;
-            3) echo "${R}Tab completion skipped.${Y} Add 'source $cstk_tab_complete' later if needed.${RE}" ;;
-            *) echo "${R}Invalid option. Manually add: source $cstk_tab_complete${RE}" ;;
+            1)
+                echo "source \"$cstk_tab_complete\"" >> "$rc"
+                echo -e "${G}✅ Tab completion added to $rc.${RE}"
+                ;;
+            2)
+                echo -e "${Y}ℹ️  Add this line manually to $rc:${RE} source \"$cstk_tab_complete\""
+                ;;
+            3)
+                echo -e "${R}❌ Skipped tab completion. You can add it later: source \"$cstk_tab_complete\"${RE}"
+                ;;
+            *)
+                echo -e "${R}❗ Invalid option. Add it manually if needed: source \"$cstk_tab_complete\"${RE}"
+                ;;
         esac
     fi
 }
@@ -381,9 +391,9 @@ breached_parser() {
         echo -e "${C}Downloading BreachCompilation data...\nThis will take around two hours depending on internet connection\nPlease fill free to do other stuff as needed.${RE}"
         read -r -p "Press Enter to continue..."
         aria2c --dir="${home_dir/}" --seed-time=0 "$TORRENT_FILE"
-        if [[ -d BreachCompilation ]] && [[ -d BreachCompilation/data ]]; then
-           mv BreachCompilation/data .                     
-           if [[ -d data ]]; then                 
+        if [[ -d "${home_dir}/BreachCompilation" ]] && [[ -d "${home_dir}/BreachCompilation/data" ]]; then
+           mv BreachCompilation/data "${home_dir}/data"                     
+           if [[ -d "${home_dir}data" ]]; then                 
                rm -rf BreachCompilation 
            fi                                                   
        fi 
@@ -407,7 +417,7 @@ set_hashes() {
     Z_BOMBS="${home_dir}/Malware_of_All_Types/DOS_Bombs/Zip-Bombs"
     SHA_PATH="${home_dir}/Other/SecurityChecks"
     mkdir -p "$SHA_PATH"
-    find "${home_dir}/cstk.sh" "${home_dir}/uninstall.sh" "${home_dir}/lib" "${home_dir}/bin" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper"  -type f -exec sha256sum {} \; | sort >> "$SHA_PATH/sha256.checksum"
+    find "${home_dir}/cstk.sh" "${home_dir}/uninstall.sh" "${home_dir}/lib/" "${home_dir}/bin/" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper"  -type f -exec sha256sum {} \; | sort >> "$SHA_PATH/sha256.checksum"
     cp "$SHA_PATH/sha256.checksum" "$SHA_PATH/sha256.checksum2"
 }
 
@@ -440,6 +450,7 @@ install_shc
 install_vulscan
 # Install Holehe
 install_holehe
+check_working_dir
 # Install tab completion for CSTK
 install_tab_completion
 # Create a wrapper script for CSTK

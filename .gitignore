@@ -1,11 +1,10 @@
-data/
+data/*
 etc/keys/*
 log/*
 Bank/Loot/*
 Bank/Malware/*
-/msf/
 Other/SecurityChecks/*
-Other/SecurityChecks/*
+*.txt
 *.pyc
 *.pyo
 *.pyd
