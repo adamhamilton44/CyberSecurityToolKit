@@ -77,8 +77,7 @@ keep_sudo_alive() {
 # This function is called at the end of the installation process to finalize the setup.
 link_main_script() {
     if ! [ -h /usr/local/bin/cstk ]; then
-        chmod +x "${home_dir}"/cstk.sh
-        ln -sr "${home_dir}"/cstk.sh /usr/local/bin/cstk
+        ln -s "${PWD}/cstk.sh" /usr/local/bin/cstk
         echo -e "${G}The main script cstk.sh is now accessible globally. You can  run it using 'cstk'.${RE}"
         read -r -p "Press Enter to continue..."
     fi
