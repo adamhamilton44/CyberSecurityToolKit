@@ -382,11 +382,13 @@ breached_parser() {
         echo -e "${C}Downloading BreachCompilation data...\nThis will take around two hours depending on internet connection\nPlease fill free to do other stuff as needed.${RE}"
         read -r -p "Press Enter to continue..."
         aria2c --dir="${home_dir/}" --seed-time=0 "$TORRENT_FILE"
+        if [[ -d BreachCompilation ]] && [[ -d BreachCompilation/data ]]; then
+           mv BreachCompilation/data .                     
+           if [[ -d data ]]; then                 
+               rm -rf BreachCompilation 
+           fi                                                   
+       fi 
         
-        if [ -d "${home_dir}/BreachCompilation" ] && [ -d "{$home_dir}/BreachCompilation/data" ]; then
-            mv "${home_dir}/BreachCompilation/data" "${home_dir}"
-            rm -rf "${home_dir}/BreachCompilation" &> /dev/null
-        fi
     fi
 }
 
