@@ -141,7 +141,8 @@ delete_me_now() {
 }
 # Function to check the sha256sum of the files and directories
 check_hash() {
-    sha256sum -c --quiet "$hash_home/sha256.checksum"
+    #sha256sum -c --quiet "$hash_home/sha256.checksum"
+    diff "$hash_home/sha256.checksum" "$hash_home/sha256.checksum2" &>/dev/null
     status="$?"
     if [[ "$status" != 0 ]]; then
         echo -e "$r corrupt files detected \n Going into delete mode"
@@ -291,10 +292,10 @@ user_create_password() {
             echo -e "\n⚠  Username not found. Register new user? (Y/n): "
             read -r ans
             ans=${ans,,}  # force lowercase
-            if [[ "$ans" == "y" ]]; then
+            if [[ "$ans" =~ ^[Yy] ]]; then
                 get_new_user_pass
             else
-                get_user_pass
+                exit 1
             fi
         fi
 
@@ -333,7 +334,7 @@ user_create_password() {
     }
 
     # Create the hash file if it does not exist
-    hash_file="$log/hash_list.txt"
+    hash_file="$log/.hash_list.txt"
     [[ -f "$hash_file" ]] || touch "$hash_file" && chmod 600 "$hash_file"
 
     get_user_pass 
@@ -354,6 +355,7 @@ clear
 logo_main2
 check_root
 check_hash
+user_create_password
 echo -e "\n
 $g
 \t\t\t        Enter Class Number: \n\n $b
@@ -2310,15 +2312,16 @@ check_root
 # If no arguemets then start in GUI mode
 
 #
+if [[ $1 =~ [-h|-H|-help|-HELP] ]]; then
+    show_help
+    exit 0
+fi
 if [[ $# -ne 2 ]]; then
-    if [[ $# -eq 1 ]] && [[ $1 =~ [-h|-H|-help|-HELP] ]]; then
-        show_help
-    fi
     header
-    user_create_password
-    
+    main_menu    
 fi
 # Parse the first argument (class)
+
 case $1 in
     -o| -O| --osint) class="osint" ;;
     -p| -P| --payload) class="payload" ;;

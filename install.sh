@@ -406,7 +406,8 @@ set_hashes() {
     P_BOMBS="${home_dir}/Malware_of_All_Types/DOS_Bombs/Image-Bombs"
     Z_BOMBS="${home_dir}/Malware_of_All_Types/DOS_Bombs/Zip-Bombs"
     SHA_PATH="${home_dir}/Other/SecurityChecks"
-    find "${home_dir}/cstk.sh" "${home_dir}/uninstall.sh" "${home_dir}/lib" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper"  -type f -exec sha256sum {} \; | sort >> "$SHA_PATH/sha256.checksum"
+    mkdir -p "$SHA_PATH"
+    find "${home_dir}/cstk.sh" "${home_dir}/uninstall.sh" "${home_dir}/lib" "${home_dir}/bin" "$K_ROOT_KITS/" "$U_ROOT_KITS/" "$P_BOMBS/" "$Z_BOMBS/" "/usr/local/bin/cstk_wrapper"  -type f -exec sha256sum {} \; | sort >> "$SHA_PATH/sha256.checksum"
     cp "$SHA_PATH/sha256.checksum" "$SHA_PATH/sha256.checksum2"
 }
 
