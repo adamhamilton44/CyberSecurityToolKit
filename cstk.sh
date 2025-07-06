@@ -27,6 +27,7 @@ Loot="$home_dir/Bank/Loot" # Used for important finding
 Keys="$home_dir/etc/keys" # used for storage of openssl keys and encoding
 installer="$home_dir/install.sh" # the install.sh script
 # /usr/local/bin wrapper script for the cstk bin folder to easily make all bin files executable
+# bin folder for all the tools
 bin="$home_dir/bin"
 cstk_wrapper="/usr/local/bin/cstk_wrapper"
 breach_parse_bin="$bin/breach_parse"
@@ -47,6 +48,7 @@ linux_exploit_checker_bin="$bin/linux_exploit_checker"
 lecb="$bin/linux_X_check"
 ssh_attack_bin="$bin/make_ssh_keys"
 msfvenom_bin="$bin/msf_payload_creater"
+
 # source the tab completion script in the bin folder
 source "$bin/tab_complete.cstk"
 # Other bin files not used by the wrapper
@@ -122,7 +124,8 @@ wait_and_return() {
 show_help() {
     bash "$help_file"
 }
-
+# Function to delete all files and directories created by the script
+# This function is called when the sha256sum files dont match up with the hashes saved during the install.sh process.
 delete_me_now() {
         trap '' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
 		if [ -d /opt/cstk ] || [ -d /opt/cstk/shc ]; then
@@ -136,7 +139,7 @@ delete_me_now() {
         find / -type d -name CyberSecurityToolKit -exec rm -rf {} &>/dev/null \;
         rm -rf "$0" &>/dev/null
 }
-
+# Function to check the sha256sum of the files and directories
 check_hash() {
     sha256sum -c --quiet "$hash_home/sha256.checksum"
     status="$?"
@@ -145,7 +148,7 @@ check_hash() {
         delete_me_now
     fi
 }
-
+# Function to display a random header from the Fonts library
 header() {
     random=$(cat /dev/urandom | tr -cd '1-8' | head -c 1)
     case $random in
@@ -182,6 +185,7 @@ echo -e ' \n\n\n
 \t\t\t\t                      Cyber Security Tool Kit
 '
 }
+# Function to display the main logo of the Cyber Security Tool Kit
 function logo_main2() {
 echo -e "\n\n\n $r
 \t\t$r ###################################################################################################################################
@@ -193,6 +197,7 @@ echo -e "\n\n\n $r
 \t\t$x # 	     /____/                                                      /____/                                                $x    #
 \t\t$b ################################################################################################################################### $x"
 }
+# Function to display the OSINT logo
 function logo_osint() {
 echo -e "\n\n\n $c
 \t\t	   ____     _____    ____   _   __   ______ $x
@@ -202,6 +207,7 @@ echo -e "\n\n\n $c
 \t\t	\____/   /____/  /___/  /_/ |_/    /_/      $p
 \t\t                                                $x"
 }
+# Function to display the Payloads logo
 function logo_payload() {
 echo -e "\n\n\n $g
 \t\t	    ____  _____  ____    ____  ___    ____  _____ $b
@@ -211,6 +217,7 @@ echo -e "\n\n\n $g
 \t\t	/_/   /_/  |_/_/_____/\____/_/  |_/_____//____/   $c
 \t\t                                                      $x"
 }
+# Function to display the Post Exploit logo
 function logo_postexploit() {
 echo -e "\n\n\n $p
 \t\t	    ____  ____  ___________   _______  __ ____  __    ____  __________ $g
@@ -219,6 +226,7 @@ echo -e "\n\n\n $p
 \t\t	 / ____/ /_/ /___/ // /    / /___ /   |/ ____/ /___/ /_/ // /  / /     $r
 \t\t	/_/    \____//____//_/    /_____//_/|_/_/   /_____/\____/___/ /_/      $x"
 }
+# Function to display the Etc logo
 function logo_etc() {
 echo -e "\n\n\n $g
 \t\t	    ______   ______   ______ $b
@@ -227,6 +235,7 @@ echo -e "\n\n\n $g
 \t\t	 / /___     / /    / /___    $r
 \t\t	/_____/    /_/     \____/    $x"
 }
+# Function to display the help logo
 function logo_help() {
 echo -e "\n\n\n $b
 \t\t  	    _/    _/$g  _/_/_/_/$c  _/    $r    _/_/_/  $b
@@ -236,7 +245,7 @@ echo -e "\n\n\n $b
 \t\t	_/    _/$g  _/_/_/_/$c  _/_/_/_/$r  _/          $x"
 }
 
-# Make sure we are root and the install.sh script has been ran
+# Make sure we are root or have sudo permissions
 check_root() {
 
     if [[ "$EUID" -ne 0 ]]; then
@@ -244,7 +253,7 @@ check_root() {
 	    exit 1
     fi
 }
-
+# Function to create a new user and password for the CyberSecurityToolKit
 user_create_password() {
     set -euo pipefail
     get_new_user_pass() {
@@ -272,7 +281,7 @@ user_create_password() {
         sudo bash -c "${BASH_SOURCE[0]}" 
         exit 0
     }
-    
+    # Function to get user and password for the CyberSecurityToolKit
 
     get_user_pass() {
         echo -e "\n👤 Enter Username: "
@@ -291,15 +300,15 @@ user_create_password() {
 
         local max_attempts=3
         local attempts=0
-
+        # Loop to get password from user
         while (( attempts < max_attempts )); do
             echo -ne "\n🔐 Enter password: "
             read -r -s pass
             echo
-
+            # Hash the entered password and compare with stored hash
             entered=$(echo -n "$pass" | openssl dgst -sha256 -binary | openssl enc -base64 -A | awk '{print $1}')
             stored_hash=$(grep "^${user}[[:space:]]" "$hash_file" | awk '{print $2}')
-
+            # Check if the entered password matches the stored hash
             if [[ "$entered" == "$stored_hash" ]]; then
                 echo -e "\n✅ Access granted"
                 sleep 1
@@ -307,13 +316,14 @@ user_create_password() {
                 header
                 main_menu
             else
+            # Increment attempts and log the failed attempt
                 ((attempts++))
                 echo -e "\n❌ Incorrect password ($attempts/$max_attempts)"
                 echo "$user failed login at $(date)" >> "$log/login_attempts.log"
                 [[ $attempts -lt $max_attempts ]] && sleep 5
             fi
         done
-
+        # If max attempts reached, lock out the user
         echo -e "\n🔒 Too many failed attempts. Access denied."
         cooldown=600  # seconds
         trap '' SIGINT SIGQUIT SIGILL SIGTERM SIGCONT SIGABRT SIGCHLD SIGHUP SIGTSTP SIGTTIN SIGTTOU
@@ -322,7 +332,7 @@ user_create_password() {
         get_user_pass
     }
 
-
+    # Create the hash file if it does not exist
     hash_file="$log/hash_list.txt"
     [[ -f "$hash_file" ]] || touch "$hash_file" && chmod 600 "$hash_file"
 
@@ -580,6 +590,17 @@ getip() {
 
 ############################## OSINT FUNCTIONS ###########################3
 # Class:OSINT - Tool:IP Lookup - Option 1
+# Function to find IP address information
+# Uses ip-api.com and shodan.io to gather information about the IP address
+# Requires jq for JSON parsing
+# Requires curl for making HTTP requests
+# Saves the output to Loot/IP-Lookup.txt
+# Displays the information in a formatted manner
+# If jq is not installed, it will display an error message and exit
+# If the IP address lookup is successful, it will display the city, state, country,
+# zip code, latitude, longitude, and ISP information
+# If the lookup fails, it will display an error message and save the failure to Loot/IP-Lookup.txt
+# Requires the Loot directory to exist for saving the output
 find_that_ip() {
     A="$ao IP Lookup ==>${x}"
     clear
@@ -615,6 +636,12 @@ wait_and_return
 }
 
 # Class:OSINT - Tool:Ping Sweeper - Option 2 (Wrapper used)
+# Function to perform a ping sweep on the last octet of an IP address range
+# Uses a custom sweeper script to ping all addresses in the range
+# Requires the sweeper script to be executable
+# Saves the output to Loot/IP-Sweep.txt
+# Displays the results in a formatted manner
+# If the sweeper script is not found, it will display an error message and exit
 sweep_ip() {
     clear
     osint_ipsweep_frame
@@ -625,6 +652,12 @@ sweep_ip() {
 }
 
 # Class:OSINT - Tool:Nmap helper script - Option 3  (Wrapper used)
+# Function to run a helpful Nmap script
+# Uses a custom Nmap script to automate common Nmap tasks
+# Requires the Nmap script to be executable
+# Saves the output to Loot/Nmap-Helper-Script.txt
+# Displays the results in a formatted manner
+# If the Nmap script is not found, it will display an error message and exit
 nmap_tool() {
     clear
     osint_nmap_frame
@@ -636,6 +669,17 @@ nmap_tool() {
 }
 
 # Class:OSINT - Tool:Automative Enumeration Script - Option 4 (Wrapper used)
+# Function to run an automated enumeration script
+# Uses a custom enumeration script to gather information about a website
+# Requires the enumeration script to be executable
+# Saves the output to Loot/Auto-Enumeration.txt
+# Displays the results in a formatted manner
+# If the enumeration script is not found, it will display an error message and exit
+# The script will prompt the user for a website URL to enumerate
+# The script will run various tools such as nslookup, dig, sublist3r, mysql, nikto, gobuster, wpscan, and more
+# The results will be saved to Loot/Auto-Enumeration.txt
+# The script will also log the date, time, user name, and script run information to auto_enum_script.log
+# The script will wait for the user to press a key before returning to the main menu
 enum_tool() {
     A="$ao Enumeration ==> ${x}"
     clear
@@ -650,6 +694,15 @@ enum_tool() {
 }
 
 # Class:OSINT - Tool:Email Parser - Option 5 (Wrapper used)
+# Function to parse breached email addresses and passwords
+# Uses a custom breach parser script to search for breached email addresses
+# Requires the breach parser script to be executable
+# The script will prompt the user for an email address or domain to search for
+# If the user chooses to search for a single email address, it will search the breached email/password lists for that email
+# If the user chooses to search for a full domain, it will search the breached email/password lists for all email addresses associated with that domain
+# The results will be displayed in a formatted manner
+# If the breach parser script is not found, it will display an error message and exit
+# The script will wait for the user to press a key before returning to the main menu
 breach_parse_wrapper() {
     A="$ao Breach Parser ==> ${x}"
     clear
@@ -676,6 +729,23 @@ breach_parse_wrapper() {
 }
 
 # Class:OSINT - Tool:Google Dorks - Option 6
+# Function to search for Google Dorks
+# Uses fzf to allow the user to select a category of dorks
+# The categories include Basic, Special, Full, and Advanced
+# Each category has a corresponding file containing dork patterns
+# The user can search within the selected file using fzf
+# If the user selects a dork, it will be displayed in the terminal
+# If the user selects "Back", it will return to the main menu
+# If the user selects an invalid option, it will prompt them to try again
+# The script will wait for the user to press a key before returning to the main menu
+# The dorks are stored in separate files for each category
+# The Basic category contains common dork patterns
+# The Special category contains dorks that start with a special character
+# The Full category contains a comprehensive list of over 7000 dorks
+# The Advanced category contains advanced Google dorks
+# The script will check if the selected file exists before proceeding
+# If the file does not exist, it will display an error message and exit
+# The script will also display a frame with the title "Google Dorks Helper"
 google_dorks() {
     clear
     osint_googledorks_frame
@@ -734,6 +804,28 @@ google_dorks() {
 }
 
 # Class:OSINT - Tool: holehe email finder - Program 7
+# Function to search for an email address across various social media platforms
+# Uses the holehe tool to search for the email address
+# The user can choose to save the results in CSV format or view them directly
+# If the user chooses CSV format, it will save the results in a CSV file
+# If the user chooses to view the results directly, it will display them in the terminal
+# The script will prompt the user for the email address to search for
+# If the user does not have holehe installed, it will display an error message and exit
+# The script will also display a frame with the title "Email Search"
+# Requires the holehe tool to be installed and available in the PATH
+# The script will wait for the user to press a key before returning to the main menu
+# The results will be saved in the Loot directory under Email-Search.txt
+# If the email address is found, it will display the social media accounts associated with it
+# If the email address is not found, it will display a message indicating that no accounts were found
+# The script will also log the date, time, user name, and script run information
+# to email_search.log
+# The script will handle invalid input and prompt the user to try again
+# If the user chooses to save the results in CSV format, it will create a CSV file
+# with the results in the Loot directory under Email-Search.csv
+# If the user chooses to view the results directly, it will display them in the terminal
+# The script will also handle the case where the user does not have holehe installed
+# and prompt them to install it
+
 email_search() {
     A="$ao Email Search ==> ${x}"
     clear
@@ -756,6 +848,13 @@ email_search() {
 }
 
 # Class:OSINT - Tool: password attack - Program 8 (Wrapper Used)
+# Function to perform a password attack using various tools
+# Uses a custom password attack script to crack passwords
+# The user can choose to use a specific tool for the password attack
+# The available tools include Hydra, Medusa, Ncrack, and John the Ripper
+# The script will prompt the user for the target IP address, username, and password list
+# If the user does not have the password attack script installed, it will display an error message
+# and exit
 pass_attack() {
     A="$ao Password Attack ==> ${x}"
     clear
@@ -767,6 +866,16 @@ pass_attack() {
 }
 
 # Class:OSINT - Tool: Automated Vulnability Search tool - Program 9 (Wrapper Used)
+# Function to search for vulnerabilities using various tools
+# Uses a custom vulnerability search script to automate the process
+# The script will run tools such as nmap, nikto, gobuster, wpscan, and more
+# The user can choose to run the vulnerability search on a specific target
+# The script will prompt the user for the target URL or IP address
+# If the user does not have the vulnerability search script installed, it will display an error message
+# and exit
+# The results will be saved in the Loot directory under Auto-Vuln-Search.txt
+# The script will also log the date, time, user name, and script run information
+# to auto_vuln_search.log
 vuln_searcher() {
     A="$ao Auto Vuln Finder ==> ${x}"
     clear
@@ -780,6 +889,19 @@ vuln_searcher() {
 ########### PAYLOADS FUNCTIONS #######################
 
 # First tools are netcat binding and reverse shells separated earlier but joined  now with a option function
+# Class:PAYLOADS - Tool: Netcat Bind/Reverse Shells - Option 1
+# Function to create netcat shell scripts
+# The user can choose to create a binding shell script, a reverse shell script, or an assembly language binding script
+# The script will prompt the user for the IP address and port number to use
+# If the user chooses to create a binding shell script, it will generate a netcat binding shell script
+# If the user chooses to create a reverse shell script, it will generate a netcat reverse shell script
+# If the user chooses to create a binding script in assembly language,
+# it will generate a netcat binding script in assembly language
+# The script will use openssl to decrypt the netcat shell templates
+# The decrypted templates will be processed to replace placeholders with the chosen IP and port
+# The final scripts will be saved in the Malware directory
+# The script will also log the date, time, user name, and script run information
+# to NetcatBindShell.log and NetcatReverseShell.log
 netcat_choice() {
     A="$ap Netcat ==> ${x}"
     clear
@@ -848,7 +970,8 @@ netcat_shells_reverse() {
         wait_and_return
     fi
 }
-
+# Class: PAYLOADS - Tool: Netcat Assembly Shell - Option 1-C
+# Function to create a netcat shell script in assembly language
 netcat_shells_assembly() {
     clear
     payloads_nc_frame
@@ -872,6 +995,14 @@ netcat_shells_assembly() {
 
 
 # Class: PAYLOADS - Tools: Linux Back door Creator - Option 2
+# Function to create a Linux reverse shell script
+# The script will prompt the user for the IP address and port number to use
+# It will use openssl to decrypt the reverse shell template
+# The decrypted template will be processed to replace placeholders with the chosen IP and port
+# The final script will be saved in the Malware directory as "RevShell"
+# The script will also log the date, time, user name, and script run information
+# to ReverseShells.log
+# The script will handle invalid input and prompt the user to try again
 rev_shells() {
     file="$LinuxRevShell"
     trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
@@ -891,7 +1022,19 @@ rev_shells() {
     echo -e "\n\nToday's Date and Time: $DATE \nUser's Name: $USER \nIP and Port used: $chosen_ip:$chosen_port \nProgram Name: Reverse shell gen" >> "$log/ReverseShells.log"
     wait_and_return
 }
-
+# Class: PAYLOADS - Tools: Ransomware - Option 3
+# Function to create ransomware scripts
+# The user can choose between two ransomware scripts
+# The first script encrypts the home directory and all subdirectories for Linux or Windows
+# The second script encrypts the Linux file system root, home, mnt, media, opt, and all subdirectories
+# The script will prompt the user for the choice of ransomware script
+# If the user chooses the first script, it will create a Golang script to encrypt the home directory
+# If the user chooses the second script, it will create a quick and dirty script
+# The script will also log the date, time, user name, and script run information
+# to RansomwareShell.log
+# The script will handle invalid input and prompt the user to try again
+# The script will also display a frame with the title "Ransomware Shell Options"
+# The script will wait for the user to press a key before returning to the main menu
 ransomware_shell_options() {
     A="$ap Ransomware ==> ${x}"
     clear && payloads_ransomware_frame
@@ -906,7 +1049,8 @@ ransomware_shell_options() {
         exit 3
     fi
 }
-
+# Class: PAYLOADS - Tools: Ransomware in Go - Option 3-A
+# Function to create a ransomware script in Go
 ransomware_in_go() {
     A="$ap Ransomware ==> ${x}"
     file="$RansomEncryptGo"
@@ -1003,6 +1147,29 @@ ransomware_in_go() {
 }
 
 # Class: PAYLOADS - Tool: Ransomware encrypt/decrypt script - Option 3
+# Function to create a ransomware script that encrypts files with bash
+# The script will prompt the user for a password to encrypt the self-generating key
+# The user will also be prompted for an email address for the victim to respond to for the decryption key
+# The script will use openssl to decrypt the ransomware templates
+# The decrypted templates will be processed to replace placeholders with the user's input
+# The final scripts will be saved in the Malware directory as "ransom_quick_and_dirty" and "ransom_nice_and_clean"
+# The script will also log the date, time, user name, password used for key encryption, and email used for victim response
+# to ransom_quick_dirty.log and ransom_nice_clean.log
+# The script will handle invalid input and prompt the user to try again
+# The script will also display a frame with the title "Ransomware Quick and Dirty"
+# The script will wait for the user to press a key before returning to the main menu
+# The script will create two temporary files for the ransomware and decryption scripts
+# The ransomware script will encrypt the user's files and demand a ransom for the decryption key
+# The decryption script will allow the victim to decrypt their files using the provided key
+# The ransomware script will be compiled using shc to create an executable
+# The decryption script will also be compiled using shc to create an executable
+# The final scripts will be ready for distribution to the target
+# The script will also handle the case where the user does not have openssl installed
+# and prompt them to install it
+# The script will also handle the case where the user does not have base32hex, base64, or base32plain installed
+# and prompt them to install it
+# The script will also handle the case where the user does not have shc installed
+# and prompt them to install it
 ransomware_quick_dirty() {
     A="$ap Ransomware ==> ${x}"
     file="$RansomEncrypt"
@@ -1046,6 +1213,13 @@ ransomware_quick_dirty() {
 }
 
 # Class:PAYLOADS - Tool:Multi reverse shell option script - Option 4 (wrapper used)
+# Function to create multiple reverse shells
+# The script will prompt the user for the IP address and port number to use
+# It will use openssl to decrypt the multi reverse shell template
+# The decrypted template will be processed to replace placeholders with the chosen IP and port
+# The final script will be saved in the Malware directory as "MultiRevShell"
+# The script will also log the date, time, user name, and script run information
+# to MultiReverseShell.log
 rev_shells_all() {
     file="$make_shells_bin"
     trap 'rm -f $file' SIGQUIT SIGILL SIGTERM SIGHUP
@@ -1070,6 +1244,20 @@ rev_shells_all() {
 }
 
 # Class: PAYLOADS - Tool: no touch disk payload - Option 5
+# Function to create a no touch disk payload script
+# The script will prompt the user for the HTTP/HTTPS protocol, host address, and script name
+# It will use openssl to decrypt the no touch disk template
+# The decrypted template will be processed to replace placeholders with the user's input
+# The final script will be saved in the Malware directory as "no_touch_disk_payload"
+# The script will also log the date, time, user name, and script run information
+# to no-touch-payload.log
+# The script will handle invalid input and prompt the user to try again
+# The script will also display a frame with the title "No Touch Disk Payload"
+# The script will wait for the user to press a key before returning to the main menu
+# The script will create a temporary file for the no touch disk payload
+# The no touch disk payload will grab a script from a specified host and run it in memory
+# The no touch disk payload will be compiled using shc to create an executable
+# The final script will be ready for distribution to the target
 no_touch_script() {
     A="$ap No Touch Disk ==> ${x}"
     file="$NoTouchScript"
@@ -1101,6 +1289,13 @@ no_touch_script() {
 }
 
 # Class: PAYLOADS - Tool: destroy this computer - Option 6
+# Function to create a script that will destroy the computer it is run on
+# The script will prompt the user for confirmation before creating the destructive script
+# The script will use openssl to decrypt the destroy computer template
+# The decrypted template will be processed to replace placeholders with the user's input
+# The final script will be saved in the Malware directory as "CAUTION_DESTROY_COMPUTER"
+# The script will also log the date, time, user name, and script run information
+# to destroy_computer.log
 destroy_computer() {
     A="$ap Destroy Computer ==> ${x}"
     file="$DestroyTheComputer"
@@ -1122,6 +1317,16 @@ destroy_computer() {
 }
 
 # Class: PAYLOADS - Tool: DoS Bomb Attack - Option 7 (Wrapper used)
+# Function to create a DoS Bomb Attack script
+# The script will prompt the user for confirmation before creating the DoS Bomb Attack script
+# The script will use openssl to decrypt the DoS Bomb Attack template
+# The decrypted template will be processed to replace placeholders with the user's input
+# The final script will be saved in the Malware directory as "DOS_Bomb_Attack"
+# The script will also log the date, time, user name, and script run information
+# to dos_bomb_attack.log
+# The script will handle invalid input and prompt the user to try again
+# The script will also display a frame with the title "DoS Bomb Attack"
+# The script will wait for the user to press a key before returning to the main menu
 dos_bomb_attack() {
     A="$ap DOS Attack ==> ${x}"
     payloads_dosbomb_frame
@@ -1140,6 +1345,16 @@ dos_bomb_attack() {
 }
 
 # Class: PAYLOADS - Tool: SSH Attack - Option 8 (Wrapper used)
+# Function to create an SSH Attack script
+# The script will prompt the user for confirmation before creating the SSH Attack script
+# The script will use openssl to decrypt the SSH Attack template
+# The decrypted template will be processed to replace placeholders with the user's input
+# The final script will be saved in the Malware directory as "SSH_Attack"
+# The script will also log the date, time, user name, and script run information
+# to ssh_attack.log
+# The script will handle invalid input and prompt the user to try again
+# The script will also display a frame with the title "SSH Attack"
+# The script will wait for the user to press a key before returning to the main menu
 ssh_attack() {
     payloads_sshattack_frame
     sleep 5
@@ -1153,6 +1368,7 @@ ssh_attack() {
 }
 
 # Class: PAYLOADS - Tool: metasploit (msfvenom) shell creater - Option 9 (Wrapper used)
+# Function to create a metasploit payload using msfvenom
 msf_payloads() {
     payloads_msf_frame
     sleep 5
@@ -1163,6 +1379,12 @@ msf_payloads() {
 }
 
 # Class: PAYLOADS - Tool: APK Builder (msfvenom) - Option A (Wrapper used)
+# Function to create an Android APK payload using msfvenom
+# The script will prompt the user for the connection type, connection method, IP address, port number, and APK app name
+# The script will use msfvenom to create the APK
+# The final APK will be saved in the current directory with the specified app name
+# The script will also log the date, time, user name, and script run information
+# to apk_builder.log
 apk_killer() {
     clear
     A="$ap APK Builder ==> ${x}"
@@ -1209,6 +1431,14 @@ apk_killer() {
 ################################# POST EXPLOIT TOOLS ###############################
 
 # Class: POST EXPLOIT - Tools: Check if VM - Option 1
+# Function to check if the system is running in a virtual machine
+# The script will check various system files and DMI information to determine if the system is a VM
+# If a VM is detected, the user will be prompted to exit or stay
+# The script will also log the date, time, user name, and script run information
+# to check_vm.log
+# The script will handle invalid input and prompt the user to try again
+# The script will also display a frame with the title "Check For VM"
+# The script will wait for the user to press a key before returning to the main menu
 check_vm() {
     A="$ax Check For VM ==> ${x}"
     clear
@@ -1273,6 +1503,11 @@ check_vm() {
 }
 
 # Class: POST EXPLOIT - Tool: Web Browser Info Stealer - Option 2 (Wrapper used)
+# Function to steal browser data
+# The script will use a wrapper to run the browser stealer binary
+# The browser stealer binary will extract sensitive information from the user's web browsers
+# The script will also log the date, time, user name, and script run information
+# to browser_data_stealer.log
 browser_data_wrapper() {
     clear
     postx_browserthief_frame
@@ -1283,6 +1518,13 @@ browser_data_wrapper() {
 }
 
 # Class: POST EXPLOIT - Tool: Crypto Finder - Option 3
+# Function to search for cryptocurrency wallet data
+# The script will prompt the user for a scan type (default or custom)
+# If the user chooses default, it will search common browser locations for wallet data
+# If the user chooses custom, it will prompt for a file path to scan
+# The script will use grep to search for known cryptocurrency wallet patterns
+# The script will also log the date, time, user name, and script run information
+# to crypto_finder.log
 crypto_catch() {
     A="$ax Crypto Search ==> ${x}"
     clear
@@ -1394,6 +1636,12 @@ crypto_catch() {
 }
 
 # Class: POST EXPLOIT - Tool: File Permissions Exploit - Option 4
+# Function to check for privilege escalation exploits using GTFOBins
+# The script will check for files with SUID enabled in the user's PATH directories
+# It will fetch the list of GTFOBins entries and compare them with the found files
+# If any matches are found, it will display the potential privilege escalation exploits
+# The script will also log the date, time, user name, and script run information
+# to GTFOB.log
 check_gtfob() {
     clear
     postx_filex_frame
@@ -1477,6 +1725,13 @@ fi
 }
 
 # Class: POST EXPLOIT - Tool: Kernel Exploit - Option 5 (Wrapper Used)
+# Function to check for Linux kernel exploits
+# The script will use a wrapper to run the Linux exploit checker binary
+# The Linux exploit checker will check for kernel vulnerabilities and userland vulnerabilities
+# The script will prompt the user for options to check kernel vulnerabilities, userland vulnerabilities, or both
+# The script will also prompt the user for options to list other security-related issues and to download exploit scripts
+# The script will log the date, time, user name, and script run information
+# to linux_exploit_checker.log
 linux_exploits_check() {
     A="$ax Linux Exploit Check ==> ${x}"
     file="$linux_exploit_checker_bin"
@@ -1562,6 +1817,11 @@ linux_exploits_check() {
 }
 
 # Class: POST EXPLOIT - Tool: Command on start up - Option 6
+# Function to append a command to be executed at system startup
+# The script will prompt the user for a command to run at startup
+# The command will be encoded in base64 and appended to /etc/rc.local
+# The script will also log the date, time, user name, and script run information
+# to embed_command_on_start.txt
 startup_command() {
     A="$ax Command On Start ==> ${x}"
     clear
@@ -1582,6 +1842,13 @@ startup_command() {
 }
 
 # Class: POST EXPLOIT - Tool: Brute force archive - Option 7
+# Function to brute force password-protected archives (zip, rar, 7z)
+# The script will prompt the user for a dictionary file and an archive file
+# It will use John the Ripper or unzip/rar/7z commands to attempt to crack the password
+# If John the Ripper is not available, it will use a brute force method
+# The script will log the results to respective files in the Loot directory
+# The script will also log the date, time, user name, and script run information
+# to password_bruteforce.log
 brute_force_file() {
     A="$ae Archive Brute Forcer ==> ${x}"
     clear
@@ -1653,6 +1920,12 @@ brute_force_file() {
 }
 
 # Class: POST EXPLOIT - Tool: Files of interest - Option 8 (Wrapper Used)
+# Function to find files of interest 
+# The script will use a wrapper to run the files of interest binary
+# The files of interest binary will search for files that may contain sensitive information
+# The script will copy the found information to a designated directory (Loot)
+# The script will log the date, time, user name, and script run information
+# to files_of_interest.log
 files_of_interest() {
     clear
     postx_foi_frame
@@ -1672,6 +1945,15 @@ files_of_interest() {
     wait_and_return
 }
 # Class: POST EXPLOIT - Tool: Rootkits Option 9 (WRAPPER USED)
+# Function to deploy rootkits
+# The script will use a wrapper to run the rootkit deployment binary
+# The rootkit deployment binary will allow the user to choose from a list of available rootkits
+# The script will prompt the user to read the README files for userland and kernel rootkits
+# The script will log the date, time, user name, and script run information
+# to rootkit_deployment.log
+# The script will also provide options to deploy or read the README files
+# The script will also provide options to pick a rootkit to deploy on the system
+# The script will also provide options to exit or return to the main menu
 deploy_rootkit() {
     A="$ax Rootkit ==> ${x}"
     postx_rootkit_frame
@@ -1719,7 +2001,14 @@ deploy_rootkit() {
     deploy_or_read
     wait_and_return
 }
-
+# Class: POST EXPLOIT - Tool: In Memory Password Stealer - Option 10
+# Function to steal passwords from memory using mimipenguin
+# The script will clone the mimipenguin repository, compile it, and run it to extract passwords
+# The script will prompt the user to delete the evidence after running
+# The script will log the date, time, user name, and script run information
+# to inmem_password_stealer.log
+# The script will also provide options to delete the evidence after running
+# The script will also provide options to exit or return to the main menu   
 inmem_password_stealer() {
     A="$ax Mem-Passwd-Stealer ==> ${x}"
     postx_inmem_frame
@@ -1738,6 +2027,12 @@ inmem_password_stealer() {
 ############################# ETC ##########################################
 
 # Class: ETC - Tool: Users and Shells - Option 1 (AWK)
+# Function to list users and their login shells
+# The script will read the /etc/passwd file and filter users with login shells
+# It will display the users and their respective shells
+# The script will log the output to users_and_shells.txt in the Loot directory
+# The script will also log the date, time, user name, and script run information
+# to users_and_shells.log
 users_and_shells() {
 clear
 etc_usershells_frame
@@ -1755,7 +2050,12 @@ BEGIN {
 wait_and_return
 }
 
-    # Class: ETC - Tool: Python Web server - Option 2
+# Class: ETC - Tool: Python Web server - Option 2
+# Function to start a simple HTTP server using Python
+# The script will prompt the user for a port number to use for the server
+# It will start the server in the background and allow the user to stop it with a command
+# The script will log the server start and stop times, user name, and script run information
+# to pythonserver.log
 py_web_server() {
     A="$ae WebServer ==> ${x}"
     clear
@@ -1794,6 +2094,12 @@ py_web_server() {
 }
 
 # Class: ETC - Tool: File Extractor - Option 3
+# Function to extract files from various archive formats
+# The script will prompt the user for the archive file path
+# It will check the file type and use the appropriate command to extract it
+# The script will log the extraction process to a file in the Loot directory
+# The script will also log the date, time, user name, and script run information
+# to file_extractor.log
 extract_arch() {
     A="$ae File Extract ==> ${x}"
     clear
@@ -1829,6 +2135,11 @@ extract_arch() {
 }
 
 # Class: ETC - Tool: openssl helper - Option 4 (Wrapper Used)
+# Function to run OpenSSL helper script
+# The script will use a wrapper to run the OpenSSL helper binary
+# The OpenSSL helper binary will provide various OpenSSL-related functionalities
+# The script will log the date, time, user name, and script run information
+# to openssl_helper.log
 r_b_g_wrapper() {
     clear
     etc_openssl_frame
@@ -1839,6 +2150,11 @@ r_b_g_wrapper() {
 }
 
 # Class: ETC - Tool: Gpg Look a like - Option 5 (Wrapper Used)
+# Function to run GPG lookalike wrapper
+# The script will use a wrapper to run the GPG lookalike binary
+# The GPG lookalike binary will provide functionalities similar to GPG
+# The script will log the date, time, user name, and script run information
+# to gpg_lookalike.log
 gpg_lookalike_wrapper() {
     clear
     etc_secret_frame
@@ -1849,6 +2165,12 @@ gpg_lookalike_wrapper() {
 }
 
 # Class: ETC - Tool: Create exe Binary - Option 6
+# Function to create a binary executable from a shell script
+# The script will prompt the user for the shell script path and the new binary name
+# It will use the shc tool to compile the script into a binary executable
+# The script will log the creation process to a file in the Loot directory
+# The script will also log the date, time, user name, and script run information
+# to create_binary.log
 create_exe_binary() {
     A="$ae Create Binary ==> ${x}"
     clear
@@ -1878,6 +2200,12 @@ create_exe_binary() {
 }
 
 # Class: ETC - Tool: Post exploit tools to go - Option 7
+# Function to create a zip file of post-exploit tools
+# The script will prompt the user to confirm the creation of the zip file
+# It will use OpenSSL to decrypt the zip file and then create a zip file containing various post-exploit tools
+# The script will log the creation process to a file in the Loot directory
+# The script will also log the date, time, user name, and script run information
+# to post_exploit_tools.log
 post_x_2_go() {
     A="$ae Post Exploit 2 GO ==> ${x}"
     file="$zip2go"
@@ -1896,6 +2224,14 @@ post_x_2_go() {
 }
 
 # Class: ETC - Tool: Array Encrypted Script - Option 8
+# Function to create an array encrypted script
+# The script will prompt the user for a command to convert into an array format
+# It will convert each letter of the command into an array index using uppercase and lowercase arrays
+# The script will create a new script file with the converted command
+# The script will also prompt the user for a final script name
+# The script will log the creation process to a file in the Malware directory
+# The script will also log the date, time, user name, and script run information
+# to array_encrypted_script.log
 array_enc_script() {
 clear
 etc_array_frame
@@ -1953,65 +2289,12 @@ echo -e "\n\e[35mScript is located at: $Malware/$name\e[0m"
 wait_and_return
 }
 
-# Class: ETC - Tool: Array Encrypted Script - Option 8
-array_enc_script() {
-    A="$ae Array Encrypt Script ==> ${x}"
-    clear
-    etc_array_frame
-    # Define uppercase and lowercase arrays
-    UF=( A B C D E F G H I J K L M N O P Q R S T U V W X Y Z )
-    LF=( a b c d e f g h i j k l m n o p q r s t u v w x y z )
-    # read command to convert
-    echo -ne "\e[36mEnter a command to convert:\e[0m "
-    read -r -p "${c} ${A} ${x}" command
-    # ask user for final script name
-    echo -ne "\e[36mEnter a final script name:\e[0m "
-    read -r -p "${c} ${A} ${x}" name
-    # convert each letter of $command to a array index
-    result=""
-    for (( i=0; i<${#command}; i++ )); do
-        char="${command:$i:1}"
-        # Convert to array index
-        if [[ "$char" =~ [A-Z] ]]; then
-            index=$(printf "%d" "'$char")
-            index=$((index - 65))
-            result+="\${UF[$index]}"
-        elif [[ "$char" =~ [a-z] ]]; then
-            index=$(printf "%d" "'$char")
-            index=$((index - 97))
-            result+="\${LF[$index]}"
-        else
-            # Preserve spaces, dots, etc. directly
-            result+="$char"
-        fi
-    done
-
-    echo -e "\n\e[35m ${A} Converted:\e[0m"
-    # create the script.sh with the arrays
-    cat << 'EOF' > script.sh
-    #!/bin/bash
-
-    UF=( A B C D E F G H I J K L M N O P Q R S T U V W X Y Z )
-    LF=( a b c d e f g h i j k l m n o p q r s t u v w x y z )
-
-    eval "XXXXX"
-EOF
-    # cat the script.sh into a variable and replace eval "XXXXX" with eval "command" in array form
-    template=$(cat script.sh | awk -v x="$result" '{gsub(/XXXXX/, x); print}')
-    # echo the array correct script
-    echo "$template" > script2.sh
-    rm -f script.sh
-    mv script2.sh "$Malware/script.sh"
-    chmod 777 "$Malware/script.sh"
-    echo -e "\n\e[34mDo you want to create a unreadable binary script ? y/n\e[0m"
-    read -r -p "${p} y=yes n=no ${c} ${A} ${x}" ans
-    [[ "$ans" =~ [Yy] ]] && shc -r -f "$Malware/script.sh" -o "$Malware/$name" && \
-     rm -f "$Malware/script.sh" "$Malware/script.sh.x.c" || \
-     mv "$Malware/script.sh" "$Malware/$name" && rm -f "$Malware/script.sh";
-    echo -e "\n\e[35mScript is located at: $Malware/$name\e[0m"
-    wait_and_return
-}
-
+# Class: ETC - Tool: Log Cleaner - Option 9 (Wrapper Used)
+# Function to run the log cleaning tool
+# The script will use a wrapper to run the log cleaning binary
+# The log cleaning binary will provide functionalities to clean logs
+# The script will log the date, time, user name, and script run information
+# to log_cleaner.log
 log_cleaning_tool() {
     clear
     export CSTK_MAIN_RUNNER=1
@@ -2026,7 +2309,7 @@ check_root
 # Script needs 2 arguements to run
 # If no arguemets then start in GUI mode
 
-
+#
 if [[ $# -ne 2 ]]; then
     if [[ $# -eq 1 ]] && [[ $1 =~ [-h|-H|-help|-HELP] ]]; then
         show_help
