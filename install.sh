@@ -6,8 +6,8 @@
 R=$'\e[1;31m' # red
 G=$'\e[1;32m' # green
 Y=$'\e[1;33m' # yellow
-C='\033[1;36m' # cyan
-RE='\033[0m' # reset
+C=$'\e[1;36m' # cyan
+RE=$'\e[0m' # reset
 home_dir="$PWD"
 # Function to check if the script is run as root
 # If not, it will prompt for the password and re-run the script with sudo.
