@@ -15,7 +15,7 @@ home_dir="$PWD"
 need_root() {
     if [[ "$EUID" -ne 0 ]]; then
         echo "Enter Password"
-        sudo bash -c "${BASH_SOURCE[0]}" 
+        sudo bash -c "${BASH_SOURCE[0]}"
     fi
 }
 # Function to check the current Bash version
@@ -61,7 +61,7 @@ keep_sudo_alive() {
         sudo -v
         sleep 300
     done
-
+    
 }
 
 # Function to create a symbolic link for the main script
@@ -98,7 +98,7 @@ make_dir() {
     MALWARE="${home_dir}/Bank/Malware"
     KEYS="{$home_dir}/etc/keys"
     folders=( "$LOOT" "$MALWARE" "$KEYS" )
-
+    
     for dir in "${folders[@]}"; do
         if [[ ! -d "$dir" ]]; then
             mkdir -p "$dir"
@@ -130,38 +130,38 @@ install_dependencies() {
             printf "\b\b\b\b\b\b"
         done
     }
-
+    
     local required_commands=(
         whiptail seclists hydra medusa ncrack john hashcat crackmapexec cewl basez
         build-essential gcc libc6-dev golang metasploit-framework bc cargo git npm
         coreutils python3 python3-pip openssl curl jq grep fzf autoconf xxd tar
         rlwrap bzip2 netcat-openbsd unrar gzip unzip dpkg 7zip nmap whois sublist3r
-        sqlmap nikto whatweb gobuster wpscan aria2c dirb nasm openssl apktool nrich 
-        exploitdb make openssh-client openssh-server wafw00f sublist3r 
-         
+        sqlmap nikto whatweb gobuster wpscan aria2 dirb nasm openssl apktool nrich
+        exploitdb make openssh-client openssh-server wafw00f sublist3r
+        
     )
-
+    
     # Append extra args
     [[ $# -gt 0 ]] && required_commands+=("$@")
-
     
-
+    
+    
     echo -e "${Y}🔧 Installing dependencies...${RE}"
-
+    
     # Detect OS package manager
     if command -v apt &>/dev/null; then
         manager="apt"
         install_cmd="apt install -y -qq"
         check_cmd="dpkg -s"
-    elif command -v yum &>/dev/null; then
+        elif command -v yum &>/dev/null; then
         manager="yum"
         install_cmd="yum install -y"
         check_cmd="rpm -q"
-    elif command -v dnf &>/dev/null; then
+        elif command -v dnf &>/dev/null; then
         manager="dnf"
         install_cmd="dnf install -y"
         check_cmd="rpm -q"
-    elif command -v brew &>/dev/null; then
+        elif command -v brew &>/dev/null; then
         manager="brew"
         install_cmd="brew install"
         check_cmd="brew list"
@@ -169,7 +169,7 @@ install_dependencies() {
         echo -e "${R}❌ No supported package manager found!${RE}"
         exit 1
     fi
-
+    
     for pkg in "${required_commands[@]}"; do
         if $check_cmd "$pkg" &>/dev/null; then
             echo -e "${G}[✔] $pkg already installed.${RE}"
@@ -204,9 +204,15 @@ install_shc() {
         autoreconf -fiv  # Ensures correct configuration
         ./configure
         make && make install
+        if [[ $? -eq 0 ]]; then
+            echo -e "${G}[✔] shc installed successfully.${RE}"
+        else
+            echo -e "${R}[!] Failed to install shc. Please check the output for errors.${RE}"
+            exit 1
+        fi
         popd || return
     else
-        echo -e "${G}shc is already installed.${RE}"
+        echo -e "${G}[✔] shc is already installed.${RE}"
     fi
 }
 
@@ -232,7 +238,7 @@ install_vulscan() {
 # It is important to ensure that the required dependencies are installed before running this function.
 # The function also sets up the necessary paths for Holehe to work correctly.
 # It uses base64 and base32plain to decode the password and the egg file.
-# This function is called during the installation process to ensure that Holehe is available for use.   
+# This function is called during the installation process to ensure that Holehe is available for use.
 install_holehe() {
     holehe_path="$home_dir/Malware_of_All_Types/OSINT_Email-Social"
     pw="$(echo 'RlBjWnV6SnVQNW00SWdIRmZobTNUR3dWWDdtQW1peVNjMmlUbVhLeAo=' | base64 -d)"
@@ -282,12 +288,12 @@ install_holehe() {
 # The tab completion script is located in the bin directory of the home directory.
 install_tab_completion() {
     cstk_tab_complete="${home_dir}"/bin/tab_complete.cstk
-    rc="/root/.bashrc" 
+    rc="/root/.bashrc"
     if ! grep -q 'tab_complete.cstk' "$rc"; then
         echo -e "{C}Tab completion is available! To enable it, add a 'source' command to $rc."
         echo -e "${G}1 - Add it now\n${Y}2 - I'll add it manually\n${R}3 - No tab completion${RE}"
         read -r -p "Enter 1, 2, or 3: " opt
-
+        
         case "$opt" in
             1) echo "source $cstk_tab_complete" >> "$rc" && echo -e "${G}Added to $rc.${RE}" ;;
             2) echo -e "${Y}Manually add:${R} source $cstk_tab_complete ${RE}" ;;
@@ -310,7 +316,7 @@ install_tab_completion() {
 create_wrapper() {
     BIN_DIR="${home_dir}/bin"
     WRAPPER_PATH="/usr/local/bin/cstk_wrapper"
-
+    
     if [[ ! -f "$WRAPPER_PATH" ]]; then
         {
             echo '#!/bin/bash'
@@ -324,7 +330,7 @@ create_wrapper() {
             echo '    exec env -i PATH="$PATH" "$@"'
             echo 'fi'
         } > "$WRAPPER_PATH"
-
+        
         # Verify wrapper creation
         if [[ -f "$WRAPPER_PATH" ]]; then
             chmod 500 "$WRAPPER_PATH"
@@ -355,28 +361,31 @@ create_wrapper() {
 breached_parser() {
     data="${home_dir}/data"
     TORRENT_FILE="magnet:?xt=urn:btih:7ffbcd8cee06aba2ce6561688cf68ce2addca0a3&dn=BreachCompilation&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fglotorrents.pw%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337"
-
+    
     if ! [[ -d "$data" ]]; then
         local space_available=$(df --output=avail -BG . | tail -n 1 | grep -o '[0-9]\+')
         if (( space_available < 42 )); then
             echo -e "${R}Insufficient space. Need at least 42GB. Exiting.${RE}"
             return
         fi
-
+        
         echo -e "${C}Do you want to Download 42GB BreachCompilation compromised email/password lists ? (Y/N) ${RE}"
         read -r -n 1 ans
         echo
         [[ "$ans" =~ [Nn] ]] && return
-
+        
         if ! command -v aria2c &>/dev/null; then
-                install_dependencies "aria2"
+            echo -e "${C}Installing aria2...${RE}"
+            # Install aria2 if not already installed
+            install_dependencies "aria2"
         fi
-
+        echo -e "${C}Downloading BreachCompilation data...\nThis will take around two hours depending on internet connection\nPlease fill free to do other stuff as needed.${RE}"
+        read -r -p "Press Enter to continue..."
         aria2c --dir="${home_dir/}" --seed-time=0 "$TORRENT_FILE"
-
+        
         if [ -d "${home_dir}/BreachCompilation" ] && [ -d "{$home_dir}/BreachCompilation/data" ]; then
-                mv "${home_dir}/BreachCompilation/data" "${home_dir}"
-                rm -rf "${home_dir}/BreachCompilation" &> /dev/null
+            mv "${home_dir}/BreachCompilation/data" "${home_dir}"
+            rm -rf "${home_dir}/BreachCompilation" &> /dev/null
         fi
     fi
 }
@@ -408,8 +417,8 @@ set_hashes() {
 # and others have no permissions.
 # This is important for security and to ensure that only authorized users can access the directories.
 finish_setup() {
-        chmod 750 /usr/local/bin/cstk_wrapper
-        find "$home_dir" -type d -exec chmod 750 {} \;
+    chmod 750 /usr/local/bin/cstk_wrapper
+    find "$home_dir" -type d -exec chmod 750 {} \;
 }
 
 # Main script execution starts here
