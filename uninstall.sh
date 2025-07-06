@@ -10,10 +10,20 @@ check_root() {
 
 remove_shc() {
 	# Remove the shc directory and its contents
-	if [ -d /opt/cstk ] && [ -e /opt/cstk/shc ]; then
-		rm -rf /opt/cstk &>/dev/null
+	if [ -d /opt/cstk/shc ]; then
+		rm -rf /opt/cstk/shc &>/dev/null
 		if [ -f /usr/local/bin/shc ]; then
 			rm -rf /usr/local/bin/shc &>/dev/null
+		fi
+	fi
+}
+
+remove_holehe() {
+	# Remove the holehe directory and its contents
+	if [ -d /opt/cstk/holehe ]; then
+		rm -rf /opt/cstk/holehe &>/dev/null
+		if [ -f /usr/local/bin/holehe ]; then
+			rm -rf /usr/local/bin/holehe &>/dev/null
 		fi
 	fi
 }
@@ -28,39 +38,22 @@ remove_all() {
 	rm -- "$0" &>/dev/null
 }
 
-remove_links() {
-	# Remove symbolic links created by the script
-	if [ -L /usr/local/bin/cstk_wrapper ]; then
-		rm -f /usr/local/bin/cstk_wrapper &>/dev/null
-	fi
-	if [ -L /usr/local/bin/cstk ]; then
-		rm -f /usr/local/bin/cstk &>/dev/null
-	fi
-	echo "All symbolic links have been removed."
-}
-
 delete_script() {
 	# Prompt user for confirmation before uninstalling
-	echo -e "1 - Remove Soft Links only \n2 - Remove all \n"
-    read -r -n 1 -p "==> " ans
-    if [[ "$ans" -eq 2 ]]; then
+	echo -e "Are you sure you want to delete the CyberSecurityToolKit program?  y/n \n"
+    read -r -p "Type a 'Y' or 'y' for yes Type a 'N' or 'n' for 'no'  ==> " ans
+    if [[ "$ans" =~ [Yy] ]]; then
         echo "Uninstalling CyberSecurityToolKit..."
 		sleep 3
 		remove_links
 		remove_shc
+		remove_holehe
 		remove_all
 		echo -e "\nCyberSecurityToolKit has been uninstalled successfully."
 		echo "Thank you for using CyberSecurityToolKit!"
 		exit 0
-	elif [[ "$ans" -eq 1 ]]; then
-		echo "Uninstalling CyberSecurityToolKit Links..."
-		sleep 3
-		remove_links
-		echo -e "\nCyberSecurityToolKit links have been removed successfully."
-		echo "Thank you for using CyberSecurityToolKit!"
-		exit 0
-	else
-		echo "Incorrect option"
+	else 
+		echo "I am glad you changed your mind. CyberSecurityToolKit will not be uninstalled."
 		exit
 	fi
 }

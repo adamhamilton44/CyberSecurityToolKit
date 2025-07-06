@@ -226,45 +226,30 @@ install_vulscan() {
 # This function checks if pip is installed and then attempts to install Holehe using pip.
 # If the installation fails, it clones the Holehe repository from GitHub into a specified directory
 # and installs it from there.
-# It also handles the case where the installation is done from a pre-compiled egg file.
-# The function uses OpenSSL to decrypt the egg file if necessary.
-# It is important to ensure that the required dependencies are installed before running this function.
-# The function also sets up the necessary paths for Holehe to work correctly.
-# It uses base64 and base32plain to decode the password and the egg file.
-# This function is called during the installation process to ensure that Holehe is available for use.
 install_holehe() {
-    holehe_path="${home_dir}/Malware_of_All_Types/OSINT_Email-Social"
-    pw="$(echo 'RlBjWnV6SnVQNW00SWdIRmZobTNUR3dWWDdtQW1peVNjMmlUbVhLeAo=' | base64 -d)"
-    pw2="$(echo 'IFCECTKBIRAU2QKEJVAU2RCBJVCECRCNIFGUITKBIRGUCTKEJVCE2QKEJVAU2RCLIFCEWQKOJNAU4QKLIRHECS2EJZFUCTSBIRAUSRCBJFHUISCJIRHUQQKPJFEEISKPJBAU6SKBJBCE6SKIIREU6QJTGMZAU===' | base32plain -d)"
+    holehe_dir="/opt/cstk"
     if command -v pip &> /dev/null; then
+        if ! command -v holehe &> /dev/null; then
+            echo -e "${C}Installing Holehe...${RE}"
+        else
+            echo -e "${G}[+] Holehe is already installed.${RE}"
+            return
+        fi
         pip install holehe &> /dev/null
         status=$?
         if [[ "$status" != 0 ]]; then
-            mkdir -P "$holehe_path" &>/dev/null
-            pushd "$holehe_path" || return &> /dev/null
-            git clone https://github.com/megadose/holehe.git &> /dev/null
-            cd holehe &> /dev/null || return
-            status=$?
-            popd || return &>/dev/null
-            if [[ "$status" != 0 ]]; then
-                openssl enc -d -aes-256-cbc -salt -pbkdf2 -in "${holehe_path}/holehe.enc" -out "${holehe_path}/holehe-1.61-py3.12.egg.zip" -pass pass:"$pw2"
-                unzip -P "$pw" "${holehe_path}/holehe-1.61-py3.12.egg.zip"
-                if [ -d /usr/local/lib/python3.12/dist-packages/ ]; then
-                    mv "${holehe_path:?}/holehe-1.61-py3.12.egg" /usr/local/lib/python3.12/dist-packages
-                    mv "${holehe_path:?}/usr/local/bin/holehe" /usr/local/bin/holehe
-                    rm -rf "${holehe_path:?}/usr" "${holehe_path}/holehe-1.61-py3.12.egg.zip"
-                else
-                    python_version="$(find /usr/local/lib/ -type d -iname 'python3.*')"
-                    mv "${holehe_path}/holehe-1.61-py3.12.egg" "$python_version/dist-packages"
-                    mv "${holehe_path}/usr/local/bin/holehe" /usr/local/bin/holehe
-                    rm -rf "${holehe_path:?}/usr" "${holehe_path}/holehe-1.61-py3.12.egg.zip"
-                fi
-            else
-                python3 setup.py install &> /dev/null
-                cd ../ &> /dev/null || return
-                rm -rf holehe &> /dev/null
-            fi
+            echo -e "${R}Failed to install Holehe using pip. Cloning repository...${RE}"
+            mkdir -p "$holehe_dir" && cd "$holehe_dir" || return
+            git clone https://github.com/megadose/holehe.git
+            cd holehe/
+            python3 setup.py install
         fi
+    else
+        echo -e "${R}[-] pip is not installed. Attempting to install Holehe from source...${RE}"
+        mkdir -p "$holehe_dir" && cd "$holehe_dir" || return
+        git clone https://github.com/megadose/holehe.git
+        cd holehe/
+        python3 setup.py install
     fi
 }
 
