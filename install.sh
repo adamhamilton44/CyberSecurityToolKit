@@ -9,10 +9,10 @@ Y=$'\e[1;33m' # yellow
 C=$'\e[1;36m' # cyan
 RE=$'\e[0m' # reset
 # 📌 Get absolute path to script and its directory
-script_path="$(realpath "$0")"
-home_dir="$(dirname "$script_path")"      # Full path to the folder
+home_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # Full path to the script
+# 📌 Set base directory and expected directory name
 base_dir="$(basename "$home_dir")"        # Just the folder name
-expected_dir="CyberSecurityToolKit"       # What we expect the folder to be
+expected_dir="CyberSecurityToolKit"       # Where we expect the folder/file to be
 # Function to check if the script is run as root
 # If not, it will prompt for the password and re-run the script with sudo.
 # This is necessary for installing packages and creating directories in system locations.
@@ -376,11 +376,15 @@ breached_parser() {
         echo -e "${C}Downloading BreachCompilation data...\nThis will take around two hours depending on internet connection\nPlease fill free to do other stuff as needed.${RE}"
         read -r -p "Press Enter to continue..."
         aria2c --dir="${home_dir/}" --seed-time=0 "$TORRENT_FILE"
-        if [[ -d "${home_dir}/BreachCompilation" ]] && [[ -d "${home_dir}/BreachCompilation/data" ]]; then
-           mv BreachCompilation/data "${home_dir}/data"                     
-           if [[ -d "${home_dir}data" ]]; then                 
+        while [[ ! -d "${home_dir}/BreachCompilation" ]]; do
+            sleep 5
+        done
+        if [[ -d "${home_dir}/BreachCompilation" ]]; then
+            mv "${home_dir}/BreachCompilation/data" "${home_dir}/data"
+            sleep 30
+            if [[ -d "${home_dir}data" ]]; then                 
                rm -rf BreachCompilation 
-           fi                                                   
+           fi                                                  
        fi 
         
     fi
@@ -435,6 +439,7 @@ install_shc
 install_vulscan
 # Install Holehe
 install_holehe
+# Check the current working directory again
 check_working_dir
 # Install tab completion for CSTK
 install_tab_completion
