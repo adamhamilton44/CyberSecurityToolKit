@@ -355,7 +355,6 @@ clear
 logo_main2
 check_root
 check_hash
-user_create_password
 echo -e "\n
 $g
 \t\t\t        Enter Class Number: \n\n $b
@@ -2318,7 +2317,8 @@ if [[ $1 =~ [-h|-H|-help|-HELP] ]]; then
 fi
 if [[ $# -ne 2 ]]; then
     header
-    main_menu    
+    user_create_password
+    main_menu
 fi
 # Parse the first argument (class)
 
