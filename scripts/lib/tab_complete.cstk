@@ -1,0 +1,75 @@
+# bash completion for cstk                                                      -*- shell-script -*-
+# shellcheck shell=bash
+
+_cstk_completion() {
+    local cur prev opts cmd_opts
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # First-level options (long and short)
+    opts="--osint --payload --postx --etc --help --version --tty --check-updates --update -O -P -X -E -V -H -T -C -U"
+
+    # If user typed a compact short form like "-Op" (no space),
+    # detect and offer completions for the trailing characters.
+    if [[ "${cur}" =~ ^-([OPXE])(.+)$ ]]; then
+        local cls="${BASH_REMATCH[1]}"
+        local tail="${BASH_REMATCH[2]}"
+        case "-${cls}" in
+            -O) cmd_opts="n s f e b g m p v u h w" ;; # short options for -O
+            -P) cmd_opts="n v r p t d b s m a" ;;   # short options for -P
+            -X) cmd_opts="s i e v b c g f k" ;; # short options for -X
+            -E) cmd_opts="u w x o l e a c h z" ;;       # short options for -E
+            *) cmd_opts="" ;;
+        esac
+        # Only propose options that start with tail
+        COMPREPLY=( $(compgen -W "$cmd_opts" -- "$tail") )
+        # Transform suggestions back into compact form (e.g. -O + n => -On)
+        for i in "${!COMPREPLY[@]}"; do
+            COMPREPLY[$i]="-${cls}${COMPREPLY[$i]}"
+        done
+        return 0
+    fi
+    # Determine second-level completions based on previous token
+    case "$prev" in
+        --osint)
+            cmd_opts="--findip --sweep --nmap --enum --breached --google --email --pass --vuln --username --ssh --waf"
+            ;;
+        --payload)
+            cmd_opts="--netcat --revshell --ransom --revall --notouch --destroy --bomb --ssh --msf --apk"
+            ;;
+        --postx)
+            cmd_opts="--onstart --foi --inmemory --vm --browser --crypto --gtfo --force --kernel"
+            ;;
+        --etc)
+            cmd_opts="--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip"
+            ;;
+        --version|--help|--tty|--check-updates|--update|-V|-H|-T|-C|-U)
+            cmd_opts=""
+            ;;
+        -O)
+            cmd_opts="n s f e b g m p v u h w"
+            ;;
+        -P)
+            cmd_opts="n v r p t d b s m a"
+            ;;
+        -X)
+            cmd_opts="s i e v b c g f k"
+            ;;
+        -E)
+            cmd_opts="u w x o l e a c h z"
+            ;;
+        *)
+            cmd_opts=""
+            ;;
+    esac
+
+    if [[ ${COMP_CWORD} -eq 1 ]]; then
+        COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+    else
+        COMPREPLY=( $(compgen -W "$cmd_opts" -- "$cur") )
+    fi
+}
+
+complete -F _cstk_completion cstk
+# ex: filetype=sh

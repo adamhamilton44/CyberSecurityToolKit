@@ -1,0 +1,10 @@
+Both the Image-Bombs and Zip-Bombs files are heavely encrypted and useless without running the cstk script
+
+# Image-Bombs
+
+Contains 2 different types of picture bombs, run the cstk script, once unencrypted and the files will create a bomb attack, they will be located in the Malware folder.
+
+# Zip-Bombs
+
+Contains many types of zip bombs along with a bash script to run the zip bombs, once the script is ran in a few minutes the computer will die and at 
+least reset the operating system causing a DoS.

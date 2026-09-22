@@ -1,0 +1,18 @@
+#!/bin/bash
+
+: "${home_dir:?home_dir not set; exit 4}"
+[[ $- == *i* ]] && { echo "This script cannot be run interactively"; exit 1; }
+
+if [[ -z "${CSTK_MAIN_RUNNER:-}" ]]; then
+    echo "This option is not available."
+    exit 1
+fi
+
+export PATH="$home_dir/scripts/bin:/opt/cstk/bin:$PATH"
+exec env -i \
+    PATH="$PATH" \
+    CSTK_WRAPPER_RUNNER=1 \
+    CSTK_MAIN_RUNNER="$CSTK_MAIN_RUNNER" \
+    CSTK_ROOT="$home_dir" \
+    home_dir="$home_dir" \
+    "$@"

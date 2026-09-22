@@ -1,0 +1,22 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+    [[rules.allowlists]]
+    description = "CSTK stores only the SHA-256 verifier for its local integrity refresh key."
+    condition = "AND"
+    regexTarget = "line"
+    paths = ['''^cstk\.sh$''']
+    regexes = ['''readonly integrity_refresh_key_sha256="[0-9a-f]{64}"''']
+
+[[rules]]
+id = "private-key"
+
+    [[rules.allowlists]]
+    description = "Google Dork guides contain quoted private-key search phrases, not key data."
+    condition = "AND"
+    regexTarget = "line"
+    paths = ['''^scripts/lib/GD_(Special|Full_List)\.txt$''']
+    regexes = ['''-----BEGIN[ A-Z]*PRIVATE KEY-----''']

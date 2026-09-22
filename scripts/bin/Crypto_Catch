@@ -1,0 +1,139 @@
+#!/bin/bash
+
+set -o pipefail
+umask 077
+
+: "${home_dir:?home_dir not set; exit 4}"
+[[ $- == *i* ]] && { echo "This option is not available"; exit 2; }
+if [[ -z "${CSTK_WRAPPER_RUNNER:-}" && -z "${CSTK_MAIN_RUNNER:-}" ]]; then
+    echo "This option is unavailable under this circumstance."
+    exit 2
+fi
+
+export TERM="${TERM:-xterm-256color}"
+log_dir="$home_dir/log"
+log_file="$log_dir/crypto_catch.log"
+home="${HOME:-}"
+g="\e[34m"
+G="\e[35m"
+R="\e[36m"
+X="\e[0m"
+
+mkdir -p "$log_dir" || exit 1
+
+declare -A browser_paths
+declare -A crypto
+crypto=(
+    [BTC]='1[a-zA-HJ-NP-Z1-9]{25,29}|3[a-zA-HJ-NP-Z0-9]{25,29}|bc1[a-zA-HJ-NP-Z0-9]{25,59}'
+    [ETH]='0x[a-fA-F0-9]{40}'
+    [XMR]='4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}|8[0-9AB][1-9A-HJ-NP-Za-km-z]{93}'
+    [XRP]='r[0-9a-zA-Z]{24,34}'
+    [BCH]='1[a-km-zA-HJ-NP-Z1-9]{25,34}|3[a-km-zA-HJ-NP-Z1-9]{25,34}|q[a-z0-9]{41}|p[a-z0-9]{41}'
+    [LTC]='L[a-km-zA-HJ-NP-Z1-9]{26,33}|M[a-km-zA-HJ-NP-Z1-9]{26,33}|3[a-km-zA-HJ-NP-Z1-9]{26,33}|ltc1q[a-km-zA-HJ-NP-Z1-9]{26,59}'
+    [DOGE]='D[5-9A-HJ-NP-U][1-9A-HJ-NP-Za-km-z]{32}'
+    [ZEC]='t1[a-km-zA-HJ-NP-Z1-9]{33}'
+    [DASH]='X[1-9A-HJ-NP-Za-km-z]{33}'
+    [RON]='ronin:[a-fA-F0-9]{40}'
+    [TRX]='T[A-Za-z1-9]{33}'
+)
+
+log_result() {
+    local status line run_user
+    status="$1"
+    line="$2"
+    run_user="${SUDO_USER:-${USER:-unknown}}"
+    printf 'User Name:\t%s\nDate:\t%s\nSTATUS:\t%s\nAddress found:\t%s\n\n' \
+        "$run_user" "$(date)" "$status" "$line" >> "$log_file"
+}
+
+process_line() {
+    local line key
+    line="$1"
+    [[ -z "$line" || "$line" =~ ^# ]] && return 0
+
+    for key in "${!crypto[@]}"; do
+        if [[ "$line" =~ ${crypto[$key]} ]]; then
+            echo -e "${R} $key ${G} address found:${R} $line ${X}"
+            log_result "$key" "$line"
+            return 0
+        fi
+    done
+}
+
+process_file() {
+    local file_path line
+    file_path="$1"
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        process_line "$line"
+    done < "$file_path"
+}
+
+process_directory() {
+    local directory file_path
+    directory="$1"
+
+    while IFS= read -r -d '' file_path; do
+        if grep -Iq . "$file_path" 2>/dev/null; then
+            process_file "$file_path"
+        fi
+    done < <(find "$directory" -maxdepth 2 -type f -readable -print0 2>/dev/null)
+}
+
+run_default_scan() {
+    local browser data_dir
+
+    if [[ -z "$home" || ! -d "$home" ]]; then
+        echo -e "${R} A readable HOME directory is required for the default scan. ${X}"
+        return 1
+    fi
+
+    browser_paths=(
+        [Firefox]="$home/.mozilla/firefox"
+        [Chrome]="$home/.config/google-chrome/Default"
+        [Brave]="$home/.config/BraveSoftware/Brave-Browser/Default"
+        [Opera]="$home/.config/opera"
+        [Edge]="$home/.config/microsoft-edge/Default"
+        [Safari]="$home/Library/Safari"
+        [Vivaldi]="$home/.config/vivaldi/Default"
+        [DuckDuckGo]="$home/.config/duckduckgo"
+    )
+
+    for browser in "${!browser_paths[@]}"; do
+        data_dir="${browser_paths[$browser]}"
+        echo -e "${G} Checking $browser data in: $data_dir ${X}"
+        if [[ -d "$data_dir" ]]; then
+            process_directory "$data_dir"
+        else
+            echo -e "${R} $browser data not found. ${X}"
+        fi
+    done
+}
+
+run_custom_scan() {
+    local data_file
+    data_file="$1"
+    if [[ ! -r "$data_file" || ! -f "$data_file" ]]; then
+        echo -e "${R} File not found or unreadable. ${X}"
+        return 1
+    fi
+    process_file "$data_file"
+}
+
+echo -e "${g} Do you want to run a\n1) default scan (search common browser locations)\n2) specify a custom file?\n${X}"
+read -r -p "Crypto Catch ==>  " scan_choice
+
+case "$scan_choice" in
+    1)
+        run_default_scan
+        ;;
+    2)
+        echo -e "${g} Enter path to check for crypto data: ${X}"
+        read -e -r -p "CSTK ==>  " path_to_your_data_file
+        run_custom_scan "$path_to_your_data_file"
+        ;;
+    *)
+        echo -e "${R} Invalid selection. ${X}"
+        exit 2
+        ;;
+esac

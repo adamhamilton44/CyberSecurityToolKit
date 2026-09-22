@@ -1,0 +1,83 @@
+filetype:bak
+filetype:bak inurl:"/backup/"
+filetype:cfg
+filetype:conf
+filetype:csv
+filetype:csv inurl:"/data/"
+filetype:doc
+filetype:ini
+filetype:json inurl:"/api/"
+filetype:log
+filetype:log inurl:"/logs/"
+filetype:pdf
+filetype:pdf inurl:"/docs/"
+filetype:sql
+filetype:sql inurl:"/db/"
+filetype:txt
+filetype:xls
+filetype:xls site:example.com
+filetype:xml
+filetype:xml inurl:"/config/"
+filetype:yaml
+filetype:zip
+intitle:"Login" site:gov
+intitle:"Network Configuration"
+intitle:"Network Map"
+intitle:"Network Tools"
+intitle:"System Dashboard"
+intitle:"admin console"
+intitle:"index of /public"
+intitle:"index of"
+intitle:"index of" "/private"
+intitle:"phpMyAdmin"
+intitle:"webadmin"
+inurl:"/admin/index.php"
+inurl:"/admin/login.html"
+inurl:"/admin/login.php"
+inurl:"/console"
+inurl:"/login.php"
+inurl:"/manager/html"
+inurl:"/secure/login"
+inurl:"/user/login"
+inurl:"admin.asp"
+inurl:"admin.aspx"
+inurl:"admin.jsp"
+inurl:"administrator"
+inurl:"wp-admin"
+inurl:/admin/
+inurl:/admin/system
+inurl:/backup/
+inurl:/billing/
+inurl:/cart/
+inurl:/cgi-bin/
+inurl:/checkout/
+inurl:/config/
+inurl:/console/
+inurl:/invoice/
+inurl:/manage/
+inurl:/manager/html
+inurl:/monitoring/
+inurl:/orders/
+inurl:/payment/
+inurl:/private/
+inurl:/secure/admin/
+inurl:/secure/transactions/
+inurl:/server-status
+inurl:/shop/
+inurl:/status
+inurl:/sysadmin/
+inurl:/system/
+inurl:/test/
+inurl:/uploads/
+inurl:admin.asp
+inurl:admin.aspx
+inurl:admin.html
+inurl:admin.jsp
+inurl:adminconsole
+inurl:config
+inurl:login.aspx
+inurl:manager/html
+inurl:phpinfo.php
+inurl:routerlogin.asp
+inurl:wp-config.php
+inurl:wp-login.php

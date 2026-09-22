@@ -1,0 +1,23 @@
+data/*
+# This local wordlist archive exceeds GitHub's 5 GB Git LFS file limit.
+Other/Wordlists/hashkiller.zip
+# This is an orphaned Git LFS pointer; the companion archive is tracked separately.
+scripts/DoSBombs/ZipBomb
+etc/*
+log/*
+Bank/*
+# Third-party repositories are installed and updated at runtime.
+Other/Downloads/
+# Runtime security state is generated locally. Keep the verifier in Git.
+Other/SecurityChecks/*
+!Other/SecurityChecks/check_hashes.sh
+# Ignore ad hoc text output, but keep CSTK's required text resources.
+*.txt
+!Other/LICENSE.txt
+!Other/Wordlists/*.txt
+!scripts/lib/*.txt
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.vscode/

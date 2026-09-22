@@ -1,0 +1,345 @@
+.\" cstk.1 - Manual page for CyberSecurityToolKit
+.TH CSTK 1 "2026-09-21" "CSTK 3.0.5" "User Commands"
+.SH NAME
+cstk \- run the CyberSecurityToolKit launcher
+.SH SYNOPSIS
+.B sudo cstk
+.br
+.B sudo cstk
+.RI [ "global option" ]
+.br
+.B sudo cstk
+.I class-option tool-option
+.br
+.B sudo cstk
+.I combined-short-option
+.SH DESCRIPTION
+.B cstk
+is the main launcher for CyberSecurityToolKit (CSTK), a collection of
+security assessment, payload-development, post-exploitation, and supporting
+utilities.
+Running
+.B cstk
+without arguments opens the interactive menu. Tools can also be selected
+directly by combining a class with a tool option.
+.PP
+CSTK requires root privileges. Use it only on systems, accounts, networks,
+and data for which you have explicit authorization. Several payload and
+post-exploitation options can alter files, credentials, services, or system
+availability.
+.SH GLOBAL OPTIONS
+.TP
+.BR \-h ", " \-H
+Display the short help and examples.
+.TP
+.B \-\-help
+Display the complete command help generated from the launcher.
+.TP
+.BR \-v ", " \-V
+Display the short version string.
+.TP
+.B \-\-version
+Display the full version string.
+.TP
+.BR \-C ", " \-\-check-updates
+Refresh package metadata and report the update status of CSTK-managed system
+packages and repositories. Python and Go tools are listed for resolution by
+the explicit update command. Nothing is installed.
+.TP
+.BR \-U ", " \-\-update
+Check the recorded CSTK-managed system packages, pipx applications, and
+GitHub or Go tools, display the scope, and ask for confirmation before
+installing updates. System-package updates are limited to packages recorded
+by the CSTK installer; this option does not perform a full distribution
+upgrade or automatically remove packages.
+.IP
+After a CSTK self-update, the current trusted launcher requests the private
+integrity refresh key and rebuilds and verifies the protected checksum
+manifest before executing the updated launcher.
+.TP
+.BR \-T ", " \-\-tty
+Display the guide for upgrading a basic Linux shell to a full TTY.
+.PP
+CSTK never contacts update servers during ordinary launcher startup. Updates
+must be checked or installed explicitly with the options above or through the
+interactive main menu.
+.SH COMMAND FORM
+Short class and tool options may be combined. For example,
+.B \-On
+selects the OSINT class and its Nmap helper.
+.PP
+Long options are supplied separately. The equivalent long command is:
+.PP
+.RS
+.B sudo cstk \-\-osint \-\-nmap
+.RE
+.PP
+Supplying a class without a tool displays the available tools for that class.
+.SH OSINT CLASS
+Select this class with
+.BR \-O " or " \-\-osint .
+.TP
+.BR n ", " \-\-nmap
+Run the Nmap helper and slower ping sweeper.
+.TP
+.BR s ", " \-\-sweep
+Run the fast IPv4 last-octet sweeper.
+.TP
+.BR f ", " \-\-findip
+Look up IP geolocation, provider information, open ports, and possible
+vulnerabilities.
+.TP
+.BR e ", " \-\-enum
+Run automated website enumeration.
+.TP
+.BR b ", " \-\-breached
+Search the locally downloaded breached email and password data.
+.TP
+.BR g ", " \-\-google
+Open the Google dorks helper.
+.TP
+.BR m ", " \-\-email
+Search supported social sites for an email address.
+.TP
+.BR p ", " \-\-pass
+Open the offline and online password attack helper.
+.TP
+.BR v ", " \-\-vuln
+Run automated vulnerability checks.
+.TP
+.BR u ", " \-\-username
+Generate username candidates from supplied identity information.
+.TP
+.BR h ", " \-\-ssh
+Enumerate a remote host through SSH-related checks.
+.TP
+.BR w ", " \-\-waf
+Check a web server for a web application firewall or intrusion detection.
+.SH PAYLOAD CLASS
+Select this class with
+.BR \-P " or " \-\-payload .
+.TP
+.BR n ", " \-\-netcat
+Create Netcat bind or reverse-shell scripts.
+.TP
+.BR v ", " \-\-revshell
+Build a Linux script that attempts multiple reverse-shell techniques.
+.TP
+.BR r ", " \-\-ransom
+Create the CSTK encryption and decryption demonstration scripts.
+.TP
+.BR p ", " \-\-revall
+Open the multi-platform reverse-shell collection.
+.TP
+.BR t ", " \-\-notouch
+Create an in-memory payload intended to avoid writing its body to disk.
+.TP
+.BR b ", " \-\-bomb
+Open the memory-overload and denial-of-service helper.
+.TP
+.BR s ", " \-\-ssh
+Open the SSH key collection and modification workflow.
+.TP
+.BR m ", " \-\-msf
+Open the msfvenom and Metasploit payload helper.
+.TP
+.BR a ", " \-\-apk
+Open the Android APK payload-embedding helper.
+.SH POST-EXPLOIT CLASS
+Select this class with
+.BR \-X " or " \-\-postx .
+.TP
+.BR s ", " \-\-onstart
+Configure a command to run after reboot.
+.TP
+.BR i ", " \-\-foi
+Search for files that may contain useful assessment information.
+.TP
+.BR e ", " \-\-inmemory
+Inspect memory-related sources for credentials belonging to active users.
+.TP
+.BR v ", " \-\-vm
+Check whether the current system appears to be a virtual machine.
+.TP
+.BR b ", " \-\-browser
+Collect supported browser history, cookies, bookmarks, downloads, extensions,
+and saved-login data.
+.TP
+.BR c ", " \-\-crypto
+Search local files for cryptocurrency wallet patterns.
+.TP
+.BR g ", " \-\-gtfo
+Check permissive executable and file configurations for escalation paths.
+.TP
+.BR f ", " \-\-force
+Attempt recovery of passwords protecting ZIP, 7-Zip, and RAR archives.
+.TP
+.BR k ", " \-\-kernel
+Check the Linux kernel for known exploit candidates and optionally obtain
+proof-of-concept material.
+.SH ETC CLASS
+Select this class with
+.BR \-E " or " \-\-etc .
+.TP
+.BR a ", " \-\-array
+Create array-obfuscated shell scripts.
+.TP
+.BR x ", " \-\-extract
+Extract supported archive and package formats.
+.TP
+.BR w ", " \-\-webserver
+Start a simple Python, PHP, or Apache web server.
+.TP
+.BR u ", " \-\-users
+List local accounts and their configured login shells.
+.TP
+.BR o ", " \-\-openssl
+Open the OpenSSL hashing, key, encryption, and decryption helper.
+.TP
+.BR l ", " \-\-lookalike
+Create an encoded message formatted to resemble a GPG message.
+.TP
+.BR e ", " \-\-exe
+Compile a Bash script into an executable wrapper.
+.TP
+.BR c ", " \-\-clean
+Open the selected-log cleanup helper.
+.TP
+.BR h ", " \-\-hashid
+Identify possible hash types from direct input or a file.
+.TP
+.BR z ", " \-\-zip
+Copy the CSTK Zip2Go post-exploitation toolkit into the malware-output
+directory.
+.TP
+.BR g ", " \-\-ng
+Open Arsenal-ng for command syntax and usage assistance.
+.SH INTEGRITY MANAGEMENT
+The installer creates
+.I Other/SecurityChecks/sha256.checksum
+after installing CSTK and its wrapper. The manifest covers the launcher,
+uninstaller, internal verifier, executable tools, library files, and the
+wrapper when it is present.
+.PP
+The checksum file is installation-specific and is intentionally excluded from
+Git. CSTK verifies it before interactive and direct tool execution. If the
+manifest is missing or a protected file has changed, CSTK refuses to launch a
+tool and offers either a safe exit or permanent removal of the launchers and
+core program files. Removal requires a second explicit confirmation and
+preserves local data, Bank files, logs, wordlists, and installed packages.
+.SH EXAMPLES
+.TP
+.B sudo cstk
+Open the interactive CSTK menu.
+.TP
+.B sudo cstk \-On
+Run the OSINT Nmap helper using combined short options.
+.TP
+.B sudo cstk \-\-osint \-\-sweep
+Run the fast IP sweeper using long options.
+.TP
+.B sudo cstk \-Pn
+Open the Netcat payload workflow.
+.TP
+.B sudo cstk \-\-postx \-\-browser
+Open the browser-data collection workflow.
+.TP
+.B sudo cstk \-\-etc \-\-hashid
+Open the hash-identification helper.
+.SH FILES
+.TP
+.I /usr/local/bin/cstk
+Global symbolic link to the CSTK launcher.
+.TP
+.I /usr/local/bin/cstk_wrapper
+Restricted wrapper that supplies the internal tool execution environment.
+.TP
+.I scripts/lib/cstk_wrapper
+Version-controlled wrapper template installed and refreshed by CSTK maintenance commands.
+.TP
+.I scripts/bin/
+Executable CSTK tools and platform-specific helper programs.
+.TP
+.I scripts/lib/
+Documentation, encrypted payload resources, templates, and supporting data.
+.TP
+.I scripts/lib/cstk.1
+Source manual page installed by
+.BR install.sh .
+.TP
+.I Other/SecurityChecks/check_hashes.sh
+Internal checksum verification and compatibility helper.
+.TP
+.I Other/SecurityChecks/sha256.checksum
+Locally generated integrity manifest. This file is not committed to Git.
+.TP
+.I /etc/cstk/lib_decryption.key
+Root-owned, mode 0600 key used to decrypt protected CSTK library resources.
+The key is provisioned by the installer and is never stored in the repository.
+.TP
+.I Other/Wordlists/
+Wordlists supplied with or retained for CSTK.
+.TP
+.I data/
+Locally downloaded breached email and password data. This directory is not
+committed to Git.
+.TP
+.I Bank/Loot/
+Collected assessment results.
+.TP
+.I Bank/Malware/
+Generated payloads and other potentially dangerous output.
+.TP
+.I log/
+CSTK and package-installation logs.
+.SH ENVIRONMENT
+.TP
+.B CSTK_MAIN_RUNNER
+Set internally when the main launcher authorizes a wrapped tool.
+.TP
+.B CSTK_WRAPPER_RUNNER
+Set internally by the restricted wrapper before invoking a helper.
+.TP
+.B CSTK_LIB_KEY_SOURCE
+Used only by
+.BR install.sh
+to provision the library decryption key from a protected regular file without
+placing the key on the command line.
+.TP
+.B home_dir
+Exported by the launcher as the absolute CSTK installation directory.
+.SH EXIT STATUS
+.TP
+.B 0
+The requested action completed successfully.
+.TP
+.B 1
+A general, integrity, or tool execution error occurred.
+.TP
+.B 2
+Root privileges are missing or the command-line arguments are invalid.
+.PP
+Individual tools may return additional nonzero status codes.
+.SH INSTALLATION
+Run
+.B sudo bash install.sh
+from the CyberSecurityToolKit directory. The installer places a compressed
+copy of this manual under
+.I /usr/share/man/man1/
+and updates the manual-page index. After installation, display it with
+.BR "man cstk" .
+.SH AUTHOR
+Adam Hamilton
+.br
+GitHub: https://github.com/adamhamilton44/CyberSecurityToolKit
+.SH REPORTING BUGS
+Report CSTK defects through the private project repository or its configured
+project issue tracker. Do not include credentials, collected browser data,
+private keys, breached-account records, or generated payloads in a report.
+.SH SEE ALSO
+.BR bash (1),
+.BR git (1),
+.BR nmap (1),
+.BR openssl (1),
+.BR ssh (1),
+.BR sha256sum (1)

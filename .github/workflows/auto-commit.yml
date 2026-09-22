@@ -1,0 +1,64 @@
+name: Validate CSTK
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository and Git LFS objects
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Verify Git LFS objects
+        run: git lfs fsck
+
+      - name: Reject nested Git repositories
+        shell: bash
+        run: |
+          nested_repo=$(find . -mindepth 2 -type d -name .git -print -quit)
+          if [[ -n "$nested_repo" ]]; then
+            echo "Nested Git repository found: $nested_repo" >&2
+            exit 1
+          fi
+
+      - name: Verify large-file tracking
+        shell: bash
+        run: |
+          failed=0
+          while IFS= read -r -d '' file; do
+            size=$(stat -c '%s' "$file")
+            if (( size >= 100000000 )); then
+              filter=$(git check-attr filter -- "$file")
+              if [[ "$filter" != *': lfs' ]]; then
+                echo "File is at least 100 MB but is not tracked by Git LFS: $file" >&2
+                failed=1
+              fi
+            fi
+          done < <(git ls-files -z)
+          exit "$failed"
+
+      - name: Verify shell syntax
+        shell: bash
+        run: |
+          bash -n cstk.sh install.sh uninstall.sh scripts/lib/Fonts scripts/lib/cstk_update.sh scripts/lib/cstk_wrapper
+
+      - name: Run ShellCheck
+        shell: bash
+        run: |
+          shellcheck -S error -x cstk.sh install.sh uninstall.sh scripts/lib/Fonts scripts/lib/cstk_update.sh scripts/lib/cstk_wrapper scripts/lib/tab_complete.cstk scripts/bin/Crypto_Catch
+
+      - name: Verify release version
+        shell: bash
+        run: |
+          grep -Fqx '#//V  v3.0.5' cstk.sh
+          grep -Fqx '#//W  version: 3.0.5' cstk.sh
+          grep -Fq '"CSTK 3.0.5"' scripts/lib/cstk.1
