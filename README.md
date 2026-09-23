@@ -1,180 +1,223 @@
-# CyberSecurityToolKit - A Beginner Friendly Tool Kit for Hackers, Red Teamers, and Penetration testers
+# CyberSecurityToolKit (CSTK)
 
-![Cyber Security Tool Kit](https://github.com/user-attachments/assets/bccc925c-d373-4c6a-9ac0-226cde5edd7e)
+![CyberSecurityToolKit logo](Other/cstk.png)
 
-## Author
+CyberSecurityToolKit is a menu-driven collection of security assessment,
+payload-development, post-exploitation, and support utilities. CSTK is designed
+primarily for Kali Linux and Kali under WSL2.
 
-Adam Hamilton
+> [!CAUTION]
+> Use CSTK only on systems, accounts, applications, and networks that you own
+> or are explicitly authorized to test. Several tools can change files,
+> credentials, services, or system availability.
 
-- [Github](https://www.github.com/adamhamilton44)
+## At a glance
 
-- [Email](blacklisthacker@protonmail.com)
+| Class | Purpose | Examples |
+| --- | --- | --- |
+| OSINT | Reconnaissance and vulnerability discovery | IP lookup, Nmap, host sweeps, web enumeration, account checks, SSH enumeration, and WAF detection |
+| Payloads | Controlled payload creation for authorized labs | Reverse-shell, encryption, DoS lab, SSH, Metasploit, APK, and command-and-control helpers |
+| Post Exploit | Assessment after authorized access | VM detection, browser-data collection, crypto searches, permission and kernel checks, and archive auditing |
+| Etc | Supporting utilities | Users, web servers, archives, OpenSSL, hashes, Bash packaging, Zip2Go, and Arsenal help |
 
-## Contributing
+## Requirements
 
-Contributions are always welcome!
+- Kali Linux is the primary supported and tested environment.
+- Root access through `sudo` is required.
+- Git and Git LFS are required to clone the complete private repository.
+- Network access is required during installation and update checks.
+- The owner-provided CSTK library key is required to use protected resources.
+  The key is installed locally with root-only permissions and is never stored
+  in this repository.
 
-## Features
+The installer contains package mappings for APT, DNF, YUM, and Homebrew, but
+Kali Linux receives the most testing.
 
-There are 4 Classes in total: OSINT, Payloads, Post Exploit, Etc.
+## Installation
 
-### OSINT
-
-- IP address lookup tool
-- Nmap helper script
-- ping sweeper tool
-- Check a email address on multiple sites
-- Breached email/password lookup tool
-- Google dorks helper
-- Automated enumeration script of a internet facing web site
-- Automated vulnerability scanner of a internet facing web site
-- Password attack tool for online/offline attacks
-
-### Payloads
-
-- Netcat Reverse/Bind Shell Scripts
-- Linux reverse shell creation tool with 30+ shells
-- Ransomware encrypt/decrypt tool
-- Multi OS reverse shell creater
-- Run in memory payload tool
-- DoS zip, computer-killer, and fork-bomb payloads
-- SSH payload script
-- Metasploit & msfvenom helper
-- Create a malicious APK file
-
-### Post Exploit
-
-- Check if on a VM
-- Web browser infomation stealer
-- Crypto wallet search tool
-- File Permissions exploit tool
-- Kernel/Userland Exploit search tool
-- Embed a command on startup
-- Brute force 7z,zip and rar archives
-- Files of Interest search tool
-- Kernel/Userland Rootkits
-- In memory password dumper
-
-### Etc
-
-- Enumerate users and there shells
-- Python web server for easy file transfers
-- Multi archive file extracter
-- Openssl helper with random byte generator
-- Secret message creater
-- Turn a bash scrpt into a encrypted executable binary script
-- Post exploit zip file with all the needed tools to open and run on remote host
-- Create a array encrypted script that can be run on the remote host
-- Log cleaner tool to hide your tracks
-
-## Run Locally
-
-Clone the project
+### 1. Enable Git LFS
 
 ```bash
-git clone https://github.com/adamhamilton44/CyberSecurityToolKit.git
+git lfs install
 ```
 
-Go to the project directory
+### 2. Clone the private repository
+
+Use a GitHub account and SSH key that have access to the repository:
 
 ```bash
+git clone git@github.com:adamhamilton44/CyberSecurityToolKit.git
 cd CyberSecurityToolKit
 ```
 
-Run the main script cstk.sh or chmod +x install.sh and then run install.sh script
+### 3. Run the installer
 
 ```bash
-chmod +x install.sh
 sudo bash install.sh
 ```
 
-A Script will be added to /usr/local/bin/cstk
-Run anywhere
+The installer adds the `cstk` launcher and its restricted wrapper under
+`/usr/local/bin/`, installs the manual page and tab completion, records the
+packages it installs, and prepares protected local state.
+
+### 4. Start CSTK
 
 ```bash
 sudo cstk
 ```
 
-A wrapper script is also added to /usr/local/bin/cstk_wrapper
+## Main menu
+
+| Choice | Action |
+| --- | --- |
+| `1` | Open the OSINT tools |
+| `2` | Open the payload-development tools |
+| `3` | Open the post-exploitation tools |
+| `4` | Open the supporting utilities |
+| `5` | Turn CSTK launcher authentication on or off |
+| `6` | Turn animated headers on or off |
+| `U` | Check for and install approved CSTK-managed updates |
+| `T` | Display the full TTY shell-upgrade guide |
+| `X` | Exit |
+
+Authentication and animated-header preferences are stored locally and are not
+committed to Git.
+
+## Command-line help
+
+```bash
+sudo cstk -H                 # Short help and examples
+sudo cstk --help             # Full option and tool list
+sudo cstk -V                 # Version
+sudo cstk --tty              # TTY shell-upgrade guide
+sudo cstk --check-updates    # Report available managed updates
+sudo cstk --update           # Review and install approved managed updates
+man cstk                     # Installed manual page
+```
+
+Class and tool options can be combined:
+
+```bash
+sudo cstk -On
+sudo cstk --osint --nmap
+```
+
+The first example uses compact short options. The second uses the equivalent
+long options.
 
 ## Updates
 
 CSTK does not contact package indexes or source repositories during normal
-startup. Check for updates explicitly:
+startup. Update checks are always user initiated.
+
+To check without installing:
 
 ```bash
 sudo cstk --check-updates
 ```
 
-Review the reported scope and run the combined updater when ready:
+To review and install approved updates:
 
 ```bash
 sudo cstk --update
 ```
 
-The updater asks for confirmation and is limited to packages and tools that
-the CSTK installer recorded. It updates tracked pipx applications, supported
-GitHub or Go tools, and CSTK-installed system packages. It does not perform a
-full operating-system upgrade, remove packages, or overwrite a dirty or
-diverged Git checkout. CSTK itself is updated only through a clean,
-authenticated Git checkout using a fast-forward-only pull. After a CSTK
-self-update, the launcher requests the private integrity refresh key, rebuilds
-and verifies the checksum manifest, and only then starts the updated code.
+The combined updater:
 
-## Tested on
+- works only with system packages, pipx applications, Go tools, and GitHub
+  repositories recorded or recognized by CSTK;
+- shows its scope and asks for confirmation before installing;
+- does not perform a full operating-system upgrade;
+- does not run `autoremove`;
+- refuses to overwrite a dirty or diverged CSTK checkout; and
+- updates CSTK itself only through an authenticated, fast-forward-only Git
+  pull.
 
-- Kali-Linux 6.11.2
+After a CSTK self-update, the already-running trusted launcher privately
+requests maintenance authorization, refreshes installed interfaces, rebuilds
+and verifies the local checksum manifest, and only then starts the updated
+launcher. There is no public integrity-refresh command, and private keys should
+never be placed on a command line.
 
-## Install script works for
+Update logs are written beneath `log/updates/`.
 
-- apt
-- yum
-- dnf
-- brew
+## Integrity protection
 
-## Important Information
+CSTK verifies protected program files before opening its menus or dispatching
+tools. The protected set includes the launcher, uninstaller, runtime binaries,
+library files, checksum verifier, and installed wrapper when present.
 
-- When program is ran most files have there SHA256 hashes checked.
+The checksum manifest is generated locally at:
 
-- This helps to ensure the security and authenticity of the files.
+```text
+Other/SecurityChecks/sha256.checksum
+```
 
-## Bad Checksum
+It is deliberately excluded from Git and stored with restrictive permissions.
 
-- If the hashes do not match program goes into self delete mode
+### What happens when verification fails
 
-- Everything contained within the CyberSecurityToolKit program will delete.
+CSTK does **not** automatically delete itself.
 
-## User Safe Files and Directories
+1. CSTK refuses to run the requested tool.
+2. The user may quit without changing anything.
+3. The user may explicitly choose deletion and must type a second confirmation.
+4. The integrity-screen deletion removes CSTK launchers and core program files
+   while preserving local data, collected results, logs, wordlists, and
+   installed system packages.
+5. Authorized maintenance has a private recovery path for rebuilding the
+   manifest; it is intentionally not exposed as a normal command-line option.
 
-These are the files and/or folders that are safe for the user to move delete etc and there use case
+An unexpected integrity warning should be treated seriously. Quit, review the
+changed files, and restore them from a trusted signed commit unless the change
+was intentional.
 
-- CyberSecurityToolKit/Bank/Loot --> This is where hidden gems collected during use of program are stored / ip scans, nmap output, Files of interest etc...
+## Local data and generated output
 
-- CyberSecurityToolKit/Bank/Malware --> This is where user created executable scripts will be stored / Reverse shells, Malwareware scripts, Rootkits, etc...
+These paths are intentionally excluded from Git:
 
-- CyberSecurityToolKit/etc/keys --> This is where user created important files are stored / Private-Public keys, hashed passwords, checksums, etc..
+| Path | Purpose |
+| --- | --- |
+| `Bank/Loot/` | Scan output, reports, and collected assessment results |
+| `Bank/Malware/` | User-generated payloads and executable test artifacts |
+| `data/` | Optional breached-account datasets |
+| `etc/keys/` | Locally generated keys and other sensitive configuration |
+| `log/` | Installer, updater, and runtime logs |
+| `Other/Downloads/` | Third-party repositories installed at runtime |
+| `Other/SecurityChecks/` | Local authentication settings, installation records, and integrity state; only the verifier is committed |
 
-- CyberSecurityToolKit/logs --> Detailed logs of most user events are stored here
+Back up any local material you need before manually removing the CSTK folder.
+Never place credentials, private keys, collected browser data, breached-account
+records, or generated payloads in a commit or issue.
 
-## Netural Files and Folders
+## Troubleshooting
 
-Other files and folders that can be tampered with that hashes are not checked (But i am not sure why you would).
+- Run `git status --short` before updating. CSTK self-update requires a clean
+  checkout.
+- Run `git lfs pull` if either ZIP asset is unexpectedly represented by a
+  small text pointer.
+- Review `log/package_manager/` for installation failures.
+- Review `log/updates/` for update-check and update failures.
+- Use `sudo cstk --tty` for help stabilizing a limited authorized shell.
+- Use `man cstk` for the complete installed command reference.
 
-- CyberSecurityToolKit/data ** --> used during the breached email/password lookup
+## Project information
 
-** Depending on your available hard disk space or your choosen option when install.sh script is ran you may or may not have this directory
+- Version: `3.0.5`
+- Primary tested platform: Kali Linux
+- License: [Other/LICENSE.txt](Other/LICENSE.txt)
+- Author: Adam Hamilton
+- GitHub: [adamhamilton44](https://github.com/adamhamilton44)
+- Contact: [blacklisthacker@protonmail.com](mailto:blacklisthacker@protonmail.com)
 
-If you have any feedback, please reach out to me at [Email](blacklisthacker@protonmail.com)
+Feedback and carefully scoped contributions are welcome. Do not include secrets
+or collected assessment data in reports or pull requests.
 
-## 🚀 About Me
+## About the author
 
-👩‍💻 I'm currently working on more bash scripts
+Adam also works as a professional dog trainer:
+[Good Happy Puppy](https://good-happy-puppy.com).
 
-💬 Ask me about anything
+## Support the project
 
-⚡️ Fun fact I am actually a Professional dog trainer.
-[My website](https://good-happy-puppy.com)
-
-## Help Fund My Projects
-
-Bitcoin: 3ENrACvnNY7AYG7HUvcdwJgZjnpoaQ9Lbt
+Bitcoin: `3ENrACvnNY7AYG7HUvcdwJgZjnpoaQ9Lbt`

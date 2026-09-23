@@ -1,25 +1,50 @@
-# bin folder
+# CSTK Runtime Scripts
 
-[!!!WARNING!!!]
+The `scripts/` tree contains the executables, protected resources, and support
+files used by the main `cstk` launcher.
 
-All script are heavely encrypted they are useless without the cstk script
-altering these files will result in program auto deletion
+> [!WARNING]
+> Do not run unfamiliar files from this directory directly. Many helpers expect
+> the restricted CSTK wrapper and launcher environment, and some tools can
+> alter files, credentials, services, or system availability.
 
+## `bin/`
 
-# lib folder
+The `bin/` directory contains CSTK helper programs and platform-specific
+executables. Some files are compiled binaries; others are executable shell or
+Python tools.
 
-[!!!WARNING!!!]
+- Start tools through `sudo cstk`.
+- Do not rename files: the launcher dispatch table uses their exact names.
+- Do not assume a compiled file is encrypted or safe merely because its source
+  is not readable.
+- Direct execution is intentionally rejected by many helpers that require CSTK
+  caller context.
 
-All X-encoded.enc files are heavely encrypted and useless without the cstk script.
-altering these files will result in program auto deletion
+## `lib/`
 
-[!INFO!]
+The `lib/` directory contains protected resources and shared interfaces,
+including:
 
-*GD_* these files are helper files for the google dorks tool
+- encrypted `*.enc` assets;
+- Google Dorks reference files (`GD_*.txt`);
+- the Nmap script list (`nmap-scripts.txt`);
+- menu frames and animated-header support;
+- the updater, restricted wrapper template, manual page, and tab completion;
+- the TTY shell-upgrade guide; and
+- the Git LFS-managed Zip2Go archive.
 
-'nmap.txt' this file is a helper script for the nmap tool
+The local decryption key is installed separately with root-only permissions.
+It is not stored in Git.
 
-'arguements_frame' this file displays a banner that cstk uses at tool startup
+## Integrity checks
 
-'tab_complete.cstk' this file is used for tab completion if user choose so.
+`scripts/bin/` and `scripts/lib/` are part of CSTK's protected checksum set.
+Changing a protected file causes CSTK to stop at the integrity screen.
 
+A mismatch does **not** trigger automatic deletion. The user may quit without
+changes or explicitly request core-file deletion and confirm it a second time.
+Authorized maintenance can rebuild the manifest through the private recovery
+path.
+
+For a detailed library inventory, see [lib/README.md](lib/README.md).

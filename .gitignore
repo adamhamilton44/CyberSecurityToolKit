@@ -4,7 +4,9 @@ Other/Wordlists/hashkiller.zip
 # This is an orphaned Git LFS pointer; the companion archive is tracked separately.
 scripts/DoSBombs/ZipBomb
 etc/*
+!etc/README.md
 log/*
+!log/README.md
 Bank/*
 # Third-party repositories are installed and updated at runtime.
 Other/Downloads/
