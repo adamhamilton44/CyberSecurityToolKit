@@ -57,8 +57,9 @@ sudo bash install.sh
 ```
 
 The installer adds the `cstk` launcher and its restricted wrapper under
-`/usr/local/bin/`, installs the manual page and tab completion, records the
-packages it installs, and prepares protected local state.
+`/usr/local/bin/`, installs the manual page and Bash/Zsh tab completion,
+records the packages it installs, prepares protected local state, and creates
+private Loot and Malware folders for the user who invoked `sudo`.
 
 ### 4. Start CSTK
 
@@ -76,6 +77,7 @@ sudo cstk
 | `4` | Open the supporting utilities |
 | `5` | Turn CSTK launcher authentication on or off |
 | `6` | Turn animated headers on or off |
+| `7` | Manage private Loot/Malware storage and create backups |
 | `U` | Check for and install approved CSTK-managed updates |
 | `T` | Display the full TTY shell-upgrade guide |
 | `X` | Exit |
@@ -92,6 +94,7 @@ sudo cstk -V                 # Version
 sudo cstk --tty              # TTY shell-upgrade guide
 sudo cstk --check-updates    # Report available managed updates
 sudo cstk --update           # Review and install approved managed updates
+sudo cstk --private-data     # Manage private output and backups
 man cstk                     # Installed manual page
 ```
 
@@ -172,14 +175,46 @@ An unexpected integrity warning should be treated seriously. Quit, review the
 changed files, and restore them from a trusted signed commit unless the change
 was intentional.
 
-## Local data and generated output
+## Private per-user data and backups
 
-These paths are intentionally excluded from Git:
+CSTK routes generated Loot and Malware to the home directory of the account
+that invoked `sudo cstk`:
 
 | Path | Purpose |
 | --- | --- |
-| `Bank/Loot/` | Scan output, reports, and collected assessment results |
-| `Bank/Malware/` | User-generated payloads and executable test artifacts |
+| `$HOME/.local/share/cstk/Loot/` | Scan output, reports, and collected assessment results |
+| `$HOME/.local/share/cstk/Malware/` | User-generated payloads and executable test artifacts |
+| `$HOME/CSTK-Exports/` | User-requested private backups |
+
+The data folders use mode `700`, and CSTK removes group and other permissions
+from their contents. This separates ordinary local accounts. Root and anyone
+with equivalent `sudo` access can still read system data.
+
+Open main-menu choice `7`, or run:
+
+```bash
+sudo cstk --private-data
+```
+
+The private-data manager can:
+
+- reapply private ownership and permissions;
+- copy old shared `Bank/Loot` and `Bank/Malware` files without overwriting
+  private files or deleting the originals;
+- create an unencrypted `.tar.gz` backup; or
+- create a password-protected `.7z` backup with AES-256 encryption and
+  encrypted filenames.
+
+CSTK lets 7-Zip request the password directly and does not store it. Use a
+strong password and keep it somewhere safe; CSTK cannot recover it. Backup
+files use mode `600`. Treat every archive as sensitive and potentially
+dangerous because it may contain credentials or generated payloads.
+
+The legacy repository `Bank/` folders remain excluded from Git but are no
+longer used for new output. Other local paths excluded from Git include:
+
+| Path | Purpose |
+| --- | --- |
 | `data/` | Optional breached-account datasets |
 | `etc/keys/` | Locally generated keys and other sensitive configuration |
 | `log/` | Installer, updater, and runtime logs |

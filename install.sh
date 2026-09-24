@@ -75,8 +75,8 @@ config_dirs() {
                 if [[ -n "$repo" ]]; then
                     echo "Using repository: $repo"
 
-                    if [[ "$(realpath "$BASH_SOURCE")" != "$repo/install.sh" ]]; then
-                        cp "$BASH_SOURCE" "$repo/install.sh" || {
+                    if [[ "$(realpath "${BASH_SOURCE[0]}")" != "$repo/install.sh" ]]; then
+                        cp "${BASH_SOURCE[0]}" "$repo/install.sh" || {
                             echo -e "${R}[ ❌ ] Failed to copy install.sh to $repo.${X}"
                             exit 1
                         }
@@ -155,22 +155,63 @@ link_main_script() {
 }
 
 make_dir() {
-    local LOOT MALWARE KEYS dir
+    local KEYS dir folders inv_user inv_group inv_home passwd_record
+    local user_data_dir user_loot user_malware
 
-    LOOT="${home_dir}/Bank/Loot"
-    MALWARE="${home_dir}/Bank/Malware"
     KEYS="${home_dir}/etc/keys"
+    inv_user="${SUDO_USER:-${USER:-root}}"
+    passwd_record="$(getent passwd "$inv_user")" || {
+        echo -e "${R}[ ERROR ] Unable to find the invoking user account: $inv_user.${X}"
+        exit 1
+    }
+    IFS=: read -r _ _ _ _ _ inv_home _ <<<"$passwd_record"
+    inv_home="$(realpath -e "$inv_home")" || exit 1
+    inv_group="$(id -gn "$inv_user")" || exit 1
 
-    folders=(
-        "$LOOT"
-        "$MALWARE"
-        "$KEYS"
-    )
+    if [[ -z "$inv_home" || "$inv_home" != /* || ! -d "$inv_home" ]]; then
+        echo -e "${R}[ ERROR ] The invoking user does not have a usable home directory.${X}"
+        exit 1
+    fi
 
+    user_data_dir="$inv_home/.local/share/cstk"
+    user_loot="$user_data_dir/Loot"
+    user_malware="$user_data_dir/Malware"
+
+    if [[ "$(realpath -m "$user_data_dir")" != "$user_data_dir" ]]; then
+        echo -e "${R}[ ERROR ] The private CSTK data path must stay inside the user home directory.${X}"
+        exit 1
+    fi
+
+    for dir in "$user_data_dir" "$user_loot" "$user_malware"; do
+        if [[ -L "$dir" ]]; then
+            echo -e "${R}[ ERROR ] Refusing symbolic-link private data path: $dir.${X}"
+            exit 1
+        fi
+    done
+
+    if [[ "$inv_user" == "root" ]]; then
+        mkdir -p -- "$user_loot" "$user_malware"
+    elif command -v runuser >/dev/null 2>&1; then
+        runuser -u "$inv_user" -- mkdir -p -- "$user_loot" "$user_malware"
+    else
+        sudo -u "$inv_user" -- mkdir -p -- "$user_loot" "$user_malware"
+    fi || {
+        echo -e "${R}[ ERROR ] Unable to create private CSTK data folders.${X}"
+        exit 1
+    }
+
+    if ! chown -R -P -- "$inv_user:$inv_group" "$user_data_dir" ||
+       ! chmod -R go-rwx -- "$user_data_dir" ||
+       ! chmod 700 -- "$user_data_dir" "$user_loot" "$user_malware"; then
+        echo -e "${R}[ ERROR ] Unable to secure private CSTK data folders.${X}"
+        exit 1
+    fi
+
+    folders=("$KEYS")
     for dir in "${folders[@]}"; do
         if [[ ! -d "$dir" ]]; then
             mkdir -p "$dir" || {
-                echo -e "${R}[ ❌ ] Failed to create $dir.${X}"
+                echo -e "${R}[ ERROR ] Failed to create $dir.${X}"
                 exit 1
             }
         fi
@@ -995,9 +1036,8 @@ install_tab_completion() {
 
     # Bash: /usr/share/bash-completion/completions/_cstk
     # Zsh:  ~/.zshrc
-    # Fish: ~/.config/fish/completions/cstk.fish
 
-    local f inv_user inv_home s target_file
+    local f inv_user inv_home inv_shell passwd_record s target_file
     local ans_user ans_root
 
     f="$home_dir/scripts/lib/tab_complete.cstk"
@@ -1007,15 +1047,13 @@ install_tab_completion() {
         return 1
     fi
 
-    if [[ -n "$SUDO_USER" ]]; then
-        inv_user="$SUDO_USER"
-        inv_home="$(eval echo "~$SUDO_USER")"
-    else
-        inv_user="$USER"
-        inv_home="$HOME"
-    fi
-
-    s="${SHELL##*/}"
+    inv_user="${SUDO_USER:-${USER:-root}}"
+    passwd_record="$(getent passwd "$inv_user")" || {
+        echo -e "${R}[ ERROR ] Unable to find account: $inv_user.${X}"
+        return 1
+    }
+    IFS=: read -r _ _ _ _ _ inv_home inv_shell <<<"$passwd_record"
+    s="${inv_shell##*/}"
 
     add_to_rc() {
 
@@ -1042,7 +1080,7 @@ install_tab_completion() {
 
     case "$s" in
 
-        bash|zsh|ksh)
+        bash|zsh)
 
             local user_rc="$inv_home/.${s}rc"
 

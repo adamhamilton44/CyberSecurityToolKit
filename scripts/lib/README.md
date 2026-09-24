@@ -21,7 +21,7 @@ checksum set.
 | `cstk_update.sh` | Check-only and confirmed-update manager |
 | `cstk_wrapper` | Version-controlled template for the restricted installed wrapper |
 | `cstk.1` | Source for the installed `man cstk` page |
-| `tab_complete.cstk` | Shell-completion definitions |
+| `tab_complete.cstk` | Bash and Zsh command-completion definitions |
 | `tty_spawn_shell.md` | Terminal-friendly TTY upgrade guide |
 | `CSTK_Zip2Go.zip` | Password-protected, Git LFS-managed Zip2Go archive |
 
@@ -40,7 +40,8 @@ trusted signed commit.
 - Keep exact filenames because launcher routes and encrypted-name mappings
   depend on them.
 - Keep ZIP archives under Git LFS.
-- Update the manual page and completion file when public options change.
+- Update the manual page and both Bash/Zsh completion routes when public
+  options change.
 - Validate shell sources with `bash -n` and ShellCheck before an authorized
   integrity refresh.
 - Use the private recovery flow for authorized checksum updates; there is no

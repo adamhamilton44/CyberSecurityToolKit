@@ -1,75 +1,106 @@
-# bash completion for cstk                                                      -*- shell-script -*-
-# shellcheck shell=bash
+# CSTK command completion for Bash and Zsh
+# shellcheck shell=bash disable=SC2154,SC2207
 
-_cstk_completion() {
-    local cur prev opts cmd_opts
+_cstk_bash_completion() {
+    local cur prev opts cmd_opts cls tail i
 
+    COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--osint --payload --postx --etc --help --version --tty --check-updates --update --private-data -O -P -X -E -V -H -T -C -U -D"
 
-    # First-level options (long and short)
-    opts="--osint --payload --postx --etc --help --version --tty --check-updates --update -O -P -X -E -V -H -T -C -U"
-
-    # If user typed a compact short form like "-Op" (no space),
-    # detect and offer completions for the trailing characters.
-    if [[ "${cur}" =~ ^-([OPXE])(.+)$ ]]; then
-        local cls="${BASH_REMATCH[1]}"
-        local tail="${BASH_REMATCH[2]}"
-        case "-${cls}" in
-            -O) cmd_opts="n s f e b g m p v u h w" ;; # short options for -O
-            -P) cmd_opts="n v r p t d b s m a" ;;   # short options for -P
-            -X) cmd_opts="s i e v b c g f k" ;; # short options for -X
-            -E) cmd_opts="u w x o l e a c h z" ;;       # short options for -E
+    if [[ "$cur" == -[OPXE]?* ]]; then
+        cls="${cur:1:1}"
+        tail="${cur:2}"
+        case "-$cls" in
+            -O) cmd_opts="n s f e b g m p v u h w" ;;
+            -P) cmd_opts="n v r p t b s m a c" ;;
+            -X) cmd_opts="s i e v b c g f k" ;;
+            -E) cmd_opts="u w x o l e a c h z g" ;;
             *) cmd_opts="" ;;
         esac
-        # Only propose options that start with tail
         COMPREPLY=( $(compgen -W "$cmd_opts" -- "$tail") )
-        # Transform suggestions back into compact form (e.g. -O + n => -On)
         for i in "${!COMPREPLY[@]}"; do
-            COMPREPLY[$i]="-${cls}${COMPREPLY[$i]}"
+            COMPREPLY[$i]="-$cls${COMPREPLY[$i]}"
         done
         return 0
     fi
-    # Determine second-level completions based on previous token
+
     case "$prev" in
-        --osint)
+        --osint|-O)
             cmd_opts="--findip --sweep --nmap --enum --breached --google --email --pass --vuln --username --ssh --waf"
+            [[ "$prev" == "-O" ]] && cmd_opts="n s f e b g m p v u h w"
             ;;
-        --payload)
-            cmd_opts="--netcat --revshell --ransom --revall --notouch --destroy --bomb --ssh --msf --apk"
+        --payload|-P)
+            cmd_opts="--netcat --revshell --ransom --revall --notouch --bomb --ssh --msf --apk --cnc"
+            [[ "$prev" == "-P" ]] && cmd_opts="n v r p t b s m a c"
             ;;
-        --postx)
+        --postx|-X)
             cmd_opts="--onstart --foi --inmemory --vm --browser --crypto --gtfo --force --kernel"
+            [[ "$prev" == "-X" ]] && cmd_opts="s i e v b c g f k"
             ;;
-        --etc)
-            cmd_opts="--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip"
-            ;;
-        --version|--help|--tty|--check-updates|--update|-V|-H|-T|-C|-U)
-            cmd_opts=""
-            ;;
-        -O)
-            cmd_opts="n s f e b g m p v u h w"
-            ;;
-        -P)
-            cmd_opts="n v r p t d b s m a"
-            ;;
-        -X)
-            cmd_opts="s i e v b c g f k"
-            ;;
-        -E)
-            cmd_opts="u w x o l e a c h z"
+        --etc|-E)
+            cmd_opts="--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng"
+            [[ "$prev" == "-E" ]] && cmd_opts="u w x o l e a c h z g"
             ;;
         *)
             cmd_opts=""
             ;;
     esac
 
-    if [[ ${COMP_CWORD} -eq 1 ]]; then
+    if [[ "$COMP_CWORD" -eq 1 ]]; then
         COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
     else
         COMPREPLY=( $(compgen -W "$cmd_opts" -- "$cur") )
     fi
 }
 
-complete -F _cstk_completion cstk
+_cstk_zsh_completion() {
+    local cur prev
+    local -a choices
+
+    cur="${words[CURRENT]}"
+    prev="${words[CURRENT-1]}"
+
+    if (( CURRENT == 2 )); then
+        choices=(
+            --osint --payload --postx --etc --help --version --tty
+            --check-updates --update --private-data
+            -O -P -X -E -V -H -T -C -U -D
+        )
+    else
+        case "$prev" in
+            --osint)
+                choices=(--findip --sweep --nmap --enum --breached --google --email --pass --vuln --username --ssh --waf)
+                ;;
+            -O) choices=(n s f e b g m p v u h w) ;;
+            --payload)
+                choices=(--netcat --revshell --ransom --revall --notouch --bomb --ssh --msf --apk --cnc)
+                ;;
+            -P) choices=(n v r p t b s m a c) ;;
+            --postx)
+                choices=(--onstart --foi --inmemory --vm --browser --crypto --gtfo --force --kernel)
+                ;;
+            -X) choices=(s i e v b c g f k) ;;
+            --etc)
+                choices=(--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng)
+                ;;
+            -E) choices=(u w x o l e a c h z g) ;;
+            *) choices=() ;;
+        esac
+    fi
+
+    compadd -- "${choices[@]}"
+}
+
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+    autoload -Uz compinit
+    if ! whence compdef >/dev/null 2>&1; then
+        compinit -C
+    fi
+    compdef _cstk_zsh_completion cstk
+elif [[ -n "${BASH_VERSION:-}" ]]; then
+    complete -F _cstk_bash_completion cstk
+fi
+
 # ex: filetype=sh

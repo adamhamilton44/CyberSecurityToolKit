@@ -37,6 +37,8 @@
 #/                         check CSTK-managed packages and repositories for available updates
 #/                 -U, --update
 #/                         check and interactively update CSTK-managed packages and repositories
+#/                 -D, --private-data
+#/                         manage and back up the current user's private Loot and Malware folders
 #/    TOOLS:
 #//O
 #//O  OSINT CLASS:            -O | --osint
@@ -105,12 +107,14 @@
 #//S  [ sudo cstk -T  ] OR  [ sudo cstk --tty               ]  Display the TTY shell upgrade guide
 #//S  [ sudo cstk -C  ] OR  [ sudo cstk --check-updates     ]  Check for CSTK-managed updates
 #//S  [ sudo cstk -U  ] OR  [ sudo cstk --update             ]  Check and install approved updates
+#//S  [ sudo cstk -D  ] OR  [ sudo cstk --private-data       ]  Manage private Loot and Malware data
 #//S
 #//V  v3.0.5
 #//W  version: 3.0.5
 #/
 
 IFS=$'\n\t'
+umask 077
 [[ $UID -ne 0 ]] && { echo "Run as root" && exit 2 ; }
 if [[ -t 1 ]]; then
     R=$'\e[38;2;255;5;215m' # red
@@ -163,8 +167,6 @@ config_file="$security_checks/.auth_config" # config file to store user option l
 fonts_config_file="$security_checks/.fonts_config" # config file to store the animated header option
 hash_file="$security_checks/.hash_list.txt" # user chosen password hashed
 log="$home_dir/log"              # used for the log files
-Malware="$home_dir/Bank/Malware" # Used to store user created Malware
-Loot="$home_dir/Bank/Loot"       # Used for important finding
 bin="$home_dir/scripts/bin"      # where all the exe files are located
 lib="$home_dir/scripts/lib"      # where all the library files are located
 . "$lib/arguments_frame"         # source the arguments frame shown before each script runs
@@ -174,6 +176,235 @@ fi
 cstk_wrapper="/usr/local/bin/cstk_wrapper" # wrapper script used for a temporary PATH environment to bin directory
 lib_decryption_key="/etc/cstk/lib_decryption.key"
 readonly integrity_refresh_key_sha256="085515d0891eb35f61637a371e4d3fafea04e5ae714180a1fb3324ab91f42073"
+
+initialize_user_context() {
+    local passwd_record
+
+    passwd_record="$(getent passwd "$user")" || {
+        echo -e "${R}[ ERROR ] Unable to find the invoking user's account: $user${X}" >&2
+        return 1
+    }
+
+    IFS=: read -r _ _ _ _ _ user_home _ <<<"$passwd_record"
+    user_home="$(realpath -e "$user_home")" || return 1
+    user_group="$(id -gn "$user")" || return 1
+
+    if [[ -z "$user_home" || "$user_home" != /* || ! -d "$user_home" ]]; then
+        echo -e "${R}[ ERROR ] The invoking user does not have a usable home directory.${X}" >&2
+        return 1
+    fi
+
+    CSTK_USER_DATA_DIR="$user_home/.local/share/cstk"
+    CSTK_LOOT_DIR="$CSTK_USER_DATA_DIR/Loot"
+    CSTK_MALWARE_DIR="$CSTK_USER_DATA_DIR/Malware"
+    cstk_export_dir="$user_home/CSTK-Exports"
+    Loot="$CSTK_LOOT_DIR"
+    Malware="$CSTK_MALWARE_DIR"
+
+    export user user_home CSTK_USER_DATA_DIR CSTK_LOOT_DIR CSTK_MALWARE_DIR
+    export Loot Malware
+}
+
+run_as_cstk_user() {
+    if [[ "$user" == "root" ]]; then
+        "$@"
+    elif command -v runuser >/dev/null 2>&1; then
+        runuser -u "$user" -- "$@"
+    else
+        sudo -u "$user" -- "$@"
+    fi
+}
+
+secure_user_data_permissions() {
+    [[ -n "${CSTK_USER_DATA_DIR:-}" && -d "$CSTK_USER_DATA_DIR" ]] || return 0
+    [[ ! -L "$CSTK_USER_DATA_DIR" ]] || return 1
+
+    chown -R -P -- "$user:$user_group" "$CSTK_USER_DATA_DIR" || return 1
+    chmod -R go-rwx -- "$CSTK_USER_DATA_DIR" || return 1
+    chmod 700 -- "$CSTK_USER_DATA_DIR" "$Loot" "$Malware"
+}
+
+prepare_user_data_dirs() {
+    local data_path
+
+    if [[ "$(realpath -m "$CSTK_USER_DATA_DIR")" != "$CSTK_USER_DATA_DIR" ]]; then
+        echo -e "${R}[ ERROR ] The private CSTK data path must stay inside the user home directory.${X}" >&2
+        return 1
+    fi
+
+    for data_path in "$CSTK_USER_DATA_DIR" "$Loot" "$Malware"; do
+        if [[ -L "$data_path" ]]; then
+            echo -e "${R}[ ERROR ] Refusing a symbolic link in the private CSTK data path: $data_path${X}" >&2
+            return 1
+        fi
+    done
+
+    if ! run_as_cstk_user mkdir -p -- "$Loot" "$Malware"; then
+        echo -e "${R}[ ERROR ] Unable to create private CSTK data folders.${X}" >&2
+        return 1
+    fi
+
+    for data_path in "$CSTK_USER_DATA_DIR" "$Loot" "$Malware"; do
+        if [[ ! -d "$data_path" || -L "$data_path" ]]; then
+            echo -e "${R}[ ERROR ] Unsafe private CSTK data path: $data_path${X}" >&2
+            return 1
+        fi
+    done
+
+    secure_user_data_permissions || {
+        echo -e "${R}[ ERROR ] Unable to secure the private CSTK data folders.${X}" >&2
+        return 1
+    }
+}
+
+prepare_export_dir() {
+    if [[ "$(realpath -m "$cstk_export_dir")" != "$cstk_export_dir" ]]; then
+        echo -e "${R}[ ERROR ] The CSTK export path must stay inside the user home directory.${X}" >&2
+        return 1
+    fi
+    if [[ -L "$cstk_export_dir" ]]; then
+        echo -e "${R}[ ERROR ] Refusing symbolic-link export folder: $cstk_export_dir${X}" >&2
+        return 1
+    fi
+
+    run_as_cstk_user mkdir -p -- "$cstk_export_dir" || return 1
+    [[ -d "$cstk_export_dir" && ! -L "$cstk_export_dir" ]] || return 1
+    run_as_cstk_user chmod 700 -- "$cstk_export_dir"
+}
+
+copy_legacy_bank_data() {
+    local answer copied source destination
+    local legacy_loot="$home_dir/Bank/Loot"
+    local legacy_malware="$home_dir/Bank/Malware"
+
+    if [[ ! -d "$legacy_loot" && ! -d "$legacy_malware" ]]; then
+        echo -e "${Y}[ INFO ] No legacy Bank/Loot or Bank/Malware folders were found.${X}"
+        return 0
+    fi
+
+    echo -e "${Y}This copies legacy shared files into $CSTK_USER_DATA_DIR.${X}"
+    echo "Existing private files will not be overwritten, and the originals will remain untouched."
+    read -r -p "Continue? [y/N]: " answer
+    [[ "$answer" =~ ^[Yy]$ ]] || return 0
+
+    copied="no"
+    for source in "$legacy_loot" "$legacy_malware"; do
+        [[ -d "$source" ]] || continue
+        if [[ "$source" == "$legacy_loot" ]]; then
+            destination="$Loot"
+        else
+            destination="$Malware"
+        fi
+        cp -a --no-clobber -- "$source/." "$destination/" || return 1
+        copied="yes"
+    done
+
+    secure_user_data_permissions || return 1
+    if [[ "$copied" == "yes" ]]; then
+        echo -e "${G}[ OK ] Legacy files copied without overwriting private files.${X}"
+    fi
+}
+
+create_private_data_archive() {
+    local format archive stamp archiver
+    format="$1"
+    stamp="$(date +%Y%m%d-%H%M%S-%N)"
+
+    secure_user_data_permissions || return 1
+    prepare_export_dir || {
+        echo -e "${R}[ ERROR ] Unable to prepare $cstk_export_dir.${X}" >&2
+        return 1
+    }
+
+    case "$format" in
+        plain)
+            archive="$cstk_export_dir/cstk-private-data-$stamp.tar.gz"
+            if ! run_as_cstk_user tar --create --gzip --file "$archive" \
+                --directory "$CSTK_USER_DATA_DIR" Loot Malware; then
+                rm -f -- "$archive"
+                return 1
+            fi
+            ;;
+        encrypted)
+            archiver="$(command -v 7z || command -v 7zz || true)"
+            if [[ -z "$archiver" ]]; then
+                echo -e "${R}[ ERROR ] 7-Zip is not installed. Run the CSTK installer, then try again.${X}" >&2
+                return 1
+            fi
+            archive="$cstk_export_dir/cstk-private-data-$stamp.7z"
+            echo -e "${Y}7-Zip will ask twice for a password. The password is not stored by CSTK.${X}"
+            if ! (
+                cd -- "$CSTK_USER_DATA_DIR" &&
+                run_as_cstk_user "$archiver" a -t7z -mhe=on -p "$archive" Loot Malware
+            ); then
+                rm -f -- "$archive"
+                return 1
+            fi
+            ;;
+        *)
+            return 2
+            ;;
+    esac
+
+    if [[ ! -f "$archive" || -L "$archive" ]]; then
+        echo -e "${R}[ ERROR ] The backup was not created as a safe regular file.${X}" >&2
+        return 1
+    fi
+    run_as_cstk_user chmod 600 -- "$archive" || return 1
+    echo -e "${G}[ OK ] Private backup created: $archive${X}"
+}
+
+private_data_menu() {
+    local choice
+
+    if [[ ! -t 0 || ! -t 1 ]]; then
+        echo -e "${R}[ ERROR ] The private-data manager requires an interactive terminal.${X}" >&2
+        return 2
+    fi
+
+    while true; do
+        clear
+        echo -e "${O}CSTK Private User Data${X}"
+        echo
+        echo "User:       $user"
+        echo "Loot:       $Loot"
+        echo "Malware:    $Malware"
+        echo "Backups:    $cstk_export_dir"
+        echo
+        echo "Other ordinary users cannot access these mode-700 folders."
+        echo "Root and accounts with sudo privileges can still access system data."
+        echo
+        echo "1 - Reapply private ownership and permissions"
+        echo "2 - Copy legacy shared Bank files here (no overwrite)"
+        echo "3 - Create a private .tar.gz backup"
+        echo "4 - Create a password-protected .7z backup (recommended)"
+        echo "X - Return"
+        echo
+        read -r -p "Private Data ==> " choice
+
+        case "$choice" in
+            1) secure_user_data_permissions &&
+               echo -e "${G}[ OK ] Private permissions reapplied.${X}" ;;
+            2) copy_legacy_bank_data ;;
+            3) create_private_data_archive plain ;;
+            4) create_private_data_archive encrypted ;;
+            [Xx]) return 0 ;;
+            *) echo -e "${Y}Choose 1, 2, 3, 4, or X.${X}" ;;
+        esac
+
+        echo
+        read -r -p "Press Enter to continue..."
+    done
+}
+
+finish_cstk_session() {
+    local rc=$?
+    trap - EXIT
+    secure_user_data_permissions >/dev/null 2>&1 || true
+    exit "$rc"
+}
+
+initialize_user_context || exit 1
 
 verify_integrity_refresh_key() {
     local supplied_hash
@@ -220,6 +451,7 @@ dec_file() {
 }
 
 wait_and_return() {
+    secure_user_data_permissions >/dev/null 2>&1 || true
     echo -e "${B} \nEnter key for main menu ${R} \nX to exit.\n ${X} "
     read -r -n 1 -p "${AA}" op
     if [[ "$op" =~ [Xx] ]]; then
@@ -339,7 +571,7 @@ delete_me_now() {
     command -v mandb >/dev/null 2>&1 && mandb >/dev/null 2>&1
 
     echo -e "${G}CSTK launchers and core program files were deleted.${X}"
-    echo -e "${Y}Local data, Bank files, logs, wordlists, and installed system packages were preserved.${X}"
+    echo -e "${Y}Private user data, legacy Bank files, logs, wordlists, and installed system packages were preserved.${X}"
     exit 0
 }
 
@@ -369,7 +601,7 @@ handle_integrity_failure() {
     case "${choice,,}" in
         2 | d | delete)
             echo -e "${R}This permanently removes CSTK's launchers and core program files.${X}"
-            echo -e "${Y}Local data, Bank files, logs, wordlists, and installed packages will be preserved.${X}"
+            echo -e "${Y}Private user data, legacy Bank files, logs, wordlists, and installed packages will be preserved.${X}"
             read -r -p "Type DELETE CSTK to confirm: " confirmation || exit 99
             if [[ "$confirmation" == "DELETE CSTK" ]]; then
                 delete_me_now
@@ -448,6 +680,8 @@ check_hash() {
 
 header() {
     local random=$((RANDOM % 8 + 1))
+    # The sourced Fonts functions read these dynamically scoped color variables.
+    # shellcheck disable=SC2034
     local r="$R" g="$G" y="$Y" b="$B" p="$P" c="$C" x="$X"
 
     case $random in
@@ -863,6 +1097,7 @@ main_menu() {
          4 -${B} ETC  ${g}
          5 -${B} Toggle Authentication ${Y}(Currently: $AUTH_ENABLED)  ${g}
          6 -${B} Toggle Animated Headers ${Y}(Currently: $FONTS_ENABLED)  ${g}
+         7 -${B} Private Loot / Malware Data and Backups  ${g}
          U -${B} Check / Install CSTK Updates  ${g}
          T -${B} TTY Shell Upgrade Guide  ${g}
          X -${R} exit ${X}\n\n\n "
@@ -872,6 +1107,7 @@ main_menu() {
         [1-4]) handle_input "$num" ;;
         5) toggle_auth && sleep 3 && main_menu ;;
         6) toggle_fonts && sleep 3 && main_menu ;;
+        7) clear; private_data_menu; main_menu ;;
         [Uu]) clear; run_update_manager update; wait_and_return ;;
         [Tt]) clear; show_tty_upgrade_guide; wait_and_return ;;
         [Xx]) exit 0 ;;
@@ -1487,7 +1723,7 @@ netcat_shells_reverse() {
 
 # Class: PAYLOADS - Tool: Netcat Assembly Shell - Option 1-C
 netcat_shells_assembly() {
-    trap 'rm -f "$Malware/execute.asm" "$Malware/execute.o"' SIGQUIT SIGILL SIGTERM SIGHUP EXIT 2>/dev/null
+    trap 'rm -f "$Malware/execute.asm" "$Malware/execute.o"; secure_user_data_permissions >/dev/null 2>&1 || true' SIGQUIT SIGILL SIGTERM SIGHUP EXIT 2>/dev/null
     clear
     payloads_nc_frame
     sleep 5
@@ -2015,9 +2251,6 @@ hash_id() {
 }
 
 ######################### MAIN SCRIPT #######################
-if [[ $# -eq 0 ]]; then
-    check_if_password_is_needed
-fi
 if [[ $# -eq 1 ]]; then
     case "$1" in
     -h | -H)
@@ -2038,8 +2271,13 @@ if [[ $# -eq 1 ]]; then
         ;;
     esac
 fi
-if [[ $# -gt 0 ]]; then
-    check_hash || exit 1
+
+check_hash || exit 1
+prepare_user_data_dirs || exit 1
+trap finish_cstk_session EXIT
+
+if [[ $# -eq 0 ]]; then
+    check_if_password_is_needed
 fi
 if [[ $# -eq 1 && "$1" =~ ^(-T|--tty)$ ]]; then
     show_tty_upgrade_guide
@@ -2051,6 +2289,10 @@ if [[ $# -eq 1 && "$1" =~ ^(-C|--check-updates)$ ]]; then
 fi
 if [[ $# -eq 1 && "$1" =~ ^(-U|--update)$ ]]; then
     run_update_manager update
+    exit $?
+fi
+if [[ $# -eq 1 && "$1" =~ ^(-D|--private-data)$ ]]; then
+    private_data_menu
     exit $?
 fi
 if [[ $# -eq 1 && "$1" =~ ^-[OPXE].* ]]; then

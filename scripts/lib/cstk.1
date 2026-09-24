@@ -1,5 +1,5 @@
 .\" cstk.1 - Manual page for CyberSecurityToolKit
-.TH CSTK 1 "2026-09-21" "CSTK 3.0.5" "User Commands"
+.TH CSTK 1 "2026-09-24" "CSTK 3.0.5" "User Commands"
 .SH NAME
 cstk \- run the CyberSecurityToolKit launcher
 .SH SYNOPSIS
@@ -56,6 +56,12 @@ upgrade or automatically remove packages.
 After a CSTK self-update, the current trusted launcher requests the private
 integrity refresh key and rebuilds and verifies the protected checksum
 manifest before executing the updated launcher.
+.TP
+.BR \-D ", " \-\-private-data
+Open the interactive private-data manager for the invoking user. It can
+reapply private permissions, copy legacy shared Bank files without overwriting
+existing private files, create an unencrypted tar archive, or create a
+password-protected 7-Zip archive with encrypted filenames.
 .TP
 .BR \-T ", " \-\-tty
 Display the guide for upgrading a basic Linux shell to a full TTY.
@@ -226,7 +232,8 @@ Git. CSTK verifies it before interactive and direct tool execution. If the
 manifest is missing or a protected file has changed, CSTK refuses to launch a
 tool and offers either a safe exit or permanent removal of the launchers and
 core program files. Removal requires a second explicit confirmation and
-preserves local data, Bank files, logs, wordlists, and installed packages.
+preserves private user data, legacy Bank files, logs, wordlists, and installed
+packages.
 .SH EXAMPLES
 .TP
 .B sudo cstk
@@ -246,6 +253,9 @@ Open the browser-data collection workflow.
 .TP
 .B sudo cstk \-\-etc \-\-hashid
 Open the hash-identification helper.
+.TP
+.B sudo cstk \-\-private-data
+Manage private Loot and Malware folders or create a backup.
 .SH FILES
 .TP
 .I /usr/local/bin/cstk
@@ -284,11 +294,23 @@ Wordlists supplied with or retained for CSTK.
 Locally downloaded breached email and password data. This directory is not
 committed to Git.
 .TP
-.I Bank/Loot/
-Collected assessment results.
+.I $HOME/.local/share/cstk/Loot/
+Per-user collected assessment results. The directory uses mode 0700.
 .TP
-.I Bank/Malware/
-Generated payloads and other potentially dangerous output.
+.I $HOME/.local/share/cstk/Malware/
+Per-user generated payloads and other potentially dangerous output. The
+directory uses mode 0700.
+.TP
+.I $HOME/CSTK-Exports/
+User-requested private backups. Archive files use mode 0600. Unencrypted
+.B .tar.gz
+and password-protected
+.B .7z
+formats are available.
+.TP
+.I Bank/Loot/ and Bank/Malware/
+Legacy shared output folders. CSTK no longer writes new output here; the
+private-data manager can copy their contents without deleting the originals.
 .TP
 .I log/
 CSTK and package-installation logs.
@@ -305,6 +327,16 @@ Used only by
 .BR install.sh
 to provision the library decryption key from a protected regular file without
 placing the key on the command line.
+.TP
+.B CSTK_USER_DATA_DIR
+Per-user data root, normally
+.IR $HOME/.local/share/cstk .
+.TP
+.B CSTK_LOOT_DIR
+Per-user Loot output directory.
+.TP
+.B CSTK_MALWARE_DIR
+Per-user Malware output directory.
 .TP
 .B home_dir
 Exported by the launcher as the absolute CSTK installation directory.
