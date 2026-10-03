@@ -23,6 +23,11 @@ package_management_install_file="$home_dir/Other/SecurityChecks/.package_managem
 github_install_file="$home_dir/Other/SecurityChecks/.github_installed_tools"
 lib_key_dir="/etc/cstk"
 lib_decryption_key="$lib_key_dir/lib_decryption.key"
+cstk_owner_uid=""
+cstk_owner_gid=""
+cstk_user=""
+cstk_group=""
+cstk_user_home=""
 
 config_dirs() {
     local base_dir expected_dir zip_download
@@ -99,6 +104,42 @@ config_dirs() {
     fi
 }
 
+resolve_cstk_account() {
+    local preferred_user passwd_record
+
+    cstk_owner_uid="$(stat -c '%u' -- "$home_dir")" || return 1
+    cstk_owner_gid="$(stat -c '%g' -- "$home_dir")" || return 1
+
+    if ! [[ "$cstk_owner_uid" =~ ^[0-9]+$ && "$cstk_owner_gid" =~ ^[0-9]+$ ]]; then
+        echo -e "${R}[ ERROR ] Unable to determine the CSTK checkout owner.${X}"
+        return 1
+    fi
+
+    preferred_user="${SUDO_USER:-}"
+    if [[ -n "$preferred_user" && "$preferred_user" != "root" && "$preferred_user" != "nobody" ]]; then
+        passwd_record="$(getent passwd "$preferred_user")" || passwd_record=""
+    else
+        passwd_record=""
+    fi
+
+    if [[ -z "$passwd_record" ]]; then
+        passwd_record="$(getent passwd "$cstk_owner_uid")" || {
+            echo -e "${R}[ ERROR ] Unable to find the CSTK checkout owner account.${X}"
+            return 1
+        }
+    fi
+
+    IFS=: read -r cstk_user _ _ _ _ cstk_user_home _ <<<"$passwd_record"
+    cstk_group="$(id -gn "$cstk_user")" || return 1
+    cstk_user_home="$(realpath -e "$cstk_user_home")" || return 1
+
+    if [[ -z "$cstk_user" || -z "$cstk_group" ||
+          "$cstk_user_home" != /* || ! -d "$cstk_user_home" ]]; then
+        echo -e "${R}[ ERROR ] The CSTK checkout owner does not have a usable account.${X}"
+        return 1
+    fi
+}
+
 need_root() {
     if [[ "$EUID" -ne 0 ]]; then
         echo "Root privileges are required."
@@ -155,67 +196,49 @@ link_main_script() {
 }
 
 make_dir() {
-    local KEYS dir folders inv_user inv_group inv_home passwd_record
-    local user_data_dir user_loot user_malware
+    local dir
+    local user_data_dir user_loot user_malware user_logs user_keys
 
-    KEYS="${home_dir}/etc/keys"
-    inv_user="${SUDO_USER:-${USER:-root}}"
-    passwd_record="$(getent passwd "$inv_user")" || {
-        echo -e "${R}[ ERROR ] Unable to find the invoking user account: $inv_user.${X}"
-        exit 1
-    }
-    IFS=: read -r _ _ _ _ _ inv_home _ <<<"$passwd_record"
-    inv_home="$(realpath -e "$inv_home")" || exit 1
-    inv_group="$(id -gn "$inv_user")" || exit 1
-
-    if [[ -z "$inv_home" || "$inv_home" != /* || ! -d "$inv_home" ]]; then
+    if [[ -z "$cstk_user_home" || "$cstk_user_home" != /* || ! -d "$cstk_user_home" ]]; then
         echo -e "${R}[ ERROR ] The invoking user does not have a usable home directory.${X}"
         exit 1
     fi
 
-    user_data_dir="$inv_home/.local/share/cstk"
+    user_data_dir="$cstk_user_home/.local/share/cstk"
     user_loot="$user_data_dir/Loot"
     user_malware="$user_data_dir/Malware"
+    user_logs="$user_data_dir/Logs"
+    user_keys="$user_data_dir/Keys"
 
     if [[ "$(realpath -m "$user_data_dir")" != "$user_data_dir" ]]; then
         echo -e "${R}[ ERROR ] The private CSTK data path must stay inside the user home directory.${X}"
         exit 1
     fi
 
-    for dir in "$user_data_dir" "$user_loot" "$user_malware"; do
+    for dir in "$user_data_dir" "$user_loot" "$user_malware" "$user_logs" "$user_keys"; do
         if [[ -L "$dir" ]]; then
             echo -e "${R}[ ERROR ] Refusing symbolic-link private data path: $dir.${X}"
             exit 1
         fi
     done
 
-    if [[ "$inv_user" == "root" ]]; then
-        mkdir -p -- "$user_loot" "$user_malware"
+    if [[ "$cstk_user" == "root" ]]; then
+        mkdir -p -- "$user_loot" "$user_malware" "$user_logs" "$user_keys"
     elif command -v runuser >/dev/null 2>&1; then
-        runuser -u "$inv_user" -- mkdir -p -- "$user_loot" "$user_malware"
+        runuser -u "$cstk_user" -- mkdir -p -- "$user_loot" "$user_malware" "$user_logs" "$user_keys"
     else
-        sudo -u "$inv_user" -- mkdir -p -- "$user_loot" "$user_malware"
+        sudo -u "$cstk_user" -- mkdir -p -- "$user_loot" "$user_malware" "$user_logs" "$user_keys"
     fi || {
         echo -e "${R}[ ERROR ] Unable to create private CSTK data folders.${X}"
         exit 1
     }
 
-    if ! chown -R -P -- "$inv_user:$inv_group" "$user_data_dir" ||
+    if ! chown -R -P -- "$cstk_user:$cstk_group" "$user_data_dir" ||
        ! chmod -R go-rwx -- "$user_data_dir" ||
-       ! chmod 700 -- "$user_data_dir" "$user_loot" "$user_malware"; then
+       ! chmod 700 -- "$user_data_dir" "$user_loot" "$user_malware" "$user_logs" "$user_keys"; then
         echo -e "${R}[ ERROR ] Unable to secure private CSTK data folders.${X}"
         exit 1
     fi
-
-    folders=("$KEYS")
-    for dir in "${folders[@]}"; do
-        if [[ ! -d "$dir" ]]; then
-            mkdir -p "$dir" || {
-                echo -e "${R}[ ERROR ] Failed to create $dir.${X}"
-                exit 1
-            }
-        fi
-    done
 
     mkdir -p \
         "$home_dir/Other/SecurityChecks" \
@@ -326,6 +349,12 @@ install_lib_decryption_key() {
 
 pipx_install() {
     local package="$1"
+    local command_name="${2:-$1}"
+
+    if command -v "$command_name" >/dev/null 2>&1; then
+        echo -e "${G}[ ✔  ] ${command_name} is already installed.${X}"
+        return 0
+    fi
 
     if ! command -v pipx >/dev/null 2>&1; then
         echo -e "${R}[ ❌ ] pipx is not installed.${X}"
@@ -349,9 +378,15 @@ pipx_install() {
 
 pipx_run_install() {
     pipx_install droopescan
-    pipx_install naminster
+    pipx_install naminter
     pipx_install holehe
-    pipx_install bloodhound-python
+
+    if command -v bloodhound-ce-python >/dev/null 2>&1 ||
+       command -v bloodhound-python >/dev/null 2>&1; then
+        echo -e "${G}[ ✔  ] A BloodHound Python collector is already installed.${X}"
+    else
+        pipx_install bloodhound-ce bloodhound-ce-python
+    fi
 }
 
 install_man_page() {
@@ -797,7 +832,7 @@ install_dependencies() {
     }
 
     local required_commands=(
-        7zip amass apache-users apktool argon2 aria2 arjun arp-scan arsenal-ng assetfinder autoconf basez bc bloodhound braa build-essential bzip2 cargo cewl commix coreutils crackmapexec curl dirb dirsearch dmitry dnsrecon dpkg enum4linux exploitdb feroxbuster ffuf fierce fping fzf gcc git git-lfs sed gobuster golang golang-any gospider grep gzip hashcat hping3 httpx-toolkit hydra impacket-scripts john joomscan jq libc6-dev lynis make masscan medusa metasploit-framework mongodb-server-core mxcheck mysql-common nasm ncrack ncat nikto nmap npm nuclei onesixtyone openssh-client openssh-server openssl p7zip-full pyenv-runtime python3 python3-pip redis rlwrap seclists sherlock skipfish smbclient smtp-user-enum snmpcheck sqlmap sslscan subfinder subjack sublist3r tar testssl.sh theharvester unrar unzip wafw00f wapiti whatweb whiptail whois wpscan xxd ldap-utils postgresql-client default-mysql-client redis-tools mongosh
+        7zip amass apache-users apktool argon2 aria2 arjun arp-scan arsenal-ng assetfinder autoconf basez bc bloodhound braa build-essential bzip2 cargo cewl commix coreutils crackmapexec curl dirb dirsearch dmitry dnsrecon dpkg enum4linux exploitdb feroxbuster ffuf fierce fping fzf gcc git git-lfs sed gobuster golang golang-any gospider grep gzip hashcat hping3 httpx-toolkit hydra impacket-scripts john joomscan jq libc6-dev lynis make masscan medusa metasploit-framework mongodb-server-core mxcheck mysql-common nasm ncrack ncat nikto nmap npm nuclei onesixtyone openssh-client openssh-server openssl p7zip-full pyenv-runtime python3 python3-pip redis rlwrap seclists sherlock skipfish smbclient smtp-user-enum snmpcheck sqlmap sslscan subfinder subjack sublist3r tar testssl.sh theharvester unrar unzip wafw00f wapiti whatweb whiptail whois wpscan xxd ldap-utils postgresql-client default-mysql-client redis-tools
     )
 
     [[ $# -gt 0 ]] && required_commands+=("$@")
@@ -904,38 +939,206 @@ install_dependencies() {
     fi
 }
 
-install_mimipenguin() {
-    if ! command -v mimipenguin >/dev/null 2>&1; then
-        echo -e "${G}[ 📌 ] Installing mimipenguin...${X}"
-        git clone \
-            https://github.com/huntergregal/mimipenguin.git \
-            "$home_dir/Other/Downloads/mimipenguin" &>/dev/null || {
-            echo -e "${R}[ ❌ ] Failed to clone mimipenguin.${X}"
+install_mongosh() {
+    local log_dir log_file package candidate
+    local os arch openssl_mode temp_dir metadata_file archive_file
+    local release_data url checksum mongosh_bin crypto_lib
+
+    if command -v mongosh >/dev/null 2>&1; then
+        echo -e "${G}[ ✔  ] mongosh is already installed.${X}"
+        return 0
+    fi
+
+    log_dir="$home_dir/log/package_manager"
+    log_file="$log_dir/mongosh.log"
+    mkdir -p "$log_dir"
+    : > "$log_file"
+
+    # Prefer a configured package repository when it provides mongosh.
+    if command -v apt-get >/dev/null 2>&1; then
+        for package in mongodb-mongosh mongosh; do
+            candidate="$(apt-cache policy "$package" 2>/dev/null |
+                awk '/Candidate:/ { print $2; exit }')"
+            if [[ -z "$candidate" || "$candidate" == "(none)" ]]; then
+                continue
+            fi
+
+            echo -e "${C}[ 📌 ] Installing $package${X}"
+            if DEBIAN_FRONTEND=noninteractive apt-get install -y \
+                -o Dpkg::Options::="--force-confdef" \
+                -o Dpkg::Options::="--force-confold" \
+                "$package" >>"$log_file" 2>&1; then
+                grep -Fxq "$package" "$package_management_install_file" ||
+                    echo "$package" >> "$package_management_install_file"
+                echo -e "${G}[ ✅ ] mongosh installed successfully.${X}"
+                return 0
+            fi
+        done
+    elif command -v brew >/dev/null 2>&1; then
+        echo -e "${C}[ 📌 ] Installing mongosh through Homebrew.${X}"
+        if brew tap mongodb/brew >>"$log_file" 2>&1 &&
+           HOMEBREW_NO_AUTO_UPDATE=1 brew install mongosh >>"$log_file" 2>&1; then
+            grep -Fxq mongosh "$package_management_install_file" ||
+                echo mongosh >> "$package_management_install_file"
+            echo -e "${G}[ ✅ ] mongosh installed successfully.${X}"
+            return 0
+        fi
+    elif command -v dnf >/dev/null 2>&1 || command -v yum >/dev/null 2>&1; then
+        for package in mongodb-mongosh mongosh; do
+            if command -v dnf >/dev/null 2>&1; then
+                dnf install -y "$package" >>"$log_file" 2>&1
+            else
+                yum install -y "$package" >>"$log_file" 2>&1
+            fi
+            if [[ "$?" -eq 0 ]]; then
+                grep -Fxq "$package" "$package_management_install_file" ||
+                    echo "$package" >> "$package_management_install_file"
+                echo -e "${G}[ ✅ ] mongosh installed successfully.${X}"
+                return 0
+            fi
+        done
+    fi
+
+    # Kali does not currently ship mongosh. Use MongoDB's official HTTPS release
+    # metadata and verify the downloaded archive against its published SHA-256.
+    os="$(uname -s)"
+    arch="$(uname -m)"
+    if [[ "$os" != "Linux" ]]; then
+        echo -e "${R}[ ❌ ] No supported mongosh package source is configured.${X}"
+        echo -e "${Y}[ ℹ️  ] Log: $log_file${X}"
+        return 1
+    fi
+
+    case "$arch" in
+        x86_64|amd64) arch="x86_64" ;;
+        aarch64|arm64) arch="arm64" ;;
+        *)
+            echo -e "${R}[ ❌ ] MongoDB does not publish a CSTK-supported mongosh build for: $arch${X}"
             return 1
-            }
+            ;;
+    esac
 
-        cd "$home_dir/Other/Downloads/mimipenguin" || return 1
-        make
-        local er=$?
-        if [[ "$er" -eq 0 ]]; then
-            echo -e "${G}[ ✅ ] mimipenguin installed successfully.${X}"
-            echo "mimipenguin" >> "$github_install_file"
-            if [[ -f "$home_dir/Other/Downloads/mimipenguin/mimipenguin.sh" ]]; then
-                cp "$home_dir/Other/Downloads/mimipenguin/mimipenguin.sh" /usr/local/bin/
-                chmod 755 /usr/local/bin/mimipenguin.sh
-            fi
+    for package in curl jq tar sha256sum; do
+        command -v "$package" >/dev/null 2>&1 || {
+            echo -e "${R}[ ❌ ] mongosh installation requires: $package${X}"
+            return 1
+        }
+    done
 
-            if [[ -f "$home_dir/Other/Downloads/mimipenguin/mimipenguin.py" ]]; then
-                cp "$home_dir/Other/Downloads/mimipenguin/mimipenguin.py" /usr/local/bin/
-                chmod 755 /usr/local/bin/mimipenguin.py
-            fi
-        else
-            echo -e "${R}[ ❌ ] Failed to build mimipenguin.${X}"
+    temp_dir="$(mktemp -d /tmp/cstk-mongosh.XXXXXX)" || return 1
+    metadata_file="$temp_dir/mongosh.json"
+    archive_file="$temp_dir/mongosh.tgz"
+
+    if ! curl -fsSL --retry 2 --connect-timeout 15 \
+        https://downloads.mongodb.com/compass/mongosh.json \
+        -o "$metadata_file" >>"$log_file" 2>&1; then
+        rm -rf -- "$temp_dir"
+        echo -e "${R}[ ❌ ] Failed to download MongoDB release metadata.${X}"
+        echo -e "${Y}[ ℹ️  ] Log: $log_file${X}"
+        return 1
+    fi
+
+    if ldconfig -p 2>/dev/null | grep -q 'libssl\.so\.3'; then
+        openssl_mode="openssl3"
+    else
+        openssl_mode="bundled"
+    fi
+
+    release_data="$(jq -r \
+        --arg arch "$arch" \
+        --arg openssl_mode "$openssl_mode" \
+        '.versions[0].downloads[] |
+         select(.distro == "linux" and .arch == $arch) |
+         select(if $openssl_mode == "openssl3"
+                then .sharedOpenssl == "openssl3"
+                else (has("sharedOpenssl") | not)
+                end) |
+         [.archive.url, .archive.sha256] | @tsv' \
+        "$metadata_file" | head -n 1)"
+    IFS=$'\t' read -r url checksum <<<"$release_data"
+
+    if [[ "$url" != https://downloads.mongodb.com/* ||
+          ! "$checksum" =~ ^[[:xdigit:]]{64}$ ]]; then
+        rm -rf -- "$temp_dir"
+        echo -e "${R}[ ❌ ] MongoDB release metadata did not contain a valid download.${X}"
+        return 1
+    fi
+
+    echo -e "${C}[ 📌 ] Downloading the verified MongoDB Shell archive.${X}"
+    if ! curl -fsSL --retry 2 --connect-timeout 15 "$url" \
+        -o "$archive_file" >>"$log_file" 2>&1 ||
+       ! printf '%s  %s\n' "$checksum" "$archive_file" |
+            sha256sum -c - >>"$log_file" 2>&1 ||
+       ! tar -xzf "$archive_file" -C "$temp_dir" >>"$log_file" 2>&1; then
+        rm -rf -- "$temp_dir"
+        echo -e "${R}[ ❌ ] Failed to download or verify mongosh.${X}"
+        echo -e "${Y}[ ℹ️  ] Log: $log_file${X}"
+        return 1
+    fi
+
+    mongosh_bin="$(find "$temp_dir" -type f -path '*/bin/mongosh' -print -quit)"
+    crypto_lib="$(find "$temp_dir" -type f -path '*/bin/mongosh_crypt_v1.*' -print -quit)"
+    if [[ ! -x "$mongosh_bin" ]] ||
+       ! "$mongosh_bin" --build-info >>"$log_file" 2>&1; then
+        rm -rf -- "$temp_dir"
+        echo -e "${R}[ ❌ ] The verified mongosh archive did not contain a working executable.${X}"
+        return 1
+    fi
+
+    install -m 0755 "$mongosh_bin" /usr/local/bin/mongosh || {
+        rm -rf -- "$temp_dir"
+        return 1
+    }
+    if [[ -n "$crypto_lib" && -f "$crypto_lib" ]]; then
+        install -m 0755 "$crypto_lib" "/usr/local/bin/$(basename "$crypto_lib")" || {
+            rm -rf -- "$temp_dir"
+            return 1
+        }
+    fi
+
+    rm -rf -- "$temp_dir"
+    grep -Fxq mongosh-archive "$github_install_file" ||
+        echo mongosh-archive >> "$github_install_file"
+    echo -e "${G}[ ✅ ] mongosh installed successfully from MongoDB's verified archive.${X}"
+}
+
+install_mimipenguin() {
+    local repo_dir log_dir log_file
+
+    repo_dir="$home_dir/Other/Downloads/mimipenguin"
+    log_dir="$home_dir/log/github"
+    log_file="$log_dir/mimipenguin_clone.log"
+    mkdir -p "$log_dir"
+
+    if [[ -d "$repo_dir/.git" &&
+          ( -f "$repo_dir/mimipenguin.py" || -f "$repo_dir/mimipenguin.sh" ) ]]; then
+        echo -e "${G}[ ✔  ] MimiPenguin source is already downloaded.${X}"
+    elif [[ -e "$repo_dir" ]]; then
+        echo -e "${R}[ ❌ ] MimiPenguin destination exists but is not a valid checkout: $repo_dir${X}"
+        return 1
+    else
+        echo -e "${G}[ 📌 ] Downloading MimiPenguin...${X}"
+        if ! git clone --depth 1 \
+            https://github.com/huntergregal/mimipenguin.git \
+            "$repo_dir" >"$log_file" 2>&1; then
+            echo -e "${R}[ ❌ ] Failed to clone MimiPenguin.${X}"
+            echo -e "${Y}[ ℹ️  ] Log: $log_file${X}"
             return 1
         fi
-    else
-        echo -e "${G}[ ✔  ] mimipenguin is already installed.${X}"
     fi
+
+    # CSTK launches the maintained Python or shell implementation directly;
+    # the optional C build is not required and needs multilib on 64-bit hosts.
+    if [[ -f "$repo_dir/mimipenguin.sh" ]]; then
+        install -m 0755 "$repo_dir/mimipenguin.sh" /usr/local/bin/mimipenguin.sh
+    fi
+    if [[ -f "$repo_dir/mimipenguin.py" ]]; then
+        install -m 0755 "$repo_dir/mimipenguin.py" /usr/local/bin/mimipenguin.py
+    fi
+
+    grep -Fxq mimipenguin "$github_install_file" ||
+        echo mimipenguin >> "$github_install_file"
+    echo -e "${G}[ ✅ ] MimiPenguin installed successfully.${X}"
 }
 
 install_shc() {
@@ -1047,12 +1250,10 @@ install_tab_completion() {
         return 1
     fi
 
-    inv_user="${SUDO_USER:-${USER:-root}}"
-    passwd_record="$(getent passwd "$inv_user")" || {
-        echo -e "${R}[ ERROR ] Unable to find account: $inv_user.${X}"
-        return 1
-    }
-    IFS=: read -r _ _ _ _ _ inv_home inv_shell <<<"$passwd_record"
+    inv_user="$cstk_user"
+    inv_home="$cstk_user_home"
+    passwd_record="$(getent passwd "$inv_user")" || return 1
+    IFS=: read -r _ _ _ _ _ _ inv_shell <<<"$passwd_record"
     s="${inv_shell##*/}"
 
     add_to_rc() {
@@ -1324,18 +1525,18 @@ password_protect() {
 }
 
 finish_setup() {
-
-    local cstk_user
-
-    cstk_user="$(echo ${SUDO_USER:-$(whoami)})"
-
     chmod 750 /usr/local/bin/cstk_wrapper
 
     find "$home_dir" \
         -type d \
         -exec chmod 750 {} \;
 
-    chown -R "$cstk_user:$cstk_user" "$home_dir"
+    if [[ -z "$cstk_owner_uid" || -z "$cstk_owner_gid" ]]; then
+        echo -e "${R}[ ERROR ] The original CSTK checkout ownership was not recorded.${X}"
+        return 1
+    fi
+
+    chown -R -P -- "$cstk_owner_uid:$cstk_owner_gid" "$home_dir"
 }
 
 # ============================================================================
@@ -1350,6 +1551,7 @@ bash_version
 
 # Find and configure the CyberSecurityToolKit directory.
 config_dirs
+resolve_cstk_account || exit 1
 
 # Install the man page.
 install_man_page
@@ -1367,6 +1569,7 @@ touch \
 
 # Install all required system dependencies.
 install_dependencies
+install_mongosh
 
 # Install Python tools through pipx.
 pipx_run_install

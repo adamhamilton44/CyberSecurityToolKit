@@ -1,16 +1,11 @@
-# Local CSTK Configuration and Keys
+# Local CSTK Program Configuration
 
-The `etc/` directory stores sensitive files generated locally by CSTK. Its
-runtime contents are excluded from Git, except for this guide.
+The repository `etc/` directory no longer stores user-generated keys. Private
+keys, OpenSSL output, password hashes, checksums, and other user-created
+cryptographic material belong in `$HOME/.local/share/cstk/Keys/`, which is
+owned by the invoking user and uses private permissions.
 
-The `etc/keys/` directory may contain:
-
-- public and private key pairs;
-- OpenSSL output;
-- password hashes and checksums; and
-- other user-created cryptographic material.
-
-## Handle this directory carefully
+## Handle key material carefully
 
 - Never commit private keys, passwords, recovery material, or unredacted
   configuration.
@@ -19,6 +14,6 @@ The `etc/keys/` directory may contain:
 - Store encrypted backups in a separate trusted location.
 - Confirm the exact path before deleting or replacing any file.
 
-This directory is separate from `/etc/cstk/`, which contains CSTK's installed
+`$HOME/.local/share/cstk/Keys/` is separate from `/etc/cstk/`, which contains CSTK's installed
 root-only library key and maintenance state. Do not copy that private key into
 the repository or pass it on a command line.

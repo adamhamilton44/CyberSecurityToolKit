@@ -1,6 +1,20 @@
 #!/bin/bash
 
 : "${home_dir:?home_dir not set; exit 4}"
+: "${user:?user not set; exit 4}"
+: "${user_home:?user_home not set; exit 4}"
+: "${CSTK_USER_DATA_DIR:?CSTK_USER_DATA_DIR not set; exit 4}"
+: "${CSTK_LOOT_DIR:?CSTK_LOOT_DIR not set; exit 4}"
+: "${CSTK_MALWARE_DIR:?CSTK_MALWARE_DIR not set; exit 4}"
+: "${CSTK_LOG_DIR:?CSTK_LOG_DIR not set; exit 4}"
+: "${CSTK_KEYS_DIR:?CSTK_KEYS_DIR not set; exit 4}"
+: "${CSTK_LOGGING_ENABLED:?CSTK_LOGGING_ENABLED not set; exit 4}"
+: "${CSTK_LOGGING_LEVEL:=$CSTK_LOGGING_ENABLED}"
+[[ "$CSTK_LOGGING_LEVEL" == "on" ]] && CSTK_LOGGING_LEVEL="basic"
+case "$CSTK_LOGGING_LEVEL" in
+    off|basic|full) ;;
+    *) echo "Invalid CSTK logging level." >&2; exit 4 ;;
+esac
 [[ $- == *i* ]] && { echo "This script cannot be run interactively"; exit 1; }
 
 if [[ -z "${CSTK_MAIN_RUNNER:-}" ]]; then
@@ -9,10 +23,69 @@ if [[ -z "${CSTK_MAIN_RUNNER:-}" ]]; then
 fi
 
 export PATH="$home_dir/scripts/bin:/opt/cstk/bin:$PATH"
-exec env -i \
+clean_env=(env -i \
     PATH="$PATH" \
+    HOME="$user_home" \
+    USER="$user" \
+    LOGNAME="$user" \
+    SUDO_USER="$user" \
     CSTK_WRAPPER_RUNNER=1 \
     CSTK_MAIN_RUNNER="$CSTK_MAIN_RUNNER" \
     CSTK_ROOT="$home_dir" \
+    CSTK_USER_HOME="$user_home" \
+    CSTK_USER_DATA_DIR="$CSTK_USER_DATA_DIR" \
+    CSTK_LOOT_DIR="$CSTK_LOOT_DIR" \
+    CSTK_MALWARE_DIR="$CSTK_MALWARE_DIR" \
+    CSTK_LOG_DIR="$CSTK_LOG_DIR" \
+    CSTK_KEYS_DIR="$CSTK_KEYS_DIR" \
+    CSTK_LOGGING_ENABLED="$CSTK_LOGGING_ENABLED" \
+    CSTK_LOGGING_LEVEL="$CSTK_LOGGING_LEVEL" \
     home_dir="$home_dir" \
-    "$@"
+)
+
+if [[ "$CSTK_LOGGING_LEVEL" == "off" ]]; then
+    exec "${clean_env[@]}" "$@"
+fi
+
+[[ -d "$CSTK_LOG_DIR" && ! -L "$CSTK_LOG_DIR" ]] || {
+    echo "Unsafe CSTK log directory: $CSTK_LOG_DIR" >&2
+    exit 4
+}
+umask 077
+run_id="$(cat /proc/sys/kernel/random/uuid 2>/dev/null || printf '%s-%s' "$$" "$(date +%s)")"
+tool_name="$(basename -- "$1" | tr -c 'A-Za-z0-9._-' '_')"
+log_file="$CSTK_LOG_DIR/run-$(date -u +%Y%m%dT%H%M%SZ)-${tool_name}-${run_id}.log"
+: > "$log_file" || exit 4
+chmod 600 -- "$log_file" || exit 4
+
+{
+    printf 'cstk_log_version=1\n'
+    printf 'started_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf 'run_id=%s\n' "$run_id"
+    printf 'user=%s\n' "$user"
+    printf 'tool=%q\n' "$1"
+    printf 'working_directory=%q\n' "$PWD"
+    printf 'logging_level=%s\n' "$CSTK_LOGGING_LEVEL"
+} >> "$log_file"
+
+if [[ "$CSTK_LOGGING_LEVEL" == "full" ]]; then
+    {
+        printf 'arguments='
+        printf ' %q' "$@"
+        printf '\n--- tool output begins ---\n'
+    } >> "$log_file"
+    "${clean_env[@]}" "$@" 2>&1 | tee -a -- "$log_file"
+    rc=${PIPESTATUS[0]}
+    printf '%s\n' '--- tool output ends ---' >> "$log_file"
+else
+    "${clean_env[@]}" "$@"
+    rc=$?
+fi
+
+{
+    printf 'finished_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf 'exit_status=%s\n' "$rc"
+} >> "$log_file"
+chown -- "$user" "$log_file" 2>/dev/null || true
+chmod 600 -- "$log_file" || true
+exit "$rc"

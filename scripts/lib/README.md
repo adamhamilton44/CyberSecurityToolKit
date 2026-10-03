@@ -42,6 +42,9 @@ trusted signed commit.
 - Keep ZIP archives under Git LFS.
 - Update the manual page and both Bash/Zsh completion routes when public
   options change.
+- Runtime helpers receive per-user Loot, Malware, Logs, logging-state, and
+  home paths from `cstk_wrapper`; do not write runtime reports beneath the
+  program directory.
 - Validate shell sources with `bash -n` and ShellCheck before an authorized
   integrity refresh.
 - Use the private recovery flow for authorized checksum updates; there is no

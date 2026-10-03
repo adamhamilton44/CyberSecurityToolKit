@@ -11,8 +11,9 @@ if [[ -z "${CSTK_WRAPPER_RUNNER:-}" && -z "${CSTK_MAIN_RUNNER:-}" ]]; then
 fi
 
 export TERM="${TERM:-xterm-256color}"
-log_dir="$home_dir/log"
+log_dir="${CSTK_LOG_DIR:?CSTK_LOG_DIR not set}"
 log_file="$log_dir/crypto_catch.log"
+[[ "${CSTK_LOGGING_ENABLED:-on}" == "on" ]] || log_file=/dev/null
 home="${HOME:-}"
 g="\e[34m"
 G="\e[35m"

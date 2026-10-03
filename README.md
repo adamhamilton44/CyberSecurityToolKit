@@ -59,7 +59,8 @@ sudo bash install.sh
 The installer adds the `cstk` launcher and its restricted wrapper under
 `/usr/local/bin/`, installs the manual page and Bash/Zsh tab completion,
 records the packages it installs, prepares protected local state, and creates
-private Loot and Malware folders for the user who invoked `sudo`.
+private Loot, Malware, and runtime Logs folders for the user who invoked
+`sudo`.
 
 ### 4. Start CSTK
 
@@ -77,7 +78,7 @@ sudo cstk
 | `4` | Open the supporting utilities |
 | `5` | Turn CSTK launcher authentication on or off |
 | `6` | Turn animated headers on or off |
-| `7` | Manage private Loot/Malware storage and create backups |
+| `7` | Manage private Loot/Malware/Logs storage, logging, and backups |
 | `U` | Check for and install approved CSTK-managed updates |
 | `T` | Display the full TTY shell-upgrade guide |
 | `X` | Exit |
@@ -177,13 +178,15 @@ was intentional.
 
 ## Private per-user data and backups
 
-CSTK routes generated Loot and Malware to the home directory of the account
-that invoked `sudo cstk`:
+CSTK routes generated Loot, Malware, and runtime tool logs to the home
+directory of the account that invoked `sudo cstk`:
 
 | Path | Purpose |
 | --- | --- |
 | `$HOME/.local/share/cstk/Loot/` | Scan output, reports, and collected assessment results |
 | `$HOME/.local/share/cstk/Malware/` | User-generated payloads and executable test artifacts |
+| `$HOME/.local/share/cstk/Logs/` | Optional basic metadata or full runtime tool logs |
+| `$HOME/.local/share/cstk/Keys/` | Private per-user generated keys and sensitive cryptographic material |
 | `$HOME/CSTK-Exports/` | User-requested private backups |
 
 The data folders use mode `700`, and CSTK removes group and other permissions
@@ -199,6 +202,7 @@ sudo cstk --private-data
 The private-data manager can:
 
 - reapply private ownership and permissions;
+- turn runtime tool logging on or off for future CSTK runs;
 - copy old shared `Bank/Loot` and `Bank/Malware` files without overwriting
   private files or deleting the originals;
 - create an unencrypted `.tar.gz` backup; or
@@ -210,14 +214,24 @@ strong password and keep it somewhere safe; CSTK cannot recover it. Backup
 files use mode `600`. Treat every archive as sensitive and potentially
 dangerous because it may contain credentials or generated payloads.
 
+The logging preference is stored in
+`$HOME/.local/share/cstk/.logging_enabled`. `basic` is the default and records
+the tool, user, start/end times, working directory, run ID, and exit status.
+`full` additionally records command arguments and complete stdout/stderr and
+may therefore contain credentials, tokens, targets, or other sensitive data.
+`off` prevents new wrapper logs while Loot reports and Malware outputs continue
+to be saved. Installer, updater, and uninstaller maintenance logs remain inside
+the CSTK program directory because they describe program maintenance rather
+than runtime tool activity.
+
 The legacy repository `Bank/` folders remain excluded from Git but are no
-longer used for new output. Other local paths excluded from Git include:
+longer used for new output. Keep them until the private-data migration has
+been checked and backed up. Other local paths excluded from Git include:
 
 | Path | Purpose |
 | --- | --- |
 | `data/` | Optional breached-account datasets |
-| `etc/keys/` | Locally generated keys and other sensitive configuration |
-| `log/` | Installer, updater, and runtime logs |
+| `log/` | Installer, updater, and uninstaller maintenance logs |
 | `Other/Downloads/` | Third-party repositories installed at runtime |
 | `Other/SecurityChecks/` | Local authentication settings, installation records, and integrity state; only the verifier is committed |
 

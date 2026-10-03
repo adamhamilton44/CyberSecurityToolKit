@@ -24,8 +24,8 @@ python_install_file="$home_dir/Other/SecurityChecks/.python_pipx_installed_tools
 package_management_install_file="$home_dir/Other/SecurityChecks/.package_management_installed_tools"
 github_install_file="$home_dir/Other/SecurityChecks/.github_installed_tools"
 # package_management = 7zip amass apache-users apktool argon2 aria2 arjun arp-scan assetfinder autoconf basez bc bloodhound braa build-essential bzip2 cargo cewl commix coreutils crackmapexec curl dirb dirsearch dmitry dnsrecon dpkg enum4linux exploitdb feroxbuster ffuf fierce fping fzf gcc git git-lfs sed gobuster golang golang-any gospider grep gzip hashcat hping3 httpx-toolkit hydra impacket-scripts john joomscan jq libc6-dev make masscan medusa metasploit-framework mongodb-server-core mxcheck mysql-common nasm ncrack ncat nikto nmap npm nuclei onesixtyone openssh-client openssh-server openssl p7zip-full pyenv-runtime python3 python3-pip redis rlwrap seclists sherlock skipfish smbclient smtp-user-enum snmpcheck sqlmap sslscan subfinder subjack sublist3r tar testssl.sh theharvester unrar unzip wafw00f wapiti whatweb whiptail whois wpscan xxd
-# github_downloads = mimipenguin,shc,vulscan,katana,nrich,msfpc,lynis,mig-logcleaner-resurrected,apktool,socat
-# pipx_installs = droopescan,holehe,naminster,updog
+# github_downloads = mimipenguin,shc,vulscan,katana,nrich,mongosh-archive,msfpc,lynis,mig-logcleaner-resurrected,apktool,socat
+# pipx_installs = droopescan,holehe,naminter,bloodhound-ce,updog
 
 # make sure user is root
 check_root() {
@@ -60,8 +60,23 @@ remove_shc() {
 
 pipx_uninstall() {
     local package="$1"
-    if pipx list | grep -q "^${package}\b"; then
+    if pipx list 2>/dev/null | grep -qE "^[[:space:]]*package ${package}[[:space:]]"; then
         pipx uninstall "${package}" &>/dev/null
+    fi
+}
+
+# Uninstall all pipx packages recorded during install.
+remove_pipx_installed_tools() {
+    local pkg
+
+    if [[ -f "$python_install_file" ]]; then
+        while IFS= read -r pkg; do
+            [[ -z "$pkg" ]] && continue
+            if pipx list 2>/dev/null | grep -qE "^[[:space:]]*package ${pkg}[[:space:]]"; then
+                pipx uninstall "$pkg" &>/dev/null &&
+                    echo -e "${Y}[✓] Removed ${pkg}. ${X}"
+            fi
+        done < "$python_install_file"
     fi
 }
 
@@ -111,10 +126,10 @@ remove_vulscan() {
     fi
 }
 
-# droopescan
-remove_droop_namester() {
+# droopescan and Naminter
+remove_droop_naminter() {
     pipx_uninstall droopescan
-    pipx_uninstall naminster
+    pipx_uninstall naminter
 }
 # tab completion removal
 remove_tab_completion() {
@@ -166,6 +181,14 @@ remove_nrich() {
     if [[ "$installed" = 0 ]] && [[ -f /usr/bin/nrich ]]; then
         rm /usr/bin/nrich &>/dev/null
         echo -e "${Y}[!] Removing nrich... ${X}"
+    fi
+}
+
+remove_mongosh_archive() {
+    if [[ -f "$github_install_file" ]] &&
+       grep -Fxq mongosh-archive "$github_install_file"; then
+        rm -f /usr/local/bin/mongosh /usr/local/bin/mongosh_crypt_v1.so
+        echo -e "${Y}[✓] Removed the CSTK-installed mongosh archive.${X}"
     fi
 }
 
@@ -240,6 +263,7 @@ confirm_uninstall() {
         remove_shc
         remove_pipx_installed_tools
         remove_nrich
+        remove_mongosh_archive
         remove_katana
         remove_nosqlmap
         remove_vulscan
@@ -256,6 +280,7 @@ confirm_uninstall() {
             remove_shc
             remove_pipx_installed_tools
             remove_nrich
+            remove_mongosh_archive
             remove_katana
             remove_nosqlmap
             remove_vulscan
@@ -273,14 +298,3 @@ confirm_uninstall() {
 # root check then confirm uninstall
 check_root
 confirm_uninstall
-# Uninstall all pipx packages recorded during install
-remove_pipx_installed_tools() {
-    if [[ -f "$python_install_file" ]]; then
-        while IFS= read -r pkg; do
-            [[ -z "$pkg" ]] && continue
-            if pipx list | grep -q "^package ${pkg}\\b"; then
-                pipx uninstall "$pkg" &>/dev/null && echo -e "${Y}[✓] Removed ${pkg}. ${X}"
-            fi
-        done < "$python_install_file"
-    fi
-}

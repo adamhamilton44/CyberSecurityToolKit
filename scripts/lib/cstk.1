@@ -1,5 +1,5 @@
 .\" cstk.1 - Manual page for CyberSecurityToolKit
-.TH CSTK 1 "2026-09-24" "CSTK 3.0.5" "User Commands"
+.TH CSTK 1 "2026-09-28" "CSTK 3.0.5" "User Commands"
 .SH NAME
 cstk \- run the CyberSecurityToolKit launcher
 .SH SYNOPSIS
@@ -255,7 +255,8 @@ Open the browser-data collection workflow.
 Open the hash-identification helper.
 .TP
 .B sudo cstk \-\-private-data
-Manage private Loot and Malware folders or create a backup.
+Manage private Loot, Malware, and runtime Logs folders, change the runtime
+logging preference, or create a backup.
 .SH FILES
 .TP
 .I /usr/local/bin/cstk
@@ -301,6 +302,18 @@ Per-user collected assessment results. The directory uses mode 0700.
 Per-user generated payloads and other potentially dangerous output. The
 directory uses mode 0700.
 .TP
+.I $HOME/.local/share/cstk/Logs/
+Per-user runtime tool logs. The directory uses mode 0700. Basic logging is the
+default. Full logging is opt-in and may include credentials, targets, command
+arguments, and complete tool output.
+.TP
+.I $HOME/.local/share/cstk/Keys/
+Per-user generated keys and sensitive cryptographic material. The directory
+uses mode 0700 and is included in user-requested private backups.
+.TP
+.I $HOME/.local/share/cstk/.logging_enabled
+Per-user runtime logging preference: off, basic, or full. The file uses mode 0600.
+.TP
 .I $HOME/CSTK-Exports/
 User-requested private backups. Archive files use mode 0600. Unencrypted
 .B .tar.gz
@@ -311,9 +324,11 @@ formats are available.
 .I Bank/Loot/ and Bank/Malware/
 Legacy shared output folders. CSTK no longer writes new output here; the
 private-data manager can copy their contents without deleting the originals.
+Keep them until migration and backup have been checked.
 .TP
 .I log/
-CSTK and package-installation logs.
+Installer, updater, and uninstaller maintenance logs. Runtime tool logs are
+stored in the invoking user's private Logs directory.
 .SH ENVIRONMENT
 .TP
 .B CSTK_MAIN_RUNNER
@@ -337,6 +352,21 @@ Per-user Loot output directory.
 .TP
 .B CSTK_MALWARE_DIR
 Per-user Malware output directory.
+.TP
+.B CSTK_LOG_DIR
+Per-user runtime tool log directory.
+.TP
+.B CSTK_KEYS_DIR
+Per-user generated-key directory.
+.TP
+.B CSTK_LOGGING_ENABLED
+Compatibility name for the per-user runtime logging level.
+.TP
+.B CSTK_LOGGING_LEVEL
+Per-user runtime logging level: off, basic, or full.
+.TP
+.B CSTK_USER_HOME
+Absolute home directory of the account that invoked CSTK.
 .TP
 .B home_dir
 Exported by the launcher as the absolute CSTK installation directory.

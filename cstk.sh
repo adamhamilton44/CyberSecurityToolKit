@@ -38,7 +38,9 @@
 #/                 -U, --update
 #/                         check and interactively update CSTK-managed packages and repositories
 #/                 -D, --private-data
-#/                         manage and back up the current user's private Loot and Malware folders
+#/                         manage the current user's private Loot, Malware, Logs, and logging preference
+#/                 --refresh-hashes
+#/                         interactively authorize and rebuild the local integrity manifest
 #/    TOOLS:
 #//O
 #//O  OSINT CLASS:            -O | --osint
@@ -75,7 +77,7 @@
 #//X  ------------------------------------------------------------------------------------------
 #//X  on start                 s | --onstart    add a command to run on reboot
 #//X  files of interest        i | --foi        search for interesting files on linux systems
-#//X  in memory payload        e | --inmemory   read passwords stored in memory (live users)
+#//X  in memory audit          e | --inmemory   best-effort audit for recoverable passwords in supported live processes
 #//X  check for VM             v | --vm         did i gain a shell on a virtual machine
 #//X  browser thief            b | --browser    extract cookies/passwords/bookmarks/downloads/addons from a webbrowser
 #//X  crypto thief             c | --crypto     search for crypto wallet patterns on disk (regex)
@@ -102,12 +104,12 @@
 #//S  Examples:
 #//S  [ sudo cstk -On ] OR  [ sudo cstk --osint --nmap      ]  Run OSINT nmap helper
 #//S  [ sudo cstk -Pn ] OR  [ sudo cstk --payload --netcat  ]  Run payload netcat helper
-#//S  [ sudo cstk -Xe ] OR  [ sudo cstk --postx --inmemory  ]  Run post-exploit in-memory password stealer
+#//S  [ sudo cstk -Xe ] OR  [ sudo cstk --postx --inmemory  ]  Run the best-effort live-memory password audit
 #//S  [ sudo cstk -Ea ] OR  [ sudo cstk --etc --array       ]  Run etc array encoder
 #//S  [ sudo cstk -T  ] OR  [ sudo cstk --tty               ]  Display the TTY shell upgrade guide
 #//S  [ sudo cstk -C  ] OR  [ sudo cstk --check-updates     ]  Check for CSTK-managed updates
 #//S  [ sudo cstk -U  ] OR  [ sudo cstk --update             ]  Check and install approved updates
-#//S  [ sudo cstk -D  ] OR  [ sudo cstk --private-data       ]  Manage private Loot and Malware data
+#//S  [ sudo cstk -D  ] OR  [ sudo cstk --private-data       ]  Manage private Loot, Malware, Logs, and backups
 #//S
 #//V  v3.0.5
 #//W  version: 3.0.5
@@ -166,7 +168,7 @@ security_checks="$home_dir/Other/SecurityChecks" # directory for security checki
 config_file="$security_checks/.auth_config" # config file to store user option login
 fonts_config_file="$security_checks/.fonts_config" # config file to store the animated header option
 hash_file="$security_checks/.hash_list.txt" # user chosen password hashed
-log="$home_dir/log"              # used for the log files
+log=""                            # initialized to the invoking user's private Logs directory
 bin="$home_dir/scripts/bin"      # where all the exe files are located
 lib="$home_dir/scripts/lib"      # where all the library files are located
 . "$lib/arguments_frame"         # source the arguments frame shown before each script runs
@@ -197,12 +199,34 @@ initialize_user_context() {
     CSTK_USER_DATA_DIR="$user_home/.local/share/cstk"
     CSTK_LOOT_DIR="$CSTK_USER_DATA_DIR/Loot"
     CSTK_MALWARE_DIR="$CSTK_USER_DATA_DIR/Malware"
+    CSTK_LOG_DIR="$CSTK_USER_DATA_DIR/Logs"
+    CSTK_KEYS_DIR="$CSTK_USER_DATA_DIR/Keys"
+    CSTK_LOG_CONFIG="$CSTK_USER_DATA_DIR/.logging_enabled"
     cstk_export_dir="$user_home/CSTK-Exports"
     Loot="$CSTK_LOOT_DIR"
     Malware="$CSTK_MALWARE_DIR"
+    Keys="$CSTK_KEYS_DIR"
+    log="$CSTK_LOG_DIR"
 
-    export user user_home CSTK_USER_DATA_DIR CSTK_LOOT_DIR CSTK_MALWARE_DIR
-    export Loot Malware
+    if [[ -r "$CSTK_LOG_CONFIG" ]]; then
+        IFS= read -r CSTK_LOGGING_LEVEL < "$CSTK_LOG_CONFIG"
+    else
+        CSTK_LOGGING_LEVEL="basic"
+    fi
+    [[ "$CSTK_LOGGING_LEVEL" == "on" ]] && CSTK_LOGGING_LEVEL="basic"
+    if [[ "$CSTK_LOGGING_LEVEL" != "basic" &&
+          "$CSTK_LOGGING_LEVEL" != "full" &&
+          "$CSTK_LOGGING_LEVEL" != "off" ]]; then
+        CSTK_LOGGING_LEVEL="basic"
+    fi
+    if [[ "$CSTK_LOGGING_LEVEL" == "off" ]]; then
+        CSTK_LOGGING_ENABLED="off"
+    else
+        CSTK_LOGGING_ENABLED="on"
+    fi
+
+    export user user_home CSTK_USER_DATA_DIR CSTK_LOOT_DIR CSTK_MALWARE_DIR CSTK_LOG_DIR CSTK_KEYS_DIR
+    export CSTK_LOG_CONFIG CSTK_LOGGING_ENABLED CSTK_LOGGING_LEVEL Loot Malware Keys log
 }
 
 run_as_cstk_user() {
@@ -221,7 +245,10 @@ secure_user_data_permissions() {
 
     chown -R -P -- "$user:$user_group" "$CSTK_USER_DATA_DIR" || return 1
     chmod -R go-rwx -- "$CSTK_USER_DATA_DIR" || return 1
-    chmod 700 -- "$CSTK_USER_DATA_DIR" "$Loot" "$Malware"
+    chmod 700 -- "$CSTK_USER_DATA_DIR" "$Loot" "$Malware" "$CSTK_LOG_DIR" "$Keys"
+    if [[ -f "$CSTK_LOG_CONFIG" ]]; then
+        chmod 600 -- "$CSTK_LOG_CONFIG"
+    fi
 }
 
 prepare_user_data_dirs() {
@@ -232,29 +259,70 @@ prepare_user_data_dirs() {
         return 1
     fi
 
-    for data_path in "$CSTK_USER_DATA_DIR" "$Loot" "$Malware"; do
+    for data_path in "$CSTK_USER_DATA_DIR" "$Loot" "$Malware" "$CSTK_LOG_DIR" "$Keys"; do
         if [[ -L "$data_path" ]]; then
             echo -e "${R}[ ERROR ] Refusing a symbolic link in the private CSTK data path: $data_path${X}" >&2
             return 1
         fi
     done
 
-    if ! run_as_cstk_user mkdir -p -- "$Loot" "$Malware"; then
+    if ! run_as_cstk_user mkdir -p -- "$Loot" "$Malware" "$CSTK_LOG_DIR" "$Keys"; then
         echo -e "${R}[ ERROR ] Unable to create private CSTK data folders.${X}" >&2
         return 1
     fi
 
-    for data_path in "$CSTK_USER_DATA_DIR" "$Loot" "$Malware"; do
+    for data_path in "$CSTK_USER_DATA_DIR" "$Loot" "$Malware" "$CSTK_LOG_DIR" "$Keys"; do
         if [[ ! -d "$data_path" || -L "$data_path" ]]; then
             echo -e "${R}[ ERROR ] Unsafe private CSTK data path: $data_path${X}" >&2
             return 1
         fi
     done
 
+    if [[ ! -f "$CSTK_LOG_CONFIG" ]]; then
+        printf 'basic\n' > "$CSTK_LOG_CONFIG" || return 1
+    fi
+
     secure_user_data_permissions || {
         echo -e "${R}[ ERROR ] Unable to secure the private CSTK data folders.${X}" >&2
         return 1
     }
+}
+
+set_runtime_logging() {
+    local choice
+    echo "Choose runtime logging detail:"
+    echo "1 - Off"
+    echo "2 - Basic metadata (recommended)"
+    echo "3 - Full command output and arguments (may contain secrets)"
+    read -r -p "Logging level ==> " choice
+    case "$choice" in
+        1|off) CSTK_LOGGING_LEVEL="off" ;;
+        2|basic) CSTK_LOGGING_LEVEL="basic" ;;
+        3|full)
+            echo -e "${Y}[ WARNING ] Full logs may store credentials, tokens, targets, and tool output.${X}"
+            read -r -p "Enable full logging? [y/N]: " choice
+            [[ "$choice" =~ ^[Yy]$ ]] || return 0
+            CSTK_LOGGING_LEVEL="full"
+            ;;
+        *) echo -e "${Y}Choose 1, 2, or 3.${X}"; return 2 ;;
+    esac
+
+    printf '%s\n' "$CSTK_LOGGING_LEVEL" > "$CSTK_LOG_CONFIG" || {
+        echo -e "${R}[ ERROR ] Unable to save the runtime logging preference.${X}" >&2
+        return 1
+    }
+    if [[ "$CSTK_LOGGING_LEVEL" == "off" ]]; then
+        CSTK_LOGGING_ENABLED="off"
+    else
+        CSTK_LOGGING_ENABLED="on"
+    fi
+    export CSTK_LOGGING_ENABLED CSTK_LOGGING_LEVEL
+    secure_user_data_permissions || return 1
+    echo -e "${G}[ OK ] Runtime tool logging level is now $CSTK_LOGGING_LEVEL.${X}"
+}
+
+runtime_logging_enabled() {
+    [[ "$CSTK_LOGGING_LEVEL" != "off" ]]
 }
 
 prepare_export_dir() {
@@ -320,7 +388,7 @@ create_private_data_archive() {
         plain)
             archive="$cstk_export_dir/cstk-private-data-$stamp.tar.gz"
             if ! run_as_cstk_user tar --create --gzip --file "$archive" \
-                --directory "$CSTK_USER_DATA_DIR" Loot Malware; then
+                --directory "$CSTK_USER_DATA_DIR" Loot Malware Logs Keys; then
                 rm -f -- "$archive"
                 return 1
             fi
@@ -335,7 +403,7 @@ create_private_data_archive() {
             echo -e "${Y}7-Zip will ask twice for a password. The password is not stored by CSTK.${X}"
             if ! (
                 cd -- "$CSTK_USER_DATA_DIR" &&
-                run_as_cstk_user "$archiver" a -t7z -mhe=on -p "$archive" Loot Malware
+                run_as_cstk_user "$archiver" a -t7z -mhe=on -p "$archive" Loot Malware Logs Keys
             ); then
                 rm -f -- "$archive"
                 return 1
@@ -369,6 +437,9 @@ private_data_menu() {
         echo "User:       $user"
         echo "Loot:       $Loot"
         echo "Malware:    $Malware"
+        echo "Keys:       $Keys"
+        echo "Logs:       $CSTK_LOG_DIR"
+        echo "Logging:    $CSTK_LOGGING_LEVEL"
         echo "Backups:    $cstk_export_dir"
         echo
         echo "Other ordinary users cannot access these mode-700 folders."
@@ -378,6 +449,7 @@ private_data_menu() {
         echo "2 - Copy legacy shared Bank files here (no overwrite)"
         echo "3 - Create a private .tar.gz backup"
         echo "4 - Create a password-protected .7z backup (recommended)"
+        echo "5 - Set runtime logging detail (off/basic/full)"
         echo "X - Return"
         echo
         read -r -p "Private Data ==> " choice
@@ -388,8 +460,9 @@ private_data_menu() {
             2) copy_legacy_bank_data ;;
             3) create_private_data_archive plain ;;
             4) create_private_data_archive encrypted ;;
+            5) set_runtime_logging ;;
             [Xx]) return 0 ;;
-            *) echo -e "${Y}Choose 1, 2, 3, 4, or X.${X}" ;;
+            *) echo -e "${Y}Choose 1, 2, 3, 4, 5, or X.${X}" ;;
         esac
 
         echo
@@ -1097,7 +1170,7 @@ main_menu() {
          4 -${B} ETC  ${g}
          5 -${B} Toggle Authentication ${Y}(Currently: $AUTH_ENABLED)  ${g}
          6 -${B} Toggle Animated Headers ${Y}(Currently: $FONTS_ENABLED)  ${g}
-         7 -${B} Private Loot / Malware Data and Backups  ${g}
+         7 -${B} Private Loot / Malware / Logs and Backups  ${g}
          U -${B} Check / Install CSTK Updates  ${g}
          T -${B} TTY Shell Upgrade Guide  ${g}
          X -${R} exit ${X}\n\n\n "
@@ -1161,7 +1234,7 @@ handle_input() {
                 "6|${G} Embed a command on start up${B}|Embed a command on start up| Embed a command that runs on system start ${g}"
                 "7|${G} Brute Force a locked file${B}|Brute Force a locked file| Brute force a zip, rar, 7z password protected file using a password list ${g}"
                 "8|${G} Files of Interest${B}|Files of Interest| Find Interesting files on Linux systems ${g}"
-                "9|${G} In-Memory Password Stealer${B}|In-Memory Password Stealer| Steal the passwords of currently logged in users ${g}"
+                "9|${G} In-Memory Password Audit${B}|In-Memory Password Audit| Best-effort check of supported live processes for recoverable passwords ${g}"
                 "X|${R} Back to main menu${X}|Back to main menu${X}"
             )
             print_menu "$header" "${entries[@]}"
@@ -1403,13 +1476,15 @@ find_that_ip() {
         echo -e "\n\nUser: \t $user \nDate: \t $DATE \nSearched IP: \t $IP \nResults: \t Failed to retrieve information." >>"$Loot/IP-Lookup.txt"
         ip_results=0
     fi
-    echo -e "User:\t$user\nDate:\t$DATE\nip address:\t$IP" >> "$log/IP-Lookup.log"
-    if [[ "$ip_results" == 1 ]]; then
-        echo -e "Results from scan:\tFound" >> "$log/IP-Lookup.log"
-    else
-        echo -e "Results from scan:\tNOT FOUND" >> "$log/IP-Lookup.log"
+    if runtime_logging_enabled; then
+        echo -e "User:\t$user\nDate:\t$DATE\nip address:\t$IP" >> "$log/IP-Lookup.log"
+        if [[ "$ip_results" == 1 ]]; then
+            echo -e "Results from scan:\tFound" >> "$log/IP-Lookup.log"
+        else
+            echo -e "Results from scan:\tNOT FOUND" >> "$log/IP-Lookup.log"
+        fi
+        echo -e "---\n\n" >> "$log/IP-Lookup.log"
     fi
-    echo -e "---\n\n" >> "$log/IP-Lookup.log"
     wait_and_return
 }
 
@@ -1422,7 +1497,9 @@ sweep_ip() {
     sleep 5
     export CSTK_MAIN_RUNNER=1
     "$cstk_wrapper" "$file"
-    printf "User Name:\t$USER\nDate and Time:\t$DATE\nScript Ran:\tPing-Sweeper\n\n" >>"$log/ping_sweeper.log"
+    if runtime_logging_enabled; then
+        printf "User Name:\t$USER\nDate and Time:\t$DATE\nScript Ran:\tPing-Sweeper\n\n" >>"$log/ping_sweeper.log"
+    fi
     wait_and_return
 }
 
@@ -1450,7 +1527,9 @@ enum_tool() {
     echo -e "\nEnter Website URL: \nExample hackersunit.com \n"
     read -r -p "CSTK ==>  " dom
     "$cstk_wrapper" "$enum_bin" "$dom" -a
-    echo -e "User Name:\t$USER\nDate and Time:\t$DATE\nScript Ran:\tAutomated Enumeration Script\n\n" >>"$log/auto_enum_script.log"
+    if runtime_logging_enabled; then
+        echo -e "User Name:\t$USER\nDate and Time:\t$DATE\nScript Ran:\tAutomated Enumeration Script\n\n" >>"$log/auto_enum_script.log"
+    fi
     wait_and_return
 }
 
@@ -1694,7 +1773,9 @@ netcat_shells_bind() {
     rm -f "$file" "$file.x.c" 2>/dev/null  # remove junk files
     trap - SIGQUIT SIGILL SIGTERM SIGHUP EXIT
     echo -e "${g} File \"NetcatBindingShellScript\" is ready and executable in the $Malware folder. \n Change the name of file before sending to target. ${X}"
-    echo -e "User Name:\t$USER\nDate and Time\t$DATE\nUser Port:\t$chosen_port\nScript Ran:\tnetcat binding shell create" >>"$log/NetcatBindShell.log"
+    if runtime_logging_enabled; then
+        echo -e "User Name:\t$USER\nDate and Time\t$DATE\nUser Port:\t$chosen_port\nScript Ran:\tnetcat binding shell create" >>"$log/NetcatBindShell.log"
+    fi
     show_tty_upgrade_hint
     wait_and_return
 }
@@ -1716,7 +1797,9 @@ netcat_shells_reverse() {
     rm -f "$file" "$file.x.c" 2>/dev/null                      # remove junk files
     trap - SIGQUIT SIGILL SIGTERM SIGHUP EXIT
     echo -e "${g} File \"NetcatReverseShellScript\" is ready and executable in the $Malware folder. \nChange the name of file before sending to target. ${X}"
-    echo -e "User Name:\t$USER\nDate and Time:\t$DATE\nUser IP and Port used:\t$chosen_ip:$chosen_port\nTool Used:\tNetcat Reverse shell create\n\n" >>"$log/NetcatReverseShell.log"
+    if runtime_logging_enabled; then
+        echo -e "User Name:\t$USER\nDate and Time:\t$DATE\nUser IP and Port used:\t$chosen_ip:$chosen_port\nTool Used:\tNetcat Reverse shell create\n\n" >>"$log/NetcatReverseShell.log"
+    fi
     show_tty_upgrade_hint
     wait_and_return
 }
@@ -1762,7 +1845,9 @@ rev_shells() {
     rm -f "$file" "$file.x.c"
     trap - SIGQUIT SIGILL SIGTERM SIGHUP EXIT
     echo -e "${g} File \"RevShell\" is ready and executable in the $Malware folder. \n Change the name of file before sending to victim. ${X}"
-    echo -e "User Name:\t$USER\nDate and Time:\t$DATE\nIP and Port used:\t$chosen_ip:$chosen_port\nProgram Name:\tReverse shell generate" >>"$log/ReverseShells.log"
+    if runtime_logging_enabled; then
+        echo -e "User Name:\t$USER\nDate and Time:\t$DATE\nIP and Port used:\t$chosen_ip:$chosen_port\nProgram Name:\tReverse shell generate" >>"$log/ReverseShells.log"
+    fi
     show_tty_upgrade_hint
     wait_and_return
 }
@@ -1853,7 +1938,9 @@ no_touch_script() {
     rm -f "$file.x.c" "$file"
     trap - SIGQUIT SIGILL SIGTERM SIGHUP EXIT
     echo -e "\n\n ${P} File $out_script is available in the Malware folder ${X} \n"
-    echo -e "User:\t$USER\nDate:\t$DATE\nProgram used:\tin memory payload\nTarget URL and script to gsub(/SCRIPT/, _scriptrun:\t$HTTP://$HOST/$SCRIPT " >> "$log/no-touch-payload.log\n\n"
+    if runtime_logging_enabled; then
+        echo -e "User:\t$USER\nDate:\t$DATE\nProgram used:\tin memory payload\nTarget URL and script:\t$HTTP://$HOST/$SCRIPT\n" >> "$log/no-touch-payload.log"
+    fi
     wait_and_return
 }
 
@@ -2073,26 +2160,76 @@ files_of_interest() {
 # Class: POST EXPLOIT - Tool: Rootkits Option 9 (WRAPPER USED)
 # REMOVED
 
-# Class: POST EXPLOIT - Tool: In Memory Password Stealer - Option 10
+# Class: POST EXPLOIT - Tool: In-Memory Password Audit - Option 10
 inmem_password_stealer() {
-    local dir file
+    local dir file runner answer save_output output_file rc process supported_found
     dir="$home_dir/Other/Downloads/mimipenguin/"
     file="$dir/mimipenguin"
     clear
     postx_inmem_frame
-    sleep 5
-    if [[ -f "$file.py" ]]; then
-       sudo python3 "$file.py"
-    elif
-       [[ -f "$file.sh" ]]; then
-       sudo bash "$file.sh"
+    echo -e "${Y}This legacy, best-effort audit reads live process memory as root.${X}"
+    echo "It supports only selected GDM, GNOME Keyring, LightDM, SSHD, VSFTPD, and Apache processes."
+    echo "No output can simply mean that no supported process retained a recoverable plaintext password."
+    echo
+
+    if [[ -x /usr/local/bin/mimipenguin.py ]]; then
+        runner=(python3 /usr/local/bin/mimipenguin.py)
+    elif [[ -x /usr/local/bin/mimipenguin.sh ]]; then
+        runner=(bash /usr/local/bin/mimipenguin.sh)
+    elif [[ -f "$file.py" ]]; then
+        runner=(python3 "$file.py")
+    elif [[ -f "$file.sh" ]]; then
+        runner=(bash "$file.sh")
     else
-        echo "No mimipenguin .sh OR .py file found."
-        exit 3
+        echo -e "${R}[ ERROR ] MimiPenguin is not installed and no source copy was found.${X}"
+        echo "Run the CSTK installer to repair the installation."
+        return 3
     fi
-    read -rp "${R}Press Enter/Return when ready to delete the evidence ${X}"
-    rm -rf "$dir" &>/dev/null
+
+    supported_found="no"
+    for process in gdm-password gnome-keyring-daemon lightdm sshd vsftpd apache2; do
+        if pgrep -f -- "$process" >/dev/null 2>&1; then
+            echo -e "${G}[ FOUND ] Supported live process: $process${X}"
+            supported_found="yes"
+        fi
+    done
+    if [[ "$supported_found" != "yes" ]]; then
+        echo -e "${Y}[ INFO ] No supported live process was detected; no password recovery is expected.${X}"
+        wait_and_return
+        return 0
+    fi
+
+    read -r -p "Run the intrusive live-memory audit now? [y/N]: " answer
+    [[ "$answer" =~ ^[Yy]$ ]] || { wait_and_return; return 0; }
+
+    save_output="no"
+    read -r -p "Save unredacted output in your private Loot directory? [y/N]: " answer
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        save_output="yes"
+        output_file="$Loot/in-memory-password-audit-$(date +%Y%m%d-%H%M%S).txt"
+        run_as_cstk_user touch -- "$output_file" || return 1
+        run_as_cstk_user chmod 600 -- "$output_file" || return 1
+        echo -e "${Y}[ WARNING ] The saved file may contain plaintext credentials.${X}"
+        sudo "${runner[@]}" 2>&1 | tee -- "$output_file"
+        rc=${PIPESTATUS[0]}
+        chown -- "$user:$user_group" "$output_file" || return 1
+        chmod 600 -- "$output_file" || return 1
+        echo "Result saved to $output_file"
+    else
+        sudo "${runner[@]}"
+        rc=$?
+    fi
+
+    if [[ "$rc" -ne 0 ]]; then
+        echo -e "${R}[ ERROR ] The memory audit exited with status $rc.${X}"
+    else
+        echo -e "${Y}[ INFO ] If no credential line appeared, no supported recoverable password was found.${X}"
+    fi
+    if [[ "$save_output" == "yes" && ! -s "$output_file" ]]; then
+        echo -e "${Y}[ INFO ] The saved result is empty.${X}"
+    fi
     wait_and_return
+    return "$rc"
 }
 
 # ##### ETC #####
@@ -2270,6 +2407,11 @@ if [[ $# -eq 1 ]]; then
         exit
         ;;
     esac
+fi
+
+if [[ $# -eq 1 && "$1" == "--refresh-hashes" ]]; then
+    refresh_integrity_after_update
+    exit $?
 fi
 
 check_hash || exit 1
