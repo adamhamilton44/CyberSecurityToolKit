@@ -3,7 +3,6 @@
 *.exe binary
 *.png binary
 *.zip filter=lfs diff=lfs merge=lfs -text
-scripts/bin/Payload_msb binary
 
 # Preserve intentional spacing in wordlists, ASCII art, and reference data.
 Other/Wordlists/*.txt whitespace=-trailing-space
