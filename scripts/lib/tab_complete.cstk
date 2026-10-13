@@ -7,7 +7,7 @@ _cstk_bash_completion() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--osint --payload --postx --etc --help --version --tty --check-updates --update --private-data -O -P -X -E -V -H -T -C -U -D"
+    opts="--osint --payload --postx --etc --help --version --tty --check-updates --update --private-data --control -O -P -X -E -V -H -T -C -U -D"
 
     if [[ "$cur" == -[OPXE]?* ]]; then
         cls="${cur:1:1}"
@@ -43,6 +43,9 @@ _cstk_bash_completion() {
             cmd_opts="--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng"
             [[ "$prev" == "-E" ]] && cmd_opts="u w x o l e a c h z g"
             ;;
+        --control)
+            cmd_opts="engagements inventory tcp-connect"
+            ;;
         *)
             cmd_opts=""
             ;;
@@ -65,7 +68,7 @@ _cstk_zsh_completion() {
     if (( CURRENT == 2 )); then
         choices=(
             --osint --payload --postx --etc --help --version --tty
-            --check-updates --update --private-data
+            --check-updates --update --private-data --control
             -O -P -X -E -V -H -T -C -U -D
         )
     else
@@ -86,6 +89,7 @@ _cstk_zsh_completion() {
                 choices=(--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng)
                 ;;
             -E) choices=(u w x o l e a c h z g) ;;
+            --control) choices=(engagements inventory tcp-connect) ;;
             *) choices=() ;;
         esac
     fi

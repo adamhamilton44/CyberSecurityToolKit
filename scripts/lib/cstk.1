@@ -65,6 +65,11 @@ password-protected 7-Zip archive with encrypted filenames.
 .TP
 .BR \-T ", " \-\-tty
 Display the guide for upgrading a basic Linux shell to a full TTY.
+.TP
+.B \-\-control {engagements|inventory|tcp-connect}
+Invoke the separately installed loopback-only CSTK Local Control client as the
+original invoking user. The client uses that user's private API token and
+supports only fixed command contracts; it is not an arbitrary command runner.
 .PP
 CSTK never contacts update servers during ordinary launcher startup. Updates
 must be checked or installed explicitly with the options above or through the
@@ -257,6 +262,9 @@ Open the hash-identification helper.
 .B sudo cstk \-\-private-data
 Manage private Loot, Malware, and runtime Logs folders, change the runtime
 logging preference, or create a backup.
+.TP
+.B sudo cstk \-\-control engagements
+List engagement records through the optional local control API.
 .SH FILES
 .TP
 .I /usr/local/bin/cstk

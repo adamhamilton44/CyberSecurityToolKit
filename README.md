@@ -96,6 +96,7 @@ sudo cstk --tty              # TTY shell-upgrade guide
 sudo cstk --check-updates    # Report available managed updates
 sudo cstk --update           # Review and install approved managed updates
 sudo cstk --private-data     # Manage private output and backups
+sudo cstk --control engagements # List engagements through the local control API
 man cstk                     # Installed manual page
 ```
 
@@ -108,6 +109,11 @@ sudo cstk --osint --nmap
 
 The first example uses compact short options. The second uses the equivalent
 long options.
+
+The optional `--control` route requires the separately installed CSTK Local
+Control service and client. CSTK runs that client as the invoking user and
+uses the user's private loopback API token; it does not run the web service as
+root or provide an arbitrary command/adapter interface.
 
 ## Updates
 

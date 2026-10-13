@@ -39,6 +39,8 @@
 #/                         check and interactively update CSTK-managed packages and repositories
 #/                 -D, --private-data
 #/                         manage the current user's private Loot, Malware, Logs, and logging preference
+#/                 --control {engagements|inventory|tcp-connect}
+#/                         use the installed loopback-only CSTK control API client as the invoking user
 #/                 --refresh-hashes
 #/                         interactively authorize and rebuild the local integrity manifest
 #/    TOOLS:
@@ -110,6 +112,7 @@
 #//S  [ sudo cstk -C  ] OR  [ sudo cstk --check-updates     ]  Check for CSTK-managed updates
 #//S  [ sudo cstk -U  ] OR  [ sudo cstk --update             ]  Check and install approved updates
 #//S  [ sudo cstk -D  ] OR  [ sudo cstk --private-data       ]  Manage private Loot, Malware, Logs, and backups
+#//S  [ sudo cstk --control engagements                       ]  List local API engagement records
 #//S
 #//V  v3.0.5
 #//W  version: 3.0.5
@@ -2386,6 +2389,17 @@ hash_id() {
     wait_and_return
 }
 
+run_control_client() {
+    local client token_file
+    client="/opt/cstk-api/cstk_control.py"
+    token_file="$user_home/.local/share/cstk-api/access.token"
+    if [[ -L "$client" || ! -f "$client" || ! -x "$client" ]]; then
+        echo -e "${R}CSTK local control client is not installed safely at $client.${X}" >&2
+        return 1
+    fi
+    run_as_cstk_user /usr/bin/python3 "$client" --token-file "$token_file" "$@"
+}
+
 ######################### MAIN SCRIPT #######################
 if [[ $# -eq 1 ]]; then
     case "$1" in
@@ -2434,6 +2448,11 @@ if [[ $# -eq 1 && "$1" =~ ^(-U|--update)$ ]]; then
 fi
 if [[ $# -eq 1 && "$1" =~ ^(-D|--private-data)$ ]]; then
     private_data_menu
+    exit $?
+fi
+if [[ $# -ge 2 && "$1" == "--control" ]]; then
+    shift
+    run_control_client "$@"
     exit $?
 fi
 if [[ $# -eq 1 && "$1" =~ ^-[OPXE].* ]]; then
