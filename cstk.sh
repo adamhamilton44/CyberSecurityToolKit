@@ -701,7 +701,6 @@ refresh_hashes() {
         "$home_dir/uninstall.sh"
         "$home_dir/scripts/bin"
         "$home_dir/scripts/lib"
-        "$security_checks/check_hashes.sh"
     )
 
     if [[ -f "$cstk_wrapper" ]]; then

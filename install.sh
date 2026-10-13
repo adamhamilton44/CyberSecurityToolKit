@@ -1440,13 +1440,12 @@ breached_parser() {
 
 set_hashes() {
 
-    local SHA_PATH BIN_DIR LIB_DIR CHECK_SCRIPT HASH_FILE TEMP_HASH_FILE
+    local SHA_PATH BIN_DIR LIB_DIR HASH_FILE TEMP_HASH_FILE
     local -a HASH_TARGETS
 
     SHA_PATH="${home_dir}/Other/SecurityChecks"
     BIN_DIR="${home_dir}/scripts/bin/"
     LIB_DIR="${home_dir}/scripts/lib/"
-    CHECK_SCRIPT="${SHA_PATH}/check_hashes.sh"
     HASH_FILE="${SHA_PATH}/sha256.checksum"
 
     mkdir -p "$SHA_PATH"
@@ -1456,7 +1455,6 @@ set_hashes() {
         "${home_dir}/uninstall.sh"
         "$LIB_DIR"
         "$BIN_DIR"
-        "$CHECK_SCRIPT"
     )
 
     if [[ -f "/usr/local/bin/cstk_wrapper" ]]; then

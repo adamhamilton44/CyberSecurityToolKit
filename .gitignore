@@ -10,9 +10,8 @@ log/*
 Bank/*
 # Third-party repositories are installed and updated at runtime.
 Other/Downloads/
-# Runtime security state is generated locally. Keep the verifier in Git.
+# Runtime security state is generated locally.
 Other/SecurityChecks/*
-!Other/SecurityChecks/check_hashes.sh
 # Ignore ad hoc text output, but keep CSTK's required text resources.
 *.txt
 !Other/LICENSE.txt

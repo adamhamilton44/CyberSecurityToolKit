@@ -9,7 +9,6 @@ runtime downloads, and artwork.
 | --- | --- |
 | `LICENSE.txt` | Project license |
 | `cstk.png` | CSTK artwork used by the main README |
-| `SecurityChecks/check_hashes.sh` | Tracked checksum verification helper |
 | `SecurityChecks/sha256.checksum` | Locally generated protected-file manifest; intentionally not committed |
 | `Wordlists/` | Wordlists supplied with CSTK |
 | `Downloads/` | Third-party repositories installed at runtime; intentionally not committed |
