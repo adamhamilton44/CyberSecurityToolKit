@@ -101,6 +101,7 @@
 #//E  hash identify            h | --hashid     attempts to identify the hash type from user input or a file
 #//E  post exploit kit         z | --zip        create a zip-protected post-exploitation toolkit for user who gained a shell
 #//E  arsenal-ng               g | --ng         use the current systems arsenal of tools to your advantage with syntax and usage help
+#//E  AI analyst               i | --ai         defensive model-assisted analysis without autonomous tools or shell access
 #//E
 #//S
 #//S  Examples:
@@ -1254,6 +1255,7 @@ handle_input() {
                 "9|${G} Log Cleaning Tool${B}|Log Cleaning Tool| Run a program to clean users logs for hiding tracks ${g}"
                 "A|${G} Arsenal-ng${B}|Arsenal-ng| Use the current systems available tools to your advantage with syntax help ${g}"
                 "B|${G} Hash Identify${B}|Hash Identify| Attempts to identify the hash(s) of a users STDIN or a file ${g}"
+                "C|${G} CSTK AI Analyst${B}|CSTK AI Analyst| Defensive analysis through an operator-selected AI endpoint ${g}"
                 "X|${R} Back to main menu ${X}|Back to main menu${X}"
             )
             print_menu "$header" "${entries[@]}"
@@ -1324,6 +1326,7 @@ execute_tool() {
             9) log_cleaning_tool ;;
             A|a) arsenal ;;
             B|b) hash_id ;;
+            C|c) cstk_ai_analyst ;;
             X|x) main_menu ;;
             *) main_menu ;;
            esac
@@ -2389,6 +2392,23 @@ hash_id() {
     wait_and_return
 }
 
+# Class: ETC - Tool: CSTK AI Analyst - Option C
+cstk_ai_analyst() {
+    local file
+    file="$bin/Etc_cstk_ai"
+    if [[ ! -f "$file" || ! -x "$file" || -L "$file" ]]; then
+        echo -e "${R}CSTK AI Analyst is missing or is not a safe executable.${X}" >&2
+        wait_and_return
+        return 1
+    fi
+    clear
+    etc_ai_frame
+    # The analyst needs no privileged operation. Run it directly as the
+    # invoking user so model traffic and optional transcripts never run as root.
+    run_as_cstk_user "$file" --prompt-config
+    wait_and_return
+}
+
 run_control_client() {
     local client token_file
     client="/opt/cstk-api/cstk_control.py"
@@ -2621,6 +2641,7 @@ case $class in
         -h) hash_id ;;
         -z) post_x_2_go ;;
         -g) arsenal ;;
+        -i) cstk_ai_analyst ;;
         *) grep '^#//E' <"${BASH_SOURCE[0]}" | cut -c 5- && exit ;;
         esac
         ;;
@@ -2637,6 +2658,7 @@ case $class in
         --hashid) hash_id ;;
         --zip) post_x_2_go ;;
         --ng) arsenal ;;
+        --ai) cstk_ai_analyst ;;
         *) grep '^#//E' <"${BASH_SOURCE[0]}" | cut -c 5- && exit ;;
         esac
         ;;

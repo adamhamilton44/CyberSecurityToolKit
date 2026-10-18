@@ -225,6 +225,13 @@ directory.
 .TP
 .BR g ", " \-\-ng
 Open Arsenal-ng for command syntax and usage assistance.
+.TP
+.BR i ", " \-\-ai
+Open CSTK AI Analyst, a defensive model-assisted analysis client. It has no
+autonomous shell, browser, file-writing, phishing, cracking, exploitation, or
+attack tools. The operator selects an Anthropic-compatible endpoint and model;
+remote endpoints must use HTTPS. An optional API key is accepted through a
+hidden prompt and is not stored by the client.
 .SH INTEGRITY MANAGEMENT
 The installer creates
 .I Other/SecurityChecks/sha256.checksum
@@ -258,6 +265,9 @@ Open the browser-data collection workflow.
 .TP
 .B sudo cstk \-\-etc \-\-hashid
 Open the hash-identification helper.
+.TP
+.B sudo cstk \-Ei
+Open CSTK AI Analyst in interactive configuration mode.
 .TP
 .B sudo cstk \-\-private-data
 Manage private Loot, Malware, and runtime Logs folders, change the runtime
@@ -315,6 +325,11 @@ arguments, and complete tool output.
 .I $HOME/.local/share/cstk/Keys/
 Per-user generated keys and sensitive cryptographic material. The directory
 uses mode 0700 and is included in user-requested private backups.
+.TP
+.I $HOME/.local/share/cstk/AI/Sessions/
+Optional redacted CSTK AI Analyst transcripts. Nothing is saved unless the
+operator requests session saving; directories use mode 0700 and files use
+mode 0600.
 .TP
 .I $HOME/.local/share/cstk/.logging_enabled
 Per-user runtime logging preference: off, basic, or full. The file uses mode 0600.

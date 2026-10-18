@@ -110,6 +110,21 @@ sudo cstk --osint --nmap
 The first example uses compact short options. The second uses the equivalent
 long options.
 
+The supporting-utilities class also includes CSTK AI Analyst:
+
+```bash
+sudo cstk -Ei
+sudo cstk --etc --ai
+```
+
+The analyst is an original defensive client for an operator-selected
+Anthropic-compatible endpoint. It cannot execute model-requested commands,
+browse targets, edit files, perform phishing or credential attacks, or run
+autonomously. Remote endpoints require HTTPS. API keys are accepted through a
+hidden prompt and are not stored by the client. Optional redacted transcripts
+are private to the invoking user under
+`$HOME/.local/share/cstk/AI/Sessions/`.
+
 The optional `--control` route requires the separately installed CSTK Local
 Control service and client. CSTK runs that client as the invoking user and
 uses the user's private loopback API token; it does not run the web service as

@@ -16,7 +16,7 @@ _cstk_bash_completion() {
             -O) cmd_opts="n s f e b g m p v u h w" ;;
             -P) cmd_opts="n v r p t b s m a c" ;;
             -X) cmd_opts="s i e v b c g f k" ;;
-            -E) cmd_opts="u w x o l e a c h z g" ;;
+            -E) cmd_opts="u w x o l e a c h z g i" ;;
             *) cmd_opts="" ;;
         esac
         COMPREPLY=( $(compgen -W "$cmd_opts" -- "$tail") )
@@ -40,8 +40,8 @@ _cstk_bash_completion() {
             [[ "$prev" == "-X" ]] && cmd_opts="s i e v b c g f k"
             ;;
         --etc|-E)
-            cmd_opts="--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng"
-            [[ "$prev" == "-E" ]] && cmd_opts="u w x o l e a c h z g"
+            cmd_opts="--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng --ai"
+            [[ "$prev" == "-E" ]] && cmd_opts="u w x o l e a c h z g i"
             ;;
         --control)
             cmd_opts="engagements inventory tcp-connect"
@@ -86,9 +86,9 @@ _cstk_zsh_completion() {
                 ;;
             -X) choices=(s i e v b c g f k) ;;
             --etc)
-                choices=(--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng)
+                choices=(--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng --ai)
                 ;;
-            -E) choices=(u w x o l e a c h z g) ;;
+            -E) choices=(u w x o l e a c h z g i) ;;
             --control) choices=(engagements inventory tcp-connect) ;;
             *) choices=() ;;
         esac
