@@ -1167,10 +1167,12 @@ main_menu() {
     fi
     echo -e "\n ${O}
          Enter Class Number: \n\n ${g}
+         ${O}TOOLS:${g}
          1 -${B} OSINT         ${g}
          2 -${B} PAYLOADS      ${g}
          3 -${B} POST EXPLOIT  ${g}
-         4 -${B} ETC  ${g}
+         4 -${B} ETC  ${g}\n
+         ${O}SYSTEM CONFIGURATION:${g}
          5 -${B} Toggle Authentication ${Y}(Currently: $AUTH_ENABLED)  ${g}
          6 -${B} Toggle Animated Headers ${Y}(Currently: $FONTS_ENABLED)  ${g}
          7 -${B} Private Loot / Malware / Logs and Backups  ${g}
@@ -2404,8 +2406,8 @@ cstk_ai_analyst() {
     clear
     etc_ai_frame
     # The analyst needs no privileged operation. Run it directly as the
-    # invoking user so model traffic and optional transcripts never run as root.
-    run_as_cstk_user "$file" --prompt-config
+    # invoking user so model traffic and private session state never run as root.
+    run_as_cstk_user "$file"
     wait_and_return
 }
 

@@ -1,66 +1,77 @@
-# CSTK AI Analyst candidate
+# CSTK AI Analyst
 
-This is an original, clean-room CSTK tool candidate. It does not contain or import
-ZimZilla code. ZimZilla was used only to identify the broad product idea: a terminal
-client that talks to an Anthropic-compatible model endpoint.
+CSTK AI Analyst is an original, provider-neutral terminal client for defensive
+security analysis. Its Textual interface uses an operator-selected
+OpenAI-compatible endpoint and includes no autonomous shell, browser, exploit,
+phishing, cracking, persistence, or file-discovery tools.
 
-The CSTK design is deliberately different:
+## Safety properties
 
-- defensive analysis only;
-- no shell, file-write, browser, phishing, cracking, AD-campaign, exploit, or agent tools;
-- no `danger`, `uncensored`, or autonomous execution mode;
-- only files explicitly named with `--file` are read;
-- secrets are redacted before submission and before optional session storage;
-- remote endpoints require HTTPS; HTTP is accepted only on loopback;
-- redirects are refused so credentials cannot be forwarded to another host;
-- model responses are capped at 4 MiB;
-- API keys stay in an environment variable and are never written by this program;
-- `--prompt-config` accepts the endpoint and model plus a key through a hidden
-  terminal prompt when CSTK's clean
-  wrapper intentionally removes the caller's environment;
-- transcripts are not saved unless `--save-session` is supplied;
-- saved transcripts live at `$XDG_DATA_HOME/cstk/ai/sessions` (normally
-  `~/.local/share/cstk/ai/sessions`) with private permissions.
+- Remote providers require HTTPS; HTTP is accepted only on loopback.
+- Keys are read from an operator-selected environment variable and are never
+  stored in provider profiles.
+- Redirects are refused and responses are limited to 4 MiB.
+- Provider error bodies are not displayed because they may echo credentials or
+  engagement data.
+- Only typed text and explicitly expanded `@` context are transmitted.
+- Changing provider or model clears outbound conversation history.
+- Real engagement context is withheld unless the phase-two record is active.
+- Questionnaire and engagement proposals are review-only candidates tied to an
+  immutable base revision and SHA-256; AI output cannot authorize activity.
 
-## Dry run without contacting a model
+## Interface
 
-```bash
-python3 cstk_ai.py --print-request -f report.txt "Summarize and prioritize these findings"
+Type `/` to discover commands, `@` to discover explicit context references, or
+press `Ctrl+K` for the action palette. The interface continuously displays the
+provider/model and engagement safety status. Below 105 columns it collapses the
+side rails but retains the compact status strip.
+
+Useful engagement commands:
+
+```text
+/engagement list
+/engagement use ID
+/engagement show
+/engagement progress
+/engagement next
+/engagement answer TARGET_LIST example.test
 ```
 
-## Local Anthropic-compatible endpoint
+Provider examples:
 
-```bash
-export CSTK_AI_MODEL='your-model-id'
-export CSTK_AI_ENDPOINT='http://127.0.0.1:4000/v1/messages'
-python3 cstk_ai.py -f report.txt "Explain the evidence and propose remediation"
+```text
+/provider Local http://127.0.0.1:11434/v1 model-name
+/provider Hosted https://provider.example/v1 model-name CSTK_AI_KEY
+/credential CSTK_AI_KEY
 ```
 
-## Hosted endpoint
+`/credential` opens a password-style field. The key is held only in the
+analyst process, is never displayed or saved, and is removed when the TUI
+exits. This is the recommended path when `sudo` has removed the caller's
+environment variables.
+
+## Development tests
+
+From this directory, using a Python environment containing Textual:
 
 ```bash
-export CSTK_AI_MODEL='your-model-id'
-export CSTK_AI_ENDPOINT='https://provider.example/v1/messages'
-export CSTK_AI_API_KEY='set-this-in-your-shell-or-secret-manager'
-python3 cstk_ai.py "Explain this security concept"
+PYTHONPATH=. python -m unittest discover -s tests -v
+python -m py_compile *.py
 ```
 
-For the future CSTK menu integration, the client runs with `--prompt-config`. It asks
-for an endpoint, model, question, and optional key. Press Enter at the key prompt
-when the local endpoint does not require one.
+The tests are offline and do not contact a provider.
 
-Do not put keys in this README, command history, endpoint URLs, or CSTK source files.
+## Reproducible package build
 
-## Test
+Build outside the repository so generated PyInstaller files are not mixed with
+auditable sources:
 
 ```bash
-PYTHONPATH=. python3 -m unittest discover -s tests -v
-python3 -m py_compile cstk_ai.py
+PYTHONPATH=/usr/lib/python3/dist-packages \
+  /path/to/textual/python -m PyInstaller \
+  --clean --noconfirm Etc_cstk_ai.spec \
+  --distpath /tmp/cstk-ai-dist --workpath /tmp/cstk-ai-build
 ```
 
-## Deferred integration
-
-After protected-file signing is available, integration can add a new CSTK dispatch
-option, help frame, installer entry, man-page section, tab completion, compiled candidate,
-and checksum-manifest update. Those protected changes are intentionally not part of this
-candidate.
+The spec bundles the policy engine and mandatory questionnaire. PyInstaller and
+UPX packaging are not encryption; this source remains authoritative.

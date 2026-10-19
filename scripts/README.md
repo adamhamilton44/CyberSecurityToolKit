@@ -20,17 +20,18 @@ Python tools.
   is not readable.
 - Direct execution is intentionally rejected by many helpers that require CSTK
   caller context.
-- `Etc_cstk_ai` is CSTK's original defensive AI-analysis client. It exposes no
+- `Etc_cstk_ai` is CSTK's original defensive AI-analysis TUI. It exposes no
   autonomous tools or shell access and does not contain ZimZilla source. Its
-  auditable source, offline tests, build notes, and provenance record are under
-  `source/cstk_ai/`.
+  auditable source, bundled phase-two policy engine, offline tests, build spec,
+  and provenance record are under `source/cstk_ai/`.
 
 ## `source/`
 
 The `source/` directory contains maintainable source and tests for selected
-packaged helpers. `source/cstk_ai/cstk_ai.py` builds the `bin/Etc_cstk_ai`
-executable with PyInstaller. PyInstaller packaging and stripping are not
-encryption; the source remains authoritative for review and future changes.
+packaged helpers. `source/cstk_ai/Etc_cstk_ai.spec` builds
+`bin/Etc_cstk_ai` with PyInstaller and includes the engagement questionnaire.
+PyInstaller packaging, stripping, and UPX compression are not encryption; the
+source remains authoritative for review and future changes.
 
 ## `lib/`
 

@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "engagement_id": "9c0a4bba-b833-4ad4-b8f8-a7e0c416a335",
+  "slug": "example-web-q4",
+  "name": "Example Web Application Q4 Assessment",
+  "client": "Example Organization",
+  "engagement_type": "penetration_test",
+  "status": "draft",
+  "revision": {
+    "number": 1,
+    "created_at": "2026-09-29T18:00:00Z",
+    "created_by": "example-tester",
+    "change_reason": "Initial draft",
+    "previous_sha256": null
+  },
+  "questionnaire": {
+    "name": "engagement_scoping_cheat_sheet.md",
+    "sha256": "d5275e60e23ab0fd217ac1003bb3d8305fa25bb61fb08f6f4a158d0670116f92",
+    "answered_at": "2026-09-29T18:00:00Z"
+  },
+  "authorization": {
+    "reference": "SOW-EXAMPLE-2026-Q4",
+    "system_owner": "Example Organization",
+    "authorized_by": "Example Authorizing Official",
+    "valid_from": "2026-10-01T13:00:00Z",
+    "valid_until": "2026-10-31T23:00:00Z",
+    "timezone": "America/Chicago",
+    "third_party_consent": "not_applicable",
+    "evidence": {
+      "location": null,
+      "sha256": null
+    }
+  },
+  "environment": {
+    "types": ["staging"],
+    "access_method": "vpn",
+    "access_notes": "Example only; use the client-approved VPN.",
+    "third_party_infrastructure": []
+  },
+  "testers": [
+    {
+      "name": "example-tester",
+      "role": "lead tester"
+    }
+  ],
+  "contacts": [
+    {
+      "name": "Example Primary Contact",
+      "role": "primary",
+      "method": "Use the engagement-approved primary contact method"
+    },
+    {
+      "name": "Example Technical Contact",
+      "role": "technical",
+      "method": "Use the engagement-approved contact method"
+    },
+    {
+      "name": "Example Emergency Contact",
+      "role": "emergency",
+      "method": "Use the engagement-approved emergency method"
+    },
+    {
+      "name": "Example Breach Escalation Contact",
+      "role": "breach_escalation",
+      "method": "Use the engagement-approved breach escalation method"
+    }
+  ],
+  "scope": {
+    "include": [
+      {
+        "type": "cidr",
+        "value": "203.0.113.0/28",
+        "note": "RFC 5737 documentation range used only as an example"
+      },
+      {
+        "type": "dns",
+        "value": "app.example.test",
+        "note": "Exact hostname"
+      },
+      {
+        "type": "wildcard_dns",
+        "value": "*.staging.example.test",
+        "note": "Subdomains only; the apex is not implied"
+      },
+      {
+        "type": "url",
+        "value": "https://app.example.test/api/",
+        "note": "Only this path subtree is authorized"
+      }
+    ],
+    "exclude": [
+      {
+        "type": "ip",
+        "value": "203.0.113.5",
+        "note": "Explicit exclusion overrides the containing CIDR"
+      },
+      {
+        "type": "dns",
+        "value": "admin.staging.example.test",
+        "note": "Explicit exclusion overrides the wildcard"
+      }
+    ]
+  },
+  "actions": {
+    "allow": [
+      "recon.passive",
+      "network.discovery",
+      "vulnerability.scan",
+      "web.passive",
+      "web.active"
+    ],
+    "confirm_each_run": [
+      "credential.online",
+      "exploit.validation"
+    ],
+    "deny": [
+      "credential.offline",
+      "payload.generate",
+      "payload.deliver",
+      "post_exploitation",
+      "persistence",
+      "credential.access",
+      "command_and_control",
+      "data.access",
+      "data.exfiltration",
+      "social_engineering",
+      "wireless",
+      "physical",
+      "availability.disruption",
+      "data.modification",
+      "log.tampering",
+      "destructive"
+    ]
+  },
+  "technical_policy": {
+    "scan_intensity": "standard_non_destructive",
+    "credentialed_testing": false,
+    "credential_references": [],
+    "automatic_exploitation": "manual_approval_each",
+    "denial_of_service": "strictly_forbidden"
+  },
+  "constraints": {
+    "testing_windows": [
+      {
+        "days": ["mon", "tue", "wed", "thu", "fri"],
+        "start": "08:00",
+        "end": "18:00",
+        "timezone": "America/Chicago"
+      }
+    ],
+    "allowed_source_ips": [
+      "198.51.100.10"
+    ],
+    "ports": [
+      {
+        "protocol": "tcp",
+        "ports": ["80", "443", "8000-8999"]
+      }
+    ],
+    "max_requests_per_second": 5,
+    "max_bandwidth_mbps": 10,
+    "max_concurrency": 4,
+    "redirect_policy": "validate_every_hop",
+    "dns_policy": "both_required",
+    "stop_conditions": [
+      "Unexpected service instability or availability impact",
+      "A target or redirect cannot be positively matched to the approved scope",
+      "The system owner or emergency contact requests a stop",
+      "Evidence suggests an unrelated active compromise"
+    ]
+  },
+  "traffic_identification": {
+    "source_ip_not_applicable_reason": null,
+    "custom_header": {
+      "enabled": true,
+      "name": "X-Engagement-Id",
+      "value_template": "{engagement_id}"
+    },
+    "defense_coordination": "monitor_only"
+  },
+  "incident_coordination": {
+    "soc_notification": "notified",
+    "breach_escalation_procedure": "Pause testing and contact the named breach-escalation contact using the approved method."
+  },
+  "data_handling": {
+    "classification": "confidential",
+    "retention_days": 30,
+    "out_of_scope_storage": "minimal_fingerprint",
+    "secret_storage": "redact",
+    "sensitive_data_policy": {
+      "pii": "mask_and_continue",
+      "pci": "stop_and_notify",
+      "phi": "stop_and_notify"
+    },
+    "encryption_required": true,
+    "encryption_standard": "Client-approved encrypted storage and transfer",
+    "cleanup_required": true
+  },
+  "reporting": {
+    "format": "PDF plus encrypted evidence archive",
+    "delivery_method": "Approved encrypted transfer channel",
+    "critical_finding_deadline_minutes": 60
+  },
+  "red_team": null,
+  "notes": "Example only. Draft engagements cannot authorize CSTK network or target-affecting tools."
+}

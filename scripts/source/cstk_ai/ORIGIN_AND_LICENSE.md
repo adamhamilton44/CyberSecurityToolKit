@@ -8,9 +8,11 @@ At review time, neither the local checkout nor the upstream repository exposed a
 license. Consequently, CSTK must not copy, modify, rebrand, compile, or redistribute
 that implementation without a license grant from its copyright owner.
 
-`cstk_ai.py` was written as a clean-room implementation using Python's standard library
-and the publicly documented shape of an Anthropic-compatible Messages request. It does
-not import ZimZilla, depend on its runtime directories, read its credentials, reproduce
-its TUI, or implement its offensive commands.
+The CSTK implementation was written as a clean-room project using Textual and
+the publicly documented OpenAI-compatible chat-completions request shape. It
+does not import ZimZilla, depend on its runtime directories, read its
+credentials, reproduce its source or assets, or implement its offensive
+commands. ZimZilla supplied only broad interface inspiration: terminal panels,
+command discovery, and a command palette.
 
 Before release, repeat the upstream license check because the repository may change.

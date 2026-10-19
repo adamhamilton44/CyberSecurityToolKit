@@ -117,13 +117,15 @@ sudo cstk -Ei
 sudo cstk --etc --ai
 ```
 
-The analyst is an original defensive client for an operator-selected
-Anthropic-compatible endpoint. It cannot execute model-requested commands,
-browse targets, edit files, perform phishing or credential attacks, or run
-autonomously. Remote endpoints require HTTPS. API keys are accepted through a
-hidden prompt and are not stored by the client. Optional redacted transcripts
-are private to the invoking user under
-`$HOME/.local/share/cstk/AI/Sessions/`.
+The analyst is an original defensive terminal client for an operator-selected
+OpenAI-compatible endpoint. It cannot execute model-requested commands, browse
+targets, edit files, perform phishing or credential attacks, or run
+autonomously. Remote endpoints require HTTPS, keys are referenced through
+environment variables or a hidden session-only dialog rather than stored, and
+redirects are refused. The
+always-visible safety display identifies the provider/model and selected
+engagement. Real scope context is withheld unless the phase-two engagement is
+active; questionnaire answers and AI proposals remain review-only candidates.
 
 The optional `--control` route requires the separately installed CSTK Local
 Control service and client. CSTK runs that client as the invoking user and
