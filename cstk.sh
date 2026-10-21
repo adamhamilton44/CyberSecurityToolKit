@@ -37,13 +37,18 @@
 #/                         check CSTK-managed packages and repositories for available updates
 #/                 -U, --update
 #/                         check and interactively update CSTK-managed packages and repositories
-#/                 -D, --private-data
+#/                 -D, --defense
+#/                         open the read-only defensive assessment tools
+#/                 --private-data
 #/                         manage the current user's private Loot, Malware, Logs, and logging preference
 #/                 --control {engagements|inventory|tcp-connect}
 #/                         use the installed loopback-only CSTK control API client as the invoking user
 #/                 --refresh-hashes
 #/                         interactively authorize and rebuild the local integrity manifest
 #/    TOOLS:
+#//D  DEFENSE CLASS:          -D | --defense
+#//D  l | --linux-audit         Linux Security Audit (requires its separately supplied executable)
+#//D  w | --web-tls             Read-only Web/TLS assessment; requires an explicit HTTP/HTTPS URL
 #//O
 #//O  OSINT CLASS:            -O | --osint
 #//O  ------------------------------------------------------------------------------------------
@@ -105,6 +110,9 @@
 #//E
 #//S
 #//S  Examples:
+#//S  [ sudo cstk -Dw https://example.com/ ] Web/TLS assessment
+#//S  [ sudo cstk --defense --web-tls https://example.com/ ] Web/TLS assessment
+#//S  [ sudo cstk -Dl ] OR [ sudo cstk --defense --linux-audit ] Linux audit
 #//S  [ sudo cstk -On ] OR  [ sudo cstk --osint --nmap      ]  Run OSINT nmap helper
 #//S  [ sudo cstk -Pn ] OR  [ sudo cstk --payload --netcat  ]  Run payload netcat helper
 #//S  [ sudo cstk -Xe ] OR  [ sudo cstk --postx --inmemory  ]  Run the best-effort live-memory password audit
@@ -112,7 +120,7 @@
 #//S  [ sudo cstk -T  ] OR  [ sudo cstk --tty               ]  Display the TTY shell upgrade guide
 #//S  [ sudo cstk -C  ] OR  [ sudo cstk --check-updates     ]  Check for CSTK-managed updates
 #//S  [ sudo cstk -U  ] OR  [ sudo cstk --update             ]  Check and install approved updates
-#//S  [ sudo cstk -D  ] OR  [ sudo cstk --private-data       ]  Manage private Loot, Malware, Logs, and backups
+#//S  [ sudo cstk --private-data                            ]  Manage private Loot, Malware, Logs, and backups
 #//S  [ sudo cstk --control engagements                       ]  List local API engagement records
 #//S
 #//V  v3.0.5
@@ -1176,6 +1184,7 @@ main_menu() {
          5 -${B} Toggle Authentication ${Y}(Currently: $AUTH_ENABLED)  ${g}
          6 -${B} Toggle Animated Headers ${Y}(Currently: $FONTS_ENABLED)  ${g}
          7 -${B} Private Loot / Malware / Logs and Backups  ${g}
+         8 -${B} DEFENSE  ${g}
          U -${B} Check / Install CSTK Updates  ${g}
          T -${B} TTY Shell Upgrade Guide  ${g}
          X -${R} exit ${X}\n\n\n "
@@ -1186,6 +1195,7 @@ main_menu() {
         5) toggle_auth && sleep 3 && main_menu ;;
         6) toggle_fonts && sleep 3 && main_menu ;;
         7) clear; private_data_menu; main_menu ;;
+        8) clear; defense_menu; main_menu ;;
         [Uu]) clear; run_update_manager update; wait_and_return ;;
         [Tt]) clear; show_tty_upgrade_guide; wait_and_return ;;
         [Xx]) exit 0 ;;
@@ -1252,7 +1262,7 @@ handle_input() {
                 "4|${G} Openssl Helper${B}|Openssl Helper| Public/Private keys, hashing, checksums, encrypt/decrypt, random byte generator ${g}"
                 "5|${G} Secret Message${B}|Secret Message| Create or decode a secret message hidden in a gpg key  ${g}"
                 "6|${G} Create Binary${B}|Create Binary| Takes a bash/sh shell script and creates a non readable executable binary file ${g}"
-                "7|${G} Post Ex 2 go${B}|Post Ex 2 go| A zip archive with needed tools for post exploitation work on a remote computer ${g}"
+                "7|${G} Portable assessment kit${B}|Portable assessment kit| Export the standalone Zip2Go local assessment archive ${g}"
                 "8|${G} Array Encryption Script${B}|Array Encryption Script| Create a complex array executable script of users chosen command ${g}"
                 "9|${G} Log Cleaning Tool${B}|Log Cleaning Tool| Run a program to clean users logs for hiding tracks ${g}"
                 "A|${G} Arsenal-ng${B}|Arsenal-ng| Use the current systems available tools to your advantage with syntax help ${g}"
@@ -2324,9 +2334,8 @@ create_exe_binary() {
 post_x_2_go() {
 	local file
 	file="$lib/CSTK_Zip2Go.zip"
-    clear
+    [[ -t 1 ]] && clear
     etc_postx_frame
-    sleep 5
     if [[ ! -f "$file" ]]; then
         echo -e "${R}Missing required archive: $file${X}"
         wait_and_return
@@ -2337,7 +2346,8 @@ post_x_2_go() {
         wait_and_return
         return
     fi
-    echo "CSTK_Zip2Go.zip is located in the $Malware folder"
+    echo "CSTK_Zip2Go.zip (portable assessment edition) is located in the $Malware folder"
+    echo "Extract the complete CSTK_2Go directory and read its README before running run_me.sh."
     wait_and_return
 }
 
@@ -2422,6 +2432,36 @@ run_control_client() {
     run_as_cstk_user /usr/bin/python3 "$client" --token-file "$token_file" "$@"
 }
 
+# ##### DEFENSE: run read-only tools as the invoking user #####
+web_tls_assessment() {
+    defense_web_tls_frame
+    run_as_cstk_user "$bin/web_tls_security_assessment" "$@"
+}
+
+linux_security_assessment() {
+    defense_linux_audit_frame
+    if [[ ! -x "$bin/linux_security_audit" ]]; then
+        echo "[SKIP] Linux Security Audit executable is unavailable in this checkout."
+        return 3
+    fi
+    run_as_cstk_user "$bin/linux_security_audit" "$@"
+}
+
+defense_menu() {
+    local choice target
+    while true; do
+        printf '\nDEFENSE\n1 - Linux Security Audit\n2 - Web/TLS Security Assessment\nX - Return\n'
+        read -r -p "Defense ==> " choice || return 0
+        case "$choice" in
+            1) linux_security_assessment ;;
+            2) read -r -p "Explicit HTTP/HTTPS target URL: " target || return 0
+               [[ -n "$target" ]] && web_tls_assessment "$target" ;;
+            [Xx]) return 0 ;;
+            *) echo "Choose 1, 2, or X." ;;
+        esac
+    done
+}
+
 ######################### MAIN SCRIPT #######################
 if [[ $# -eq 1 ]]; then
     case "$1" in
@@ -2468,7 +2508,7 @@ if [[ $# -eq 1 && "$1" =~ ^(-U|--update)$ ]]; then
     run_update_manager update
     exit $?
 fi
-if [[ $# -eq 1 && "$1" =~ ^(-D|--private-data)$ ]]; then
+if [[ $# -eq 1 && "$1" == --private-data ]]; then
     private_data_menu
     exit $?
 fi
@@ -2476,6 +2516,31 @@ if [[ $# -ge 2 && "$1" == "--control" ]]; then
     shift
     run_control_client "$@"
     exit $?
+fi
+# DEFENSE accepts a target argument; keep legacy class dispatch below unchanged.
+if [[ ${1:-} == -D || ${1:-} == --defense || ${1:-} == -D* ]]; then
+    defense_option=$1
+    shift
+    case "$defense_option" in
+        -D|--defense)
+            if [[ $# == 0 ]]; then
+                if [[ -t 0 ]]; then defense_menu; else grep '^#//D' <"${BASH_SOURCE[0]}" | cut -c 5-; fi
+                exit $?
+            fi
+            defense_tool=$1; shift ;;
+        -Dl) defense_tool=--linux-audit ;;
+        -Dw) defense_tool=--web-tls ;;
+        *) echo "Invalid DEFENSE option." >&2; exit 2 ;;
+    esac
+    case "$defense_tool" in
+        l|-l|--linux-audit)
+            [[ $# == 0 ]] || { echo "Linux audit takes no launcher arguments." >&2; exit 2; }
+            linux_security_assessment; exit $? ;;
+        w|-w|--web-tls)
+            [[ $# == 1 ]] || { echo "Usage: cstk -Dw HTTP_OR_HTTPS_URL" >&2; exit 2; }
+            web_tls_assessment "$1"; exit $? ;;
+        *) echo "Unknown DEFENSE tool." >&2; exit 2 ;;
+    esac
 fi
 if [[ $# -eq 1 && "$1" =~ ^-[OPXE].* ]]; then
     opt="-${1:1:1}"

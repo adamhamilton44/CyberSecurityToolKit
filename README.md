@@ -18,6 +18,7 @@ primarily for Kali Linux and Kali under WSL2.
 | OSINT | Reconnaissance and vulnerability discovery | IP lookup, Nmap, host sweeps, web enumeration, account checks, SSH enumeration, and WAF detection |
 | Payloads | Controlled payload creation for authorized labs | Reverse-shell, encryption, DoS lab, SSH, Metasploit, APK, and command-and-control helpers |
 | Post Exploit | Assessment after authorized access | VM detection, browser-data collection, crypto searches, permission and kernel checks, and archive auditing |
+| DEFENSE | Read-only configuration assessment | Web/TLS assessment; Linux audit when its executable is available |
 | Etc | Supporting utilities | Users, web servers, archives, OpenSSL, hashes, Bash packaging, Zip2Go, and Arsenal help |
 
 ## Requirements
@@ -26,9 +27,9 @@ primarily for Kali Linux and Kali under WSL2.
 - Root access through `sudo` is required.
 - Git and Git LFS are required to clone the complete private repository.
 - Network access is required during installation and update checks.
-- The owner-provided CSTK library key is required to use protected resources.
-  The key is installed locally with root-only permissions and is never stored
-  in this repository.
+- Linux x86-64 and ARM64 installs provision the library key automatically using
+  bundled helpers containing recoverable key material. The plaintext key is stored
+  outside the repository at `/etc/cstk/lib_decryption.key` with root-only access.
 
 The installer contains package mappings for APT, DNF, YUM, and Homebrew, but
 Kali Linux receives the most testing.
@@ -62,6 +63,24 @@ records the packages it installs, prepares protected local state, and creates
 private Loot, Malware, and runtime Logs folders for the user who invoked
 `sudo`.
 
+Installation ownership is recorded in root-only `/var/lib/cstk`. Newly added
+system packages (including dependencies) are recorded per package transaction.
+CSTK-managed pipx environments, Go tools, and caches live under `/opt/cstk`;
+software already present is retained.
+
+To uninstall, run `sudo bash uninstall.sh` from the installed checkout. Cleanup
+removes CSTK's key, launcher, wrapper, manual, completion entries, managed tool
+environments, and recorded system packages. Files replaced during installation
+are restored from the installation ledger. User files under
+`~/.local/share/cstk/` and unrelated shell configuration edits are preserved.
+A failed removal keeps the checkout and ledger for retry. APT removal is refused
+if its plan would also remove an unrecorded package; no blanket autoremove runs.
+
+Older installations have only the original package lists. Their unrecorded
+historical dependencies and caches cannot be reconstructed safely. Package
+upgrades, package-manager history, system logs, and arbitrary package maintainer
+script effects are not reverted to a previous OS snapshot.
+
 ### 4. Start CSTK
 
 ```bash
@@ -79,6 +98,7 @@ sudo cstk
 | `5` | Turn CSTK launcher authentication on or off |
 | `6` | Turn animated headers on or off |
 | `7` | Manage private Loot/Malware/Logs storage, logging, and backups |
+| `8` | Open the DEFENSE tools |
 | `U` | Check for and install approved CSTK-managed updates |
 | `T` | Display the full TTY shell-upgrade guide |
 | `X` | Exit |
@@ -293,3 +313,72 @@ Adam also works as a professional dog trainer:
 ## Support the project
 
 Bitcoin: `3ENrACvnNY7AYG7HUvcdwJgZjnpoaQ9Lbt`
+
+## DEFENSE: Web/TLS Security Assessment
+
+```bash
+sudo cstk -Dw https://example.com/
+sudo cstk --defense --web-tls https://example.com/
+# Standalone, without root:
+bash scripts/bin/web_tls_security_assessment https://example.com/
+```
+
+Menu 8 → DEFENSE → 2 asks for an explicit HTTP/HTTPS URL. DEFENSE 1 and
+`-Dl` / `--defense --linux-audit` retain the Linux audit entry; this checkout
+has no Linux audit executable and reports SKIP until the prior implementation
+is supplied. Private data management is long form only: `--private-data`.
+
+The assessment uses curl and openssl, Bash and standard Unix tools. GNU
+`timeout` bounds TLS connections. Missing capabilities produce SKIP/INFO.
+It sends GET with a one-byte Range request and OPTIONS to the exact target,
+never follows redirects, never replays cookies, and never sends credentials.
+Servers may ignore Range; transfers have a 1 MiB advertised size limit and a
+10-second timeout. HTTPS port 443 additionally checks `http://host:80/`;
+no counterpart port is guessed for custom HTTPS ports. HTTP targets report
+redirects and skip TLS; assess the HTTPS destination separately.
+
+Findings cover certificate chain trust and hostname/IP verification, validity
+and expiry (including the 30-day window), presented chain identities, negotiated
+TLS/cipher/key information and four bounded TLS version probes. Local policy
+may prevent legacy negotiation: a failed probe is inconclusive, while a
+successful TLS 1.0/1.1 handshake is HIGH. No client security policy is weakened.
+Headers include HSTS, CSP, X-Frame-Options, nosniff, Referrer-Policy and
+Permissions-Policy. Cookie Secure/HttpOnly/SameSite and __Host-/__Secure- prefix checks redact cookie
+values. CSP frame-ancestors is recognized as a framing-policy alternative, and
+Report-Only is distinguished from enforcing CSP. Duplicate HSTS fields are
+flagged for review. Interim headers and trailers are excluded from the audit. OPTIONS describes advertised methods without exercising unsafe ones.
+Header absence is a review finding, not proof of exploitation; applicability
+varies for redirects, APIs and authenticated pages. CSP presence alone does
+not establish protection. This is not an exhaustive cipher or route scanner.
+
+Private reports are created under `$HOME/.local/share/cstk/Loot/web-tls-*`
+(or exported `CSTK_LOOT_DIR`). Summary logs use `Logs` / `CSTK_LOG_DIR` and
+honor logging off. Target query values and redirect credentials/path/query/fragment are redacted.
+Finding totals appear in both the report and summary log. Remote evidence is
+flattened into bounded single-line findings to prevent misleading report lines.
+Temporary raw evidence is deleted
+on exit; report directories are mode 700 and files mode 600. The launcher runs
+the assessment as the invoking user. Exit 0 means the assessment completed,
+including findings or skipped checks; 2 means invalid input and 1 output failure.
+
+The installer grants executable permissions; the existing integrity manifest
+includes all files under scripts/bin and scripts/lib. Its authenticated refresh
+and fast-forward update process is unchanged. Uninstall removes managed scripts,
+completion and the manual through the existing lifecycle and retains user reports.
+
+## Portable assessment kit
+
+`scripts/lib/CSTK_Zip2Go.zip` is the portable assessment edition. Extract its
+`CSTK_2Go/` directory and read the included README before running
+`bash run_me.sh --output /your/report/directory`. No CSTK wrapper or root account
+is required. Optional network actions are separate commands. Readable shell
+sources support more Linux environments; bundled shc launchers target Linux
+x86-64 and still require Bash and their documented dependencies. The archive
+includes a checksum manifest and generated launcher sources. Maintainers rebuild
+it with `python3 tools/build_zip2go.py` after changing sources. See
+[ZIP2GO_BUILD_REPORT.md](ZIP2GO_BUILD_REPORT.md) for scope and validation.
+
+Zip2Go also includes explicit LinPEAS, LES and Unix Priv Check enumeration
+profiles. Use `enumeration.sh --tool linpeas`, `--tool les`, or `--tool upc` after
+reading the archive README. The profiles record upstream provenance, exact
+coverage and omitted checks; successful completion is not a security verdict.

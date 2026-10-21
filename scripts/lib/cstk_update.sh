@@ -32,6 +32,34 @@ declare -a SYSTEM_PACKAGES=()
 declare -a PYTHON_PACKAGES=()
 declare -a GITHUB_TOOLS=()
 
+# Share the installer's isolated environments and dependency ledger.
+prepare_update_environment() {
+    if [[ -d /var/lib/cstk && ! -L /var/lib/cstk ]]; then
+        [[ $(stat -c %u /var/lib/cstk) == 0 && $(stat -c %a /var/lib/cstk) == 700 &&
+           $(cat /var/lib/cstk/checkout) == "$home_dir" ]] || return 1
+        # shellcheck source=scripts/lib/install_state.sh
+        source "$home_dir/scripts/lib/install_state.sh" || return 1
+        cstk_state_env
+    fi
+}
+
+update_package_transaction() {
+    if declare -F cstk_package_transaction >/dev/null; then
+        cstk_package_transaction "$@"
+    else
+        shift
+        "$@"
+    fi
+}
+
+update_install_file() {
+    if declare -F cstk_install_file >/dev/null; then
+        cstk_install_file "$@"
+    else
+        install -m "$1" -- "$2" "$3"
+    fi
+}
+
 info() {
     echo -e "${C}[ ℹ  ] $*${X}"
 }
@@ -253,7 +281,7 @@ update_system_packages() {
 
     if command -v apt-get >/dev/null 2>&1; then
         if APT_LISTCHANGES_FRONTEND=none DEBIAN_FRONTEND=noninteractive \
-            apt-get install --only-upgrade --no-remove -y \
+            update_package_transaction apt-get apt-get install --only-upgrade --no-remove -y \
                 -o Dpkg::Options::="--force-confdef" \
                 -o Dpkg::Options::="--force-confold" \
                 "${SYSTEM_PACKAGES[@]}" >"$log_dir/apt_upgrade.log" 2>&1; then
@@ -262,19 +290,19 @@ update_system_packages() {
             fail "APT package update failed; see $log_dir/apt_upgrade.log"
         fi
     elif command -v dnf >/dev/null 2>&1; then
-        if dnf upgrade --refresh -y "${SYSTEM_PACKAGES[@]}" >"$log_dir/dnf_upgrade.log" 2>&1; then
+        if update_package_transaction dnf dnf upgrade --refresh -y "${SYSTEM_PACKAGES[@]}" >"$log_dir/dnf_upgrade.log" 2>&1; then
             ok "Recorded DNF packages updated."
         else
             fail "DNF package update failed; see the update log."
         fi
     elif command -v yum >/dev/null 2>&1; then
-        if yum update -y "${SYSTEM_PACKAGES[@]}" >"$log_dir/yum_upgrade.log" 2>&1; then
+        if update_package_transaction yum yum update -y "${SYSTEM_PACKAGES[@]}" >"$log_dir/yum_upgrade.log" 2>&1; then
             ok "Recorded YUM packages updated."
         else
             fail "YUM package update failed; see the update log."
         fi
     elif command -v brew >/dev/null 2>&1; then
-        if HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade "${SYSTEM_PACKAGES[@]}" >"$log_dir/brew_upgrade.log" 2>&1; then
+        if HOMEBREW_NO_AUTO_UPDATE=1 update_package_transaction brew brew upgrade "${SYSTEM_PACKAGES[@]}" >"$log_dir/brew_upgrade.log" 2>&1; then
             ok "Recorded Homebrew packages updated."
         else
             fail "Homebrew package update failed; see the update log."
@@ -366,7 +394,7 @@ update_katana() {
     }
     if CGO_ENABLED=1 go install github.com/projectdiscovery/katana/cmd/katana@latest \
         >"$log_dir/katana_update.log" 2>&1; then
-        katana_path="$(go env GOPATH)/bin/katana"
+        katana_path="${GOBIN:-$(go env GOPATH)/bin}/katana"
         if [[ -x "$katana_path" ]]; then
             ok "katana updated through its verified Go module path."
         else
@@ -382,13 +410,19 @@ update_mimipenguin() {
 
     update_git_repo mimipenguin "$path" || return 0
     [[ "$REPO_CHANGED" -eq 1 ]] || return 0
-    if make -C "$path" >"$log_dir/mimipenguin_build.log" 2>&1; then
-        [[ -f "$path/mimipenguin.sh" ]] && install -m 0755 "$path/mimipenguin.sh" /usr/local/bin/mimipenguin.sh
-        [[ -f "$path/mimipenguin.py" ]] && install -m 0755 "$path/mimipenguin.py" /usr/local/bin/mimipenguin.py
-        ok "mimipenguin rebuilt and installed."
-    else
-        fail "mimipenguin updated but its rebuild failed; see the update log."
-    fi
+    local tool
+    for tool in mimipenguin.sh mimipenguin.py; do
+        if [[ -f "$path/$tool" ]]; then
+            if declare -F cstk_path_owned >/dev/null && ! cstk_path_owned "/usr/local/bin/$tool"; then
+                continue
+            fi
+            update_install_file 0755 "$path/$tool" "/usr/local/bin/$tool" || {
+                fail "Unable to install $tool."; return 1;
+            }
+        fi
+    done
+    ok "mimipenguin scripts updated."
+
 }
 
 update_shc() {
@@ -398,7 +432,7 @@ update_shc() {
     [[ "$REPO_CHANGED" -eq 1 ]] || return 0
     if (
         cd "$path" || exit 1
-        autoreconf -fiv && ./configure && make && make install
+        autoreconf -fiv && ./configure && make && update_install_file 755 src/shc /usr/local/bin/shc
     ) >"$log_dir/shc_build.log" 2>&1; then
         ok "shc rebuilt and installed."
     else
@@ -451,16 +485,18 @@ refresh_installed_interfaces() {
         fail "CSTK wrapper template is missing: $wrapper"
         return 1
     fi
-    install -m 0750 "$wrapper" /usr/local/bin/cstk_wrapper || return 1
+    update_install_file 0750 "$wrapper" /usr/local/bin/cstk_wrapper || return 1
 
     if [[ -f "$manual" ]]; then
-        install -m 0644 "$manual" /usr/share/man/man1/cstk.1 || return 1
+        if declare -F cstk_track_path >/dev/null; then cstk_track_path /usr/share/man/man1/cstk.1.gz || return 1; fi
+        update_install_file 0644 "$manual" /usr/share/man/man1/cstk.1 || return 1
         gzip -f /usr/share/man/man1/cstk.1 || return 1
-        command -v mandb >/dev/null 2>&1 && mandb >/dev/null 2>&1
+        if command -v mandb >/dev/null 2>&1; then mandb >/dev/null 2>&1 || return 1; fi
     fi
     if [[ -f "$completion" && -e "$system_completion" ]]; then
-        install -m 0644 "$completion" "$system_completion" || return 1
+        update_install_file 0644 "$completion" "$system_completion" || return 1
     fi
+    return 0
 }
 
 update_cstk_self() {
@@ -522,6 +558,7 @@ main() {
 
     require_root
     validate_home
+    prepare_update_environment || return 1
 
     if [[ "$mode" == "sync-runtime" ]]; then
         refresh_installed_interfaces

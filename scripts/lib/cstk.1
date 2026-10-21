@@ -1,5 +1,5 @@
 .\" cstk.1 - Manual page for CyberSecurityToolKit
-.TH CSTK 1 "2026-09-28" "CSTK 3.0.5" "User Commands"
+.TH CSTK 1 "2026-10-06" "CSTK 3.0.5" "User Commands"
 .SH NAME
 cstk \- run the CyberSecurityToolKit launcher
 .SH SYNOPSIS
@@ -57,7 +57,7 @@ After a CSTK self-update, the current trusted launcher requests the private
 integrity refresh key and rebuilds and verifies the protected checksum
 manifest before executing the updated launcher.
 .TP
-.BR \-D ", " \-\-private-data
+.B \-\-private-data
 Open the interactive private-data manager for the invoking user. It can
 reapply private permissions, copy legacy shared Bank files without overwriting
 existing private files, create an unencrypted tar archive, or create a
@@ -86,6 +86,39 @@ Long options are supplied separately. The equivalent long command is:
 .RE
 .PP
 Supplying a class without a tool displays the available tools for that class.
+.SH DEFENSE CLASS
+Select with
+.BR \-D " or " \-\-defense .
+.TP
+.BR l ", " \-\-linux-audit
+Run the Linux Security Audit executable when available.
+.TP
+.BR w ", " \-\-web-tls " URL"
+Assess an explicitly supplied HTTP or HTTPS URL using curl and openssl.
+For example: sudo cstk \-Dw https://example.com/ or
+sudo cstk \-\-defense \-\-web-tls https://example.com/.
+Checks include certificate trust, hostname, dates and chain identities,
+bounded TLS protocol handshakes, response headers, cookie attributes,
+advertised HTTP methods, server disclosure and HTTPS redirects.
+.PP
+GET (Range bytes=0-0) and OPTIONS are the only HTTP methods sent.
+Redirects are never followed. HTTPS on port 443 also checks HTTP port 80
+at the root path; nonstandard ports have no inferred HTTP counterpart.
+HTTP targets require a separate explicit HTTPS assessment for TLS checks.
+Requests take at most 10 seconds each. No credentials, cookie replay,
+unsafe method execution, cipher brute force or insecure curl retry is used.
+.PP
+Absent dependencies or inconclusive tests produce SKIP or INFO.
+Failed protocol negotiation is not proof that the server disables it.
+Reports use private per-user Loot/web-tls-* directories; cookie values,
+target query values and redirect credentials/path/query/fragment are redacted.
+Reports and summary logs include severity totals. Summary logs honor the logging setting.
+Remote evidence is flattened and bounded to prevent forged finding lines.
+Interim headers and trailers are not audited. Cookie prefix requirements,
+CSP frame-ancestors alternatives, Report-Only policies and duplicate HSTS
+fields are included in the configuration review.
+The tool runs as the invoking user. Standalone execution does not need root.
+Private data management uses \-\-private-data; \-D selects DEFENSE.
 .SH OSINT CLASS
 Select this class with
 .BR \-O " or " \-\-osint .
@@ -220,8 +253,10 @@ Open the selected-log cleanup helper.
 Identify possible hash types from direct input or a file.
 .TP
 .BR z ", " \-\-zip
-Copy the CSTK Zip2Go post-exploitation toolkit into the malware-output
-directory.
+Copy the CSTK Zip2Go portable assessment archive into the malware-output
+directory. Extract the complete CSTK_2Go directory and read its README. The
+standalone scripts require no CSTK wrapper or root account; bundled launchers
+target Linux x86-64 and still require Bash.
 .TP
 .BR g ", " \-\-ng
 Open Arsenal-ng for command syntax and usage assistance.
@@ -303,9 +338,19 @@ Source manual page installed by
 .I Other/SecurityChecks/sha256.checksum
 Locally generated integrity manifest. This file is not committed to Git.
 .TP
+.I /var/lib/cstk/
+Root-only installation ledger, package ownership records, and original system
+files retained for uninstall recovery. Removed after successful uninstallation.
+.TP
+.I /opt/cstk/
+CSTK-managed pipx environments, command links, Go builds, and caches.
+Removed during uninstallation; user runtime data is kept separately.
+.TP
 .I /etc/cstk/lib_decryption.key
 Root-owned, mode 0600 key used to decrypt protected CSTK library resources.
-The key is provisioned by the installer and is never stored in the repository.
+Linux x86-64 and ARM64 installers provision the key using bundled helpers, then
+remove those helpers locally. The binaries contain recoverable key material;
+only the plaintext key is excluded from the repository.
 .TP
 .I Other/Wordlists/
 Wordlists supplied with or retained for CSTK.

@@ -7,6 +7,8 @@
 #
 # shellcheck disable=SC1003,SC2016,SC1090
 
+set -o pipefail
+
 # Colors
 R=$'\e[1;31m'   # Red
 G=$'\e[1;32m'   # Green
@@ -16,6 +18,8 @@ X=$'\e[0m'      # Reset
 
 # Directory structure
 home_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/install_state.sh
+source "$home_dir/scripts/lib/install_state.sh" || exit 1
 
 # Package management, GitHub, and Python downloads are recorded in hidden files.
 python_install_file="$home_dir/Other/SecurityChecks/.python_pipx_installed_tools"
@@ -30,78 +34,12 @@ cstk_group=""
 cstk_user_home=""
 
 config_dirs() {
-    local base_dir expected_dir zip_download
-    base_dir="$(basename "$home_dir")"
-    expected_dir="CyberSecurityToolKit"
-    zip_download="CyberSecurityToolKit-main"
-
-    if [[ "$base_dir" != "$expected_dir" ]]; then
-
-        if [[ "$base_dir" == "$zip_download" ]]; then
-            echo "It looks like you downloaded this repository as a ZIP file."
-            echo "The directory needs to be renamed."
-            echo "Changing CyberSecurityToolKit-main to CyberSecurityToolKit."
-
-            cd .. || exit 1
-
-            if [[ -e "$expected_dir" ]]; then
-                echo -e "${R}[ ❌ ] $expected_dir already exists.${X}"
-                echo "Please remove or rename the existing directory before continuing."
-                exit 1
-            fi
-
-            mv "$zip_download" "$expected_dir" || {
-                echo -e "${R}[ ❌ ] Failed to rename $zip_download to $expected_dir.${X}"
-                exit 1
-            }
-
-            cd "$expected_dir" || exit 1
-            home_dir="$PWD"
-
-            echo -e "${G}[ ✅ ] Directory renamed successfully.${X}"
-        else
-            echo "I do not see the CyberSecurityToolKit repository where expected."
-            echo "Searching the file system for a CyberSecurityToolKit directory..."
-
-            declare -a my_repo
-            mapfile -t my_repo < <(
-                find / -type d -name CyberSecurityToolKit -print 2>/dev/null
-            )
-
-            if [[ "${#my_repo[@]}" -eq 0 ]]; then
-                echo -e "${R}[ ❌ ] Could not find a CyberSecurityToolKit directory.${X}"
-                echo "Please move the repository into a CyberSecurityToolKit directory."
-                exit 6
-            fi
-
-            echo
-            echo "The following CyberSecurityToolKit directories were found:"
-            select repo in "${my_repo[@]}"; do
-                if [[ -n "$repo" ]]; then
-                    echo "Using repository: $repo"
-
-                    if [[ "$(realpath "${BASH_SOURCE[0]}")" != "$repo/install.sh" ]]; then
-                        cp "${BASH_SOURCE[0]}" "$repo/install.sh" || {
-                            echo -e "${R}[ ❌ ] Failed to copy install.sh to $repo.${X}"
-                            exit 1
-                        }
-                    fi
-
-                    cd "$repo" || exit 1
-                    home_dir="$PWD"
-                    return
-                fi
-
-                echo "Invalid selection."
-            done
-        fi
-    fi
-
-    if ! [[ -h /usr/local/bin/cstk ]]; then
-        home_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    else
-        home_dir="$(dirname "$(realpath /usr/local/bin/cstk)")"
-    fi
+    # All paths are absolute: a clone need not have a particular folder name.
+    [[ -f "$home_dir/cstk.sh" && -f "$home_dir/uninstall.sh" &&
+       -d "$home_dir/scripts/lib" && -d "$home_dir/scripts/bin" ]] || {
+        echo 'Incomplete CSTK checkout.' >&2
+        return 1
+    }
 }
 
 resolve_cstk_account() {
@@ -149,20 +87,9 @@ need_root() {
 }
 
 bash_version() {
-    local min_bash_version current_bash_version
-    min_bash_version=4.0
-
-    current_bash_version="$(
-        bash --version |
-        head -n 1 |
-        awk '{print $4}' |
-        awk -F '(' '{print $1}'
-    )"
-
-    if [[ "$(printf '%s\n' "$min_bash_version" "$current_bash_version" | sort -V | head -n 1)" != "$min_bash_version" ]]; then
-        echo -e "${R}[ ❌ ] Error: This script requires Bash $min_bash_version or higher.${X}"
-        echo -e "${R}You have Bash $current_bash_version.${X}"
-        exit 1
+    if (( BASH_VERSINFO[0] < 4 )); then
+        echo 'CSTK requires Bash 4 or newer.' >&2
+        return 1
     fi
 }
 
@@ -185,8 +112,12 @@ keep_sudo_alive() {
 }
 
 link_main_script() {
-    if [[ ! -h /usr/local/bin/cstk ]]; then
-        ln -s "${home_dir}/cstk.sh" /usr/local/bin/cstk
+    cstk_track_path /usr/local/bin/cstk || return 1
+    if [[ -L /usr/local/bin/cstk || -f /usr/local/bin/cstk ]]; then
+        rm -f /usr/local/bin/cstk || return 1
+    fi
+    if [[ ! -e /usr/local/bin/cstk ]]; then
+        ln -s "${home_dir}/cstk.sh" /usr/local/bin/cstk || return 1
 
         echo -e "${G}[ 📌 ] The main script cstk.sh is now accessible globally.${X}"
         echo -e "${G}You can run it using 'sudo cstk'.${X}"
@@ -247,47 +178,82 @@ make_dir() {
 }
 
 verify_lib_decryption_key() {
-    local candidate_key encrypted_probe probe_output
+    local candidate_key encrypted_probe
+    local -a encrypted_resources
     candidate_key="$1"
-    encrypted_probe="$home_dir/scripts/lib/HCDOUNASIXNTM7Q3YR-X-encoded.enc"
+    [[ -f "$candidate_key" && -r "$candidate_key" ]] || return 1
+    encrypted_resources=("$home_dir"/scripts/lib/*.enc)
+    for encrypted_probe in "${encrypted_resources[@]}"; do
+        [[ -f "$encrypted_probe" ]] || return 1
+        openssl enc -d -aes-256-cbc -salt -pbkdf2 \
+            -in "$encrypted_probe" -out /dev/null \
+            -pass file:"$candidate_key" 2>/dev/null || return 1
+    done
+}
 
-    [[ -f "$candidate_key" && -r "$candidate_key" && -f "$encrypted_probe" ]] || return 1
+remove_lib_provisioners() {
+    rm -f -- "$home_dir/scripts/provision/cstk-provision-x86_64" \
+        "$home_dir/scripts/provision/cstk-provision-aarch64"
+}
 
-    probe_output="$(mktemp /tmp/cstk-key-check.XXXXXX)" || return 1
-    chmod 600 "$probe_output"
-    if openssl enc -d -aes-256-cbc -salt -pbkdf2 \
-        -in "$encrypted_probe" \
-        -out "$probe_output" \
-        -pass file:"$candidate_key" 2>/dev/null && [[ -s "$probe_output" ]]; then
-        rm -f -- "$probe_output"
-        return 0
+provision_bundled_lib_key() {
+    local arch helper staging
+    arch="$(uname -m)" || return 1
+    case "$arch" in
+        x86_64|aarch64) ;;
+        arm64) arch=aarch64 ;;
+        *) return 2 ;;
+    esac
+    helper="$home_dir/scripts/provision/cstk-provision-$arch"
+    [[ -f "$helper" && ! -L "$helper" ]] || return 2
+    staging="$(mktemp -d "$lib_key_dir/.provision.XXXXXX")" || return 1
+    if ! chmod 700 "$helper" || ! "$helper" "$staging" ||
+       ! verify_lib_decryption_key "$staging/lib_decryption.key"; then
+        rm -f -- "$staging/lib_decryption.key"
+        rmdir -- "$staging"
+        echo -e "${R}[ ❌ ] Bundled library key provisioning failed.${X}" >&2
+        return 1
     fi
-
-    rm -f -- "$probe_output"
-    return 1
+    if ! install -m 600 -o root -g root -- \
+        "$staging/lib_decryption.key" "$lib_decryption_key"; then
+        rm -f -- "$staging/lib_decryption.key"
+        rmdir -- "$staging"
+        return 1
+    fi
+    rm -f -- "$staging/lib_decryption.key"
+    rmdir -- "$staging" || return 1
+    remove_lib_provisioners
 }
 
 install_lib_decryption_key() {
-    local first_key second_key source_key temp_key
+    local first_key second_key source_key temp_key provision_status
 
+    command -v openssl >/dev/null 2>&1 || {
+        echo -e "${R}[ ❌ ] Install OpenSSL before running the CSTK installer.${X}" >&2
+        return 1
+    }
+    if [[ -L "$lib_key_dir" || ( -e "$lib_key_dir" && ! -d "$lib_key_dir" ) ]]; then
+        echo -e "${R}[ ❌ ] Refusing an unsafe CSTK key directory.${X}" >&2
+        return 1
+    fi
     install -d -m 700 -o root -g root "$lib_key_dir" || {
         echo -e "${R}[ ❌ ] Failed to create $lib_key_dir.${X}"
         return 1
     }
 
-    if [[ -L "$lib_decryption_key" ]]; then
+    if [[ -L "$lib_decryption_key" || ( -e "$lib_decryption_key" && ! -f "$lib_decryption_key" ) ]]; then
         echo -e "${R}[ ❌ ] Refusing to use a symbolic link as the library key file.${X}"
         return 1
     fi
 
     if [[ -s "$lib_decryption_key" ]]; then
-        chown root:root "$lib_decryption_key"
-        chmod 600 "$lib_decryption_key"
+        chown root:root "$lib_decryption_key" || return 1
+        chmod 600 "$lib_decryption_key" || return 1
         if ! verify_lib_decryption_key "$lib_decryption_key"; then
             echo -e "${R}[ ❌ ] The installed CSTK library key cannot decrypt the protected resources.${X}"
             return 1
         fi
-        echo -e "${G}[ ✔  ] The root-only CSTK library key is already installed.${X}"
+        remove_lib_provisioners || return 1
         return 0
     fi
 
@@ -302,8 +268,15 @@ install_lib_decryption_key() {
             return 1
         fi
         install -m 600 -o root -g root -- "$source_key" "$lib_decryption_key" || return 1
-        echo -e "${G}[ ✅ ] Installed the CSTK library key from the protected source file.${X}"
+        remove_lib_provisioners || return 1
         return 0
+    fi
+
+    if provision_bundled_lib_key; then
+        return 0
+    else
+        provision_status=$?
+        [[ "$provision_status" -eq 2 ]] || return 1
     fi
 
     if [[ ! -t 0 ]]; then
@@ -341,15 +314,16 @@ install_lib_decryption_key() {
         return 1
     fi
 
-    chown root:root "$temp_key"
-    chmod 600 "$temp_key"
-    mv -f -- "$temp_key" "$lib_decryption_key"
-    echo -e "${G}[ ✅ ] Installed the root-only CSTK library key.${X}"
+    chown root:root "$temp_key" || return 1
+    chmod 600 "$temp_key" || return 1
+    mv -f -- "$temp_key" "$lib_decryption_key" || return 1
+    remove_lib_provisioners
 }
 
 pipx_install() {
     local package="$1"
     local command_name="${2:-$1}"
+    local installed_apps
 
     if command -v "$command_name" >/dev/null 2>&1; then
         echo -e "${G}[ ✔  ] ${command_name} is already installed.${X}"
@@ -361,13 +335,14 @@ pipx_install() {
         return 1
     fi
 
-    if pipx list 2>/dev/null | grep -qE "^[[:space:]]*package ${package}[[:space:]]"; then
+    installed_apps=$(pipx list --short) || return 1
+    if awk -v wanted="$package" '$1 == wanted {found=1} END {exit !found}' <<< "$installed_apps"; then
         echo -e "${G}[ ✔  ] ${package} is already installed.${X}"
     else
         echo -e "${C}[ 📌 ] Installing ${package}${X}"
 
         if pipx install "$package"; then
-            echo "$package" >> "$python_install_file"
+            echo "$package" >> "$python_install_file" || return 1
             echo -e "${G}[ ✅ ] ${package} installed successfully.${X}"
         else
             echo -e "${R}[ ❌ ] Failed to install ${package}.${X}"
@@ -377,9 +352,9 @@ pipx_install() {
 }
 
 pipx_run_install() {
-    pipx_install droopescan
-    pipx_install naminter
-    pipx_install holehe
+    pipx_install droopescan || return 1
+    pipx_install naminter || return 1
+    pipx_install holehe || return 1
 
     if command -v bloodhound-ce-python >/dev/null 2>&1 ||
        command -v bloodhound-python >/dev/null 2>&1; then
@@ -396,21 +371,24 @@ install_man_page() {
     dest="/usr/share/man/man1/cstk.1"
 
     if [[ -f "$src" ]]; then
-        sudo cp "$src" "$dest" || {
+        install -d -m 755 /usr/share/man/man1 || return 1
+        cstk_track_path "$dest.gz" || return 1
+        cstk_install_file 644 "$src" "$dest" || {
             echo -e "${R}[ ❌ ] Failed to install the CSTK man page.${X}"
             return 1
         }
 
-        sudo gzip -f "$dest" || {
+        gzip -f "$dest" || {
             echo -e "${R}[ ❌ ] Failed to compress the CSTK man page.${X}"
             return 1
         }
 
-        sudo mandb >/dev/null 2>&1
+        if command -v mandb >/dev/null 2>&1; then mandb >/dev/null 2>&1 || true; fi
 
         echo -e "${G}[ ✅ ] Installed man page to ${dest}.gz${X}"
     else
-        echo -e "${Y}[ ⚠️ ] Man page not found: $src${X}"
+        echo -e "${R}[ ❌ ] Man page not found: $src${X}"
+        return 1
     fi
 }
 
@@ -450,11 +428,11 @@ install_nrich() {
                 download_file="$newname.deb"
 
                 if wget -q --show-progress -O "$download_file" "$url/$file"; then
-                    if sudo dpkg -i "$download_file"; then
+                    if cstk_package_transaction apt-get dpkg -i "$download_file"; then
                         :
                     else
                         echo -e "${Y}[ ⚠️ ] dpkg reported dependency issues. Attempting to fix them...${X}"
-                        sudo apt-get install -f -y >/dev/null 2>&1
+                        cstk_package_transaction apt-get apt-get install -f -y >/dev/null 2>&1 || { popd >/dev/null || return 1; return 1; }
                     fi
                 else
                     echo -e "${R}[ ❌ ] Failed to download nrich.${X}"
@@ -468,7 +446,7 @@ install_nrich() {
                 download_file="$newname.rpm"
 
                 wget -q --show-progress -O "$download_file" "$url/$file" &&
-                    sudo dnf install -y "./$download_file"
+                    cstk_package_transaction dnf dnf install -y "./$download_file" || { popd >/dev/null || return 1; return 1; }
 
             elif command -v yum >/dev/null 2>&1; then
 
@@ -476,7 +454,7 @@ install_nrich() {
                 download_file="$newname.rpm"
 
                 wget -q --show-progress -O "$download_file" "$url/$file" &&
-                    sudo yum localinstall -y "./$download_file"
+                    cstk_package_transaction yum yum localinstall -y "./$download_file" || { popd >/dev/null || return 1; return 1; }
 
             elif command -v rpm >/dev/null 2>&1; then
 
@@ -484,15 +462,15 @@ install_nrich() {
                 download_file="$newname.rpm"
 
                 wget -q --show-progress -O "$download_file" "$url/$file" &&
-                    sudo rpm -Uvh "$download_file"
+                    cstk_package_transaction dnf rpm -Uvh "$download_file" || { popd >/dev/null || return 1; return 1; }
 
             elif command -v brew >/dev/null 2>&1; then
 
                 echo -e "${C}[ 📌 ] Installing nrich through Homebrew.${X}"
 
-                if brew tap shodan-public/homebrew-shodan \
+                if cstk_brew_tap shodan-public/homebrew-shodan \
                     https://gitlab.com/shodan-public/homebrew-shodan &&
-                    brew install nrich; then
+                    cstk_package_transaction brew brew install nrich; then
                     :
                 else
                     echo -e "${R}[ ❌ ] Failed to install nrich with Homebrew.${X}"
@@ -526,7 +504,7 @@ install_nrich() {
 
             if wget -q --show-progress -O "$download_file" "$url/$file"; then
                 if tar -xzf "$download_file"; then
-                    sudo install -m 755 nrich /usr/local/bin/nrich
+                    cstk_install_file 755 nrich /usr/local/bin/nrich || return 1
                 else
                     echo -e "${R}[ ❌ ] Failed to extract nrich.${X}"
                     popd >/dev/null || return
@@ -569,6 +547,9 @@ package_candidates() {
     local pkg_type="$2"
 
     case "$pkg_type:$pkg" in
+        deb:p7zip-full)
+            printf '%s\n' 7zip p7zip-full
+            ;;
         deb:default-mysql-client)
             printf '%s\n' default-mysql-client mariadb-client mysql-client
             ;;
@@ -695,12 +676,12 @@ package_candidates() {
 
 install_dependencies() {
     local PACKAGE_MANAGER PKG_TYPE
-    local pkg pid er
+    local pkg pid er failures=0
     local -a candidates
     local log_dir="$home_dir/log/package_manager"
 
-    mkdir -p "$log_dir"
-    touch "$package_management_install_file"
+    mkdir -p "$log_dir" || return 1
+    touch "$package_management_install_file" || return 1
 
     spinner() {
         local pid="$1"
@@ -729,7 +710,7 @@ install_dependencies() {
                     (
                         export DEBIAN_FRONTEND=noninteractive
 
-                        apt-get install -y \
+                        cstk_package_transaction apt-get apt-get install -y \
                             -o Dpkg::Options::="--force-confdef" \
                             -o Dpkg::Options::="--force-confold" \
                             "$pkg"
@@ -738,13 +719,13 @@ install_dependencies() {
 
                 rpm)
                     (
-                        "$PACKAGE_MANAGER" install -y "$pkg"
+                        cstk_package_transaction "$PACKAGE_MANAGER" "$PACKAGE_MANAGER" install -y "$pkg"
                     ) >"$logfile" 2>&1 &
                     ;;
 
                 brew)
                     (
-                        HOMEBREW_NO_AUTO_UPDATE=1 brew install "$pkg"
+                        HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 cstk_package_transaction brew brew install "$pkg"
                     ) >"$logfile" 2>&1 &
                     ;;
 
@@ -762,7 +743,7 @@ install_dependencies() {
 
             if [[ "$er" -eq 0 ]]; then
                 echo -e "${G}[ ✅ ] Installed: $pkg${X}"
-                echo "$pkg" >> "$package_management_install_file"
+                echo "$pkg" >> "$package_management_install_file" || return 1
                 return 0
             fi
             # APT-specific recovery.
@@ -797,7 +778,7 @@ install_dependencies() {
 
         case "$PKG_TYPE" in
             deb)
-                dpkg -s -- "$candidate" &>/dev/null
+                [[ "$(dpkg-query -W -f='${db:Status-Status}' -- "$candidate" 2>/dev/null)" == installed ]]
                 ;;
             rpm)
                 rpm -q -- "$candidate" &>/dev/null
@@ -832,7 +813,7 @@ install_dependencies() {
     }
 
     local required_commands=(
-        7zip amass apache-users apktool argon2 aria2 arjun arp-scan arsenal-ng assetfinder autoconf basez bc bloodhound braa build-essential bzip2 cargo cewl commix coreutils crackmapexec curl dirb dirsearch dmitry dnsrecon dpkg enum4linux exploitdb feroxbuster ffuf fierce fping fzf gcc git git-lfs sed gobuster golang golang-any gospider grep gzip hashcat hping3 httpx-toolkit hydra impacket-scripts john joomscan jq libc6-dev lynis make masscan medusa metasploit-framework mongodb-server-core mxcheck mysql-common nasm ncrack ncat nikto nmap npm nuclei onesixtyone openssh-client openssh-server openssl p7zip-full pyenv-runtime python3 python3-pip redis rlwrap seclists sherlock skipfish smbclient smtp-user-enum snmpcheck sqlmap sslscan subfinder subjack sublist3r tar testssl.sh theharvester unrar unzip wafw00f wapiti whatweb whiptail whois wpscan xxd ldap-utils postgresql-client default-mysql-client redis-tools
+        7zip amass apache-users apktool argon2 aria2 arjun arp-scan arsenal-ng assetfinder autoconf basez bc bloodhound braa build-essential bzip2 cargo cewl commix coreutils crackmapexec curl dirb dirsearch dmitry dnsrecon dpkg enum4linux exploitdb feroxbuster ffuf fierce fping fzf gcc git git-lfs sed gobuster golang golang-any gospider grep gzip hashcat hping3 httpx-toolkit hydra impacket-scripts john joomscan jq libc6-dev lynis make masscan medusa metasploit-framework mongodb-server-core mxcheck mysql-common nasm ncrack ncat nikto nmap npm nuclei onesixtyone openssh-client openssh-server openssl p7zip-full pyenv-runtime python3 python3-pip pipx automake libtool pkg-config wget redis rlwrap seclists sherlock skipfish smbclient smtp-user-enum snmpcheck sqlmap sslscan subfinder subjack sublist3r tar testssl.sh theharvester unrar unzip wafw00f wapiti whatweb whiptail whois wpscan xxd ldap-utils postgresql-client default-mysql-client redis-tools
     )
 
     [[ $# -gt 0 ]] && required_commands+=("$@")
@@ -846,7 +827,7 @@ install_dependencies() {
         # Finish configuration of packages that were unpacked but
         # not completely configured during an earlier installation.
         if ! DEBIAN_FRONTEND=noninteractive \
-            dpkg --configure -a \
+            cstk_package_transaction apt-get dpkg --configure -a \
             >"$log_dir/dpkg_configure.log" 2>&1; then
 
             echo -e "${Y}[ ⚠️  ] dpkg reported an unfinished package installation.${X}"
@@ -856,7 +837,7 @@ install_dependencies() {
             echo -e "${Y}[ ⚠️  ] Broken package dependencies detected.${X}"
             echo -e "${C}[ 🔧 ] Attempting automatic repair...${X}"
             if ! DEBIAN_FRONTEND=noninteractive \
-                apt-get --fix-broken install -y \
+                cstk_package_transaction apt-get apt-get --fix-broken install -y \
                 -o Dpkg::Options::="--force-confdef" \
                 -o Dpkg::Options::="--force-confold" \
                 >"$log_dir/apt_fix_broken.log" 2>&1; then
@@ -867,7 +848,7 @@ install_dependencies() {
             fi
             # Configure anything repaired/unpacked by apt.
             DEBIAN_FRONTEND=noninteractive \
-                dpkg --configure -a \
+                cstk_package_transaction apt-get dpkg --configure -a \
                 >>"$log_dir/dpkg_configure.log" 2>&1
         fi
         # This is critical on Kali Rolling. Package versions move
@@ -890,7 +871,7 @@ install_dependencies() {
         echo -e "${G}[ ✔  ] Package manager detected: dnf${X}"
 
         dnf makecache -y \
-            >"$log_dir/dnf_makecache.log" 2>&1
+            >"$log_dir/dnf_makecache.log" 2>&1 || return 1
     # YUM
     elif command -v yum &>/dev/null; then
 
@@ -900,7 +881,7 @@ install_dependencies() {
         echo -e "${G}[ ✔  ] Package manager detected: yum${X}"
 
         yum makecache -y \
-            >"$log_dir/yum_makecache.log" 2>&1
+            >"$log_dir/yum_makecache.log" 2>&1 || return 1
     # Homebrew
     elif command -v brew &>/dev/null; then
 
@@ -920,7 +901,7 @@ install_dependencies() {
             continue
         fi
 
-        try_install_pkg "$pkg" "${candidates[@]}"
+        try_install_pkg "$pkg" "${candidates[@]}" || failures=$((failures + 1))
     done
     # Final package database check
     if [[ "$PKG_TYPE" == "deb" ]]; then
@@ -929,6 +910,7 @@ install_dependencies() {
             echo
             echo -e "${Y}[ ⚠️  ] APT reports unresolved dependencies after installation.${X}"
             echo -e "${Y}[ ℹ️  ] Log: $log_dir/apt_final_check.log${X}"
+            failures=$((failures + 1))
         fi
 
         if [[ -f /var/run/reboot-required ]]; then
@@ -937,6 +919,7 @@ install_dependencies() {
             echo -e "${Y}[ ℹ️  ] CSTK will not reboot the machine automatically.${X}"
         fi
     fi
+    (( failures == 0 ))
 }
 
 install_mongosh() {
@@ -951,7 +934,7 @@ install_mongosh() {
 
     log_dir="$home_dir/log/package_manager"
     log_file="$log_dir/mongosh.log"
-    mkdir -p "$log_dir"
+    mkdir -p "$log_dir" || return 1
     : > "$log_file"
 
     # Prefer a configured package repository when it provides mongosh.
@@ -964,7 +947,7 @@ install_mongosh() {
             fi
 
             echo -e "${C}[ 📌 ] Installing $package${X}"
-            if DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            if DEBIAN_FRONTEND=noninteractive cstk_package_transaction apt-get apt-get install -y \
                 -o Dpkg::Options::="--force-confdef" \
                 -o Dpkg::Options::="--force-confold" \
                 "$package" >>"$log_file" 2>&1; then
@@ -976,8 +959,8 @@ install_mongosh() {
         done
     elif command -v brew >/dev/null 2>&1; then
         echo -e "${C}[ 📌 ] Installing mongosh through Homebrew.${X}"
-        if brew tap mongodb/brew >>"$log_file" 2>&1 &&
-           HOMEBREW_NO_AUTO_UPDATE=1 brew install mongosh >>"$log_file" 2>&1; then
+        if cstk_brew_tap mongodb/brew >>"$log_file" 2>&1 &&
+           HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 cstk_package_transaction brew brew install mongosh >>"$log_file" 2>&1; then
             grep -Fxq mongosh "$package_management_install_file" ||
                 echo mongosh >> "$package_management_install_file"
             echo -e "${G}[ ✅ ] mongosh installed successfully.${X}"
@@ -986,9 +969,9 @@ install_mongosh() {
     elif command -v dnf >/dev/null 2>&1 || command -v yum >/dev/null 2>&1; then
         for package in mongodb-mongosh mongosh; do
             if command -v dnf >/dev/null 2>&1; then
-                dnf install -y "$package" >>"$log_file" 2>&1
+                cstk_package_transaction dnf dnf install -y "$package" >>"$log_file" 2>&1
             else
-                yum install -y "$package" >>"$log_file" 2>&1
+                cstk_package_transaction yum yum install -y "$package" >>"$log_file" 2>&1
             fi
             if [[ "$?" -eq 0 ]]; then
                 grep -Fxq "$package" "$package_management_install_file" ||
@@ -1038,7 +1021,7 @@ install_mongosh() {
         return 1
     fi
 
-    if ldconfig -p 2>/dev/null | grep -q 'libssl\.so\.3'; then
+    if ldconfig -p 2>/dev/null | grep 'libssl\.so\.3' >/dev/null; then
         openssl_mode="openssl3"
     else
         openssl_mode="bundled"
@@ -1085,12 +1068,12 @@ install_mongosh() {
         return 1
     fi
 
-    install -m 0755 "$mongosh_bin" /usr/local/bin/mongosh || {
+    cstk_install_file 0755 "$mongosh_bin" /usr/local/bin/mongosh || {
         rm -rf -- "$temp_dir"
         return 1
     }
     if [[ -n "$crypto_lib" && -f "$crypto_lib" ]]; then
-        install -m 0755 "$crypto_lib" "/usr/local/bin/$(basename "$crypto_lib")" || {
+        cstk_install_file 0755 "$crypto_lib" "/usr/local/bin/$(basename "$crypto_lib")" || {
             rm -rf -- "$temp_dir"
             return 1
         }
@@ -1108,7 +1091,7 @@ install_mimipenguin() {
     repo_dir="$home_dir/Other/Downloads/mimipenguin"
     log_dir="$home_dir/log/github"
     log_file="$log_dir/mimipenguin_clone.log"
-    mkdir -p "$log_dir"
+    mkdir -p "$log_dir" || return 1
 
     if [[ -d "$repo_dir/.git" &&
           ( -f "$repo_dir/mimipenguin.py" || -f "$repo_dir/mimipenguin.sh" ) ]]; then
@@ -1130,10 +1113,10 @@ install_mimipenguin() {
     # CSTK launches the maintained Python or shell implementation directly;
     # the optional C build is not required and needs multilib on 64-bit hosts.
     if [[ -f "$repo_dir/mimipenguin.sh" ]]; then
-        install -m 0755 "$repo_dir/mimipenguin.sh" /usr/local/bin/mimipenguin.sh
+        [[ -e /usr/local/bin/mimipenguin.sh ]] || cstk_install_file 0755 "$repo_dir/mimipenguin.sh" /usr/local/bin/mimipenguin.sh || return 1
     fi
     if [[ -f "$repo_dir/mimipenguin.py" ]]; then
-        install -m 0755 "$repo_dir/mimipenguin.py" /usr/local/bin/mimipenguin.py
+        [[ -e /usr/local/bin/mimipenguin.py ]] || cstk_install_file 0755 "$repo_dir/mimipenguin.py" /usr/local/bin/mimipenguin.py || return 1
     fi
 
     grep -Fxq mimipenguin "$github_install_file" ||
@@ -1168,12 +1151,12 @@ install_shc() {
             return 1
         }
 
-        make && make install
+        make && cstk_install_file 755 src/shc /usr/local/bin/shc
         local er=$?
 
         if [[ "$er" -eq 0 ]]; then
             echo -e "${G}[ ✅ ] shc installed successfully.${X}"
-            echo "shc" >> "$github_install_file"
+            echo "shc" >> "$github_install_file" || return 1
         else
             echo -e "${R}[ ❌ ] Failed to install shc.${X}"
             exit 1
@@ -1192,6 +1175,7 @@ install_vulscan() {
 
         echo -e "${G}[ 📌 ] Installing Nmap vulscan...${X}"
 
+        echo "vulscan" >> "$github_install_file" || return 1
         git clone \
             https://github.com/scipag/vulscan \
             /usr/share/nmap/scripts/vulscan || {
@@ -1205,7 +1189,6 @@ install_vulscan() {
         }
 
         echo -e "${G}[ ✅ ] Nmap vulscan.nse installed successfully.${X}"
-        echo "vulscan" >> "$github_install_file"
 
     else
         echo -e "${G}[ ✔  ] Nmap vulscan.nse is already installed.${X}"
@@ -1214,9 +1197,9 @@ install_vulscan() {
 
 install_katana() {
     local katana_dir co
-    katana_dir="/root/go/bin/katana"
+    katana_dir="/opt/cstk/bin/katana"
 
-    if [[ -x "$katana_dir" ]]; then
+    if command -v katana >/dev/null 2>&1; then
         echo -e "${G}[ ✔  ] katana is already present.${X}"
         return 0
     fi
@@ -1228,7 +1211,7 @@ install_katana() {
 
     if [[ "$co" -eq 0 && -x "$katana_dir" ]]; then
         echo -e "${G}[ ✅ ] Installed: katana.${X}"
-        echo "katana" >> "$github_install_file"
+        echo "katana" >> "$github_install_file" || return 1
     else
         echo -e "${R}[ ❌ ] Failed to install katana.${X}"
         return 1
@@ -1260,14 +1243,22 @@ install_tab_completion() {
 
         target_file="$1"
 
-        [[ -f "$target_file" ]] || touch "$target_file"
-
-        if grep -qF "$f" "$target_file" 2>/dev/null; then
-            echo -e "${C}[ ℹ️ ] Already present in $target_file — skipping.${X}"
+        [[ ! -L "$target_file" ]] || return 1
+        if [[ -f "$target_file" ]] && grep -Fxq "source \"$f\"" "$target_file"; then
             return 0
         fi
-
-        echo "source \"$f\"" >> "$target_file"
+        printf '%s\n' "$target_file" >> "$cstk_state_dir/completions" || return 1
+        if [[ ! -f "$target_file" ]]; then
+            printf '%s\n' "$target_file" >> "$cstk_state_dir/completions-created" || return 1
+            touch "$target_file" || return 1
+            if [[ "$target_file" == "$inv_home/"* ]]; then
+                chown "$cstk_user:$cstk_group" "$target_file" || return 1
+            fi
+        fi
+        if [[ -s "$target_file" && -n "$(tail -c 1 "$target_file")" ]]; then
+            printf '\n' >> "$target_file" || return 1
+        fi
+        printf 'source "%s"\n' "$f" >> "$target_file" || return 1
 
         echo -e "${G}[ ✅ ] Added to $target_file${X}"
     }
@@ -1293,7 +1284,7 @@ install_tab_completion() {
 
             case "$ans_user" in
                 1)
-                    add_to_rc "$user_rc"
+                    add_to_rc "$user_rc" || return 1
                     ;;
                 *)
                     echo -e "${R}[ ❌ ] Skipped for normal user.${X}"
@@ -1316,8 +1307,13 @@ install_tab_completion() {
     case "$ans_root" in
 
         1)
-            local root_rc="/root/.${s}rc"
-            add_to_rc "$root_rc"
+            local root_shell root_rc
+            root_shell=$(getent passwd root) || return 1
+            root_shell=${root_shell##*:}
+            root_shell=${root_shell##*/}
+            case "$root_shell" in bash|zsh) ;; *) return 0 ;; esac
+            root_rc="/root/.${root_shell}rc"
+            add_to_rc "$root_rc" || return 1
             ;;
 
         *)
@@ -1340,7 +1336,7 @@ create_wrapper() {
         return 1
     fi
 
-    install -m 0750 "$WRAPPER_SOURCE" "$WRAPPER_PATH" || return 1
+    cstk_install_file 0750 "$WRAPPER_SOURCE" "$WRAPPER_PATH" || return 1
 
     if [[ -f "$WRAPPER_PATH" ]]; then
         echo -e "${G}Wrapper script installed at ${C}/usr/local/bin/cstk_wrapper${X}"
@@ -1389,7 +1385,7 @@ breached_parser() {
         read -r -n 1 ans
         echo
 
-        [[ "$ans" =~ [Nn] ]] && return
+        [[ "$ans" =~ ^[Yy]$ ]] || return 0
 
         if ! command -v aria2c >/dev/null 2>&1; then
 
@@ -1448,7 +1444,7 @@ set_hashes() {
     LIB_DIR="${home_dir}/scripts/lib/"
     HASH_FILE="${SHA_PATH}/sha256.checksum"
 
-    mkdir -p "$SHA_PATH"
+    mkdir -p "$SHA_PATH" || return 1
 
     HASH_TARGETS=(
         "${home_dir}/cstk.sh"
@@ -1478,7 +1474,7 @@ set_hashes() {
         return 1
     fi
 
-    chmod 600 "$TEMP_HASH_FILE"
+    chmod 600 "$TEMP_HASH_FILE" || return 1
     mv -f -- "$TEMP_HASH_FILE" "$HASH_FILE"
 
 }
@@ -1490,9 +1486,9 @@ password_protect() {
     log="${home_dir}/log"
     config_file="$log/.auth_config"
 
-    mkdir -p "$log"
+    mkdir -p "$log" || return 1
 
-    [[ -f "$config_file" ]] || touch "$config_file"
+    [[ -f "$config_file" ]] || touch "$config_file" || return 1
 
     echo
     echo "[ 🔐 ] Do you want to enable username/password authentication?"
@@ -1504,17 +1500,17 @@ password_protect() {
     case "$auth_choice" in
 
         1)
-            echo "on" > "$config_file"
+            echo "on" > "$config_file" || return 1
             echo "[ ✅ ] Authentication enabled"
             ;;
 
         2)
-            echo "off" > "$config_file"
+            echo "off" > "$config_file" || return 1
             echo "[ ⚡ ] Authentication disabled"
             ;;
 
         *)
-            echo "on" > "$config_file"
+            echo "on" > "$config_file" || return 1
             echo "[ ⚠️ ] Invalid choice. Defaulting to ENABLED for security."
             ;;
     esac
@@ -1523,11 +1519,17 @@ password_protect() {
 }
 
 finish_setup() {
-    chmod 750 /usr/local/bin/cstk_wrapper
+    # DEFENSE scripts stay in the managed checkout; no extra system symlinks.
+    [[ -f "$home_dir/scripts/bin/web_tls_security_assessment" ]] || return 1
+    chmod 750 "$home_dir/scripts/bin/web_tls_security_assessment" || return 1
+    if [[ -f "$home_dir/scripts/bin/linux_security_audit" ]]; then
+        chmod 750 "$home_dir/scripts/bin/linux_security_audit" || return 1
+    fi
+    chmod 750 /usr/local/bin/cstk_wrapper || return 1
 
     find "$home_dir" \
         -type d \
-        -exec chmod 750 {} \;
+        -exec chmod 750 {} + || return 1
 
     if [[ -z "$cstk_owner_uid" || -z "$cstk_owner_gid" ]]; then
         echo -e "${R}[ ERROR ] The original CSTK checkout ownership was not recorded.${X}"
@@ -1545,54 +1547,75 @@ finish_setup() {
 need_root "$@"
 
 # Check that Bash is at least version 4.0.
-bash_version
+bash_version || exit 1
 
 # Find and configure the CyberSecurityToolKit directory.
-config_dirs
+config_dirs || exit 1
 resolve_cstk_account || exit 1
+cstk_state_init || exit 1
+trap 'rc=$?; if [[ -n "${SUDO_KEEPALIVE_PID:-}" ]]; then kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true; fi; if (( rc )); then echo "Installation incomplete. State retained in /var/lib/cstk; rerun install.sh or uninstall.sh." >&2; fi' EXIT
+# Isolate CSTK-managed Python and Go environments from root's personal tools.
+make_dir || exit 1
+
+# Bootstrap decryption prerequisites before provisioning on minimal VMs.
+if ! command -v openssl >/dev/null 2>&1; then
+    if command -v apt-get >/dev/null 2>&1; then
+        apt-get update || exit 1
+        cstk_package_transaction apt-get apt-get install -y openssl || exit 1
+    elif command -v dnf >/dev/null 2>&1; then
+        cstk_package_transaction dnf dnf install -y openssl || exit 1
+    elif command -v yum >/dev/null 2>&1; then
+        cstk_package_transaction yum yum install -y openssl || exit 1
+    else
+        echo 'OpenSSL is required; no supported bootstrap package manager found.' >&2
+        exit 1
+    fi
+fi
+
+# Provision protected resources before installation checks and side effects.
+install_lib_decryption_key || exit 1
 
 # Install the man page.
-install_man_page
+install_man_page || exit 1
 
 # Check the working directory and create required directories.
-check_working_dir
-make_dir
-install_lib_decryption_key || exit 1
+check_working_dir || exit 1
+make_dir || exit 1
 
 # Make sure the tracking files exist.
 touch \
     "$python_install_file" \
     "$package_management_install_file" \
-    "$github_install_file"
+    "$github_install_file" || exit 1
 
 # Install all required system dependencies.
-install_dependencies
-install_mongosh
+install_dependencies || exit 1
+install_mongosh || exit 1
 
 # Install Python tools through pipx.
-pipx_run_install
+pipx_run_install || exit 1
 
 # Install additional GitHub-based tools.
-install_shc
-install_vulscan
-install_katana
-install_nrich
-install_mimipenguin
+install_shc || exit 1
+install_vulscan || exit 1
+install_katana || exit 1
+install_nrich || exit 1
+install_mimipenguin || exit 1
 
 # Check the working directory again.
-check_working_dir
+check_working_dir || exit 1
 
 # Add CSTK tab completion.
-install_tab_completion
+install_tab_completion || exit 1
 
 # Create the CSTK wrapper.
-create_wrapper
+create_wrapper || exit 1
 
 # Create the global link to cstk.sh.
-link_main_script
+link_main_script || exit 1
 
 # Ask the user whether CSTK authentication should be enabled.
-password_protect
+password_protect || exit 1
 
 # Keep sudo credentials alive while the installer is running.
 if [[ -n "$SUDO_USER" ]]; then
@@ -1601,14 +1624,14 @@ if [[ -n "$SUDO_USER" ]]; then
 fi
 
 # Prepare and optionally download BreachCompilation data.
-check_working_dir
-breached_parser
+check_working_dir || exit 1
+breached_parser || exit 1
 
 # Create CSTK integrity hashes.
 set_hashes || exit 1
 
 # Finalize permissions and ownership.
-finish_setup
+finish_setup || exit 1
 
 # Stop the sudo keep-alive process.
 if [[ -n "${SUDO_KEEPALIVE_PID:-}" ]]; then

@@ -302,7 +302,8 @@ short option for Classes:
 OSINT        -O
 Payloads     -P
 Post Exploit -X
-ETC          -E'
+ETC          -E
+DEFENSE      -D'
 sleep 2
 clear
 echo '
@@ -311,7 +312,8 @@ long option for class:
 OSINT        --osint
 Payloads     --payload
 Post Exploit --postx
-ETC          --etc'
+ETC          --etc
+DEFENSE      --defense'
 sleep 2
 clear
 echo '
@@ -320,7 +322,8 @@ both class options:
 OSINT        -O --osint
 Payloads     -P --payload
 Post Exploit -X --postx
-ETC          -E --etc'
+ETC          -E --etc
+DEFENSE      -D --defense'
 sleep 2
 clear
 echo '
@@ -329,7 +332,8 @@ Short Class option and tool usage:
 OSINT        -On
 Payloads     -Pp
 Post Exploit -Xn
-ETC          -Eu'
+ETC          -Eu
+DEFENSE      -Dw https://example.com/'
 sleep 2
 clear
 echo '
@@ -338,7 +342,9 @@ Long Class option and tool isage:
 OSINT        --osint --nmap
 Payloads     --payload --multi
 Post Exploit --postx --users
-ETC          --etc --vm'
+ETC          --etc --vm
+DEFENSE      --defense --web-tls https://example.com/
+Private data --private-data (long form only)'
 sleep 2
 clear
 echo "I have done my best to help feel free to contact me with any questions or issues."

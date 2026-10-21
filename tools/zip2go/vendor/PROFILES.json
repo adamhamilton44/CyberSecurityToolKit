@@ -1,0 +1,70 @@
+{
+  "les": {
+    "file": "les.sh",
+    "sha256": "37080f953c1e2b1e19d9e3b931db9737590c27f23fc6cece036aa398f68389f9",
+    "repository": "https://github.com/The-Z-Labs/linux-exploit-suggester",
+    "commit": "bde09673eb5577f13030637d2c8a6a8ec98cddc8",
+    "arguments": [],
+    "coverage": "Heuristic kernel/userspace vulnerability matches and local prerequisites; matches do not prove exploitability.",
+    "omissions": [
+      "Exploit source/binary downloads",
+      "Exploit execution",
+      "Denial-of-service candidates"
+    ]
+  },
+  "upc": {
+    "file": "unix-privesc-check.sh",
+    "sha256": "d2a91b0ab974d9afde48c1fc3c3714092407a9c16b7a4acacb356a4a76d6bb09",
+    "upstream_sha256": "d8a01295838a11bea5f0002dc00fa22ec83a07316cc236e605d5144e7a17ed07",
+    "repository": "https://github.com/pentestmonkey/unix-privesc-check",
+    "commit": "00e0d54c611a498ad6121ea03df2b88c8d7a80fb",
+    "arguments": [
+      "standard"
+    ],
+    "coverage": "Unix Priv Check standard permission/configuration review, with two login probes omitted.",
+    "omissions": [
+      "UPC020 postgres authentication probe",
+      "UPC021 pgsql authentication probe",
+      "Detailed-mode ldd/strings analysis"
+    ]
+  },
+  "linpeas": {
+    "file": "linpeas-enumeration.sh",
+    "sha256": "b77cbdfaf0712fc135eebe3aea28ca242bc23bedb7af17f510900de282e6e36c",
+    "repository": "https://github.com/peass-ng/PEASS-ng",
+    "commit": "80cb747d062f63cffe225f57ef7fe15b79c05491",
+    "gtfobins_commit": "acd524623f9c406acedd2754ebd9c2431f3675ad",
+    "modules": [
+      "SY_Operative_system",
+      "SY_Sudo_version",
+      "SY_Path",
+      "IP_SUID",
+      "IP_SGID",
+      "IP_Files_ACLs",
+      "IP_Capabilities",
+      "IP_Misconfigured_ldso",
+      "IP_Files_etc_profile_d",
+      "IP_Files_etc_init_d",
+      "IP_Writable_root_execs"
+    ],
+    "arguments": [
+      "-n",
+      "-N",
+      "-L",
+      "-z",
+      "1",
+      "-o",
+      "system_information,interesting_perms_files"
+    ],
+    "coverage": "11 explicitly selected OS, sudo-version, PATH, SUID/SGID, ACL, capability, library/init-path and writable-root-executable checks. Upstream default FAST=1 retained.",
+    "omissions": [
+      "Account guessing/login attempts",
+      "Cloud and API credential collection",
+      "Credential regex/file-content collection",
+      "Host-name and package uploads",
+      "Network discovery/port scanning",
+      "Unknown SUID/SGID binary execution via strace/ldd",
+      "Exploit execution"
+    ]
+  }
+}

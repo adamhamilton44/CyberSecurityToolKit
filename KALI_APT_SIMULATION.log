@@ -1,0 +1,133 @@
+NOTE: This is only a simulation!
+      apt-get needs root privileges for real execution.
+      Keep also in mind that locking is deactivated,
+      so don't depend on the relevance to the real current situation!
+Reading package lists...
+Building dependency tree...
+Reading state information...
+7zip is already the newest version (26.02+dfsg-2).
+amass is already the newest version (5.1.1-0kali3).
+apache-users is already the newest version (2.1-1kali6).
+apktool is already the newest version (2.7.0+dfsg-7.2).
+argon2 is already the newest version (0~20190702+dfsg-6).
+aria2 is already the newest version (1.37.0+debian-4+b1).
+arjun is already the newest version (2.2.7-1).
+arp-scan is already the newest version (1.10.0-2+b1).
+arsenal-ng is already the newest version (1.6-0kali1).
+assetfinder is already the newest version (0.1.1-1+b12).
+autoconf is already the newest version (2.73-2).
+basez is already the newest version (1.6.2-3).
+bc is already the newest version (1.07.1-4).
+bloodhound is already the newest version (9.7.0~rc4-0kali1).
+braa is already the newest version (0.90.1-1).
+build-essential is already the newest version (12.12).
+bzip2 is already the newest version (1.0.8-6+b2).
+cargo is already the newest version (1.95.0+dfsg1-2).
+cewl is already the newest version (6.2.1-1).
+commix is already the newest version (4.1-0kali1).
+coreutils is already the newest version (9.10-1).
+crackmapexec is already the newest version (5.4.0-0kali7).
+curl is already the newest version (8.21.0-2).
+dirb is already the newest version (2.22+dfsg-7).
+dirsearch is already the newest version (0.4.3-1).
+dmitry is already the newest version (1.3a-8).
+dnsrecon is already the newest version (1.6.0-1).
+dpkg is already the newest version (1.23.7+kali1).
+enum4linux is already the newest version (0.9.1-0kali2).
+exploitdb is already the newest version (20260904-0kali1).
+feroxbuster is already the newest version (2.13.1-0kali3).
+ffuf is already the newest version (2.2.1-1).
+fierce is already the newest version (1.6.0-2).
+fping is already the newest version (5.1-1).
+fzf is already the newest version (0.74.3-1).
+gcc is already the newest version (4:16.1.0-3).
+git is already the newest version (1:2.53.0-1).
+git-lfs is already the newest version (3.8.0-1).
+sed is already the newest version (4.9-3).
+gobuster is already the newest version (3.8.2-1).
+golang is already the newest version (2:1.26~1).
+golang-any is already the newest version (2:1.26~1).
+gospider is already the newest version (1.1.6-0kali1).
+grep is already the newest version (3.12-1).
+gzip is already the newest version (1.14-1).
+hashcat is already the newest version (7.1.2+ds1-4).
+hping3 is already the newest version (3.a2.ds2-11~kali1).
+httpx-toolkit is already the newest version (1.9.0-0kali2).
+hydra is already the newest version (9.7-1).
+impacket-scripts is already the newest version (1.10).
+john is already the newest version (1.9.0-Jumbo-1+git20211102-0kali11).
+joomscan is already the newest version (0.0.7-0kali2).
+jq is already the newest version (1.8.2-1).
+libc6-dev is already the newest version (2.43-4).
+lynis is already the newest version (3.1.6-1).
+make is already the newest version (4.4.1-3).
+masscan is already the newest version (2:1.3.2+ds1-2).
+medusa is already the newest version (2.3-3).
+metasploit-framework is already the newest version (6.5.3-0kali1).
+mongodb-server-core is already the newest version (1:7.0.14-0kali3).
+mxcheck is already the newest version (2.0.0-0kali1).
+mysql-common is already the newest version (5.8+1.1.1).
+nasm is already the newest version (3.01-1).
+ncrack is already the newest version (0.7+debian-6).
+ncat is already the newest version (7.99+dfsg-1kali1).
+nikto is already the newest version (1:2.6.1-0kali1).
+nmap is already the newest version (7.99+dfsg-1kali1).
+npm is already the newest version (11.19.0+ds1-2).
+nuclei is already the newest version (3.11.1-0kali1).
+onesixtyone is already the newest version (0.3.4-1).
+openssh-client is already the newest version (1:10.4p1-5).
+openssh-server is already the newest version (1:10.4p1-5).
+openssl is already the newest version (3.6.3-1).
+pyenv-runtime is already the newest version (2.7.1-1).
+python3 is already the newest version (3.14.7-3).
+python3-pip is already the newest version (26.1.2+dfsg-1).
+pipx is already the newest version (1.15.0-1).
+automake is already the newest version (1:1.18.1-4).
+automake set to manually installed.
+wget is already the newest version (1.25.0-3).
+wget set to manually installed.
+redis is already the newest version (5:8.0.6-2).
+rlwrap is already the newest version (0.47.1-0.1).
+seclists is already the newest version (2025.3-0kali1).
+sherlock is already the newest version (0.16.0-3).
+skipfish is already the newest version (2.10b-2kali8).
+smbclient is already the newest version (2:4.24.6+dfsg-1).
+smtp-user-enum is already the newest version (1.2-1kali4).
+snmpcheck is already the newest version (1.9-0kali2).
+sqlmap is already the newest version (1.10.8-1).
+sslscan is already the newest version (2.1.5-1).
+subfinder is already the newest version (2.16.0-0kali1).
+subjack is already the newest version (2.1-0kali2).
+sublist3r is already the newest version (1.1-5).
+tar is already the newest version (1.35+dfsg-5).
+testssl.sh is already the newest version (3.2.4+dfsg-2).
+theharvester is already the newest version (4.11.1-0kali2).
+unrar is already the newest version (1:7.2.7-2).
+unzip is already the newest version (6.0-31).
+wafw00f is already the newest version (2.4.2-1).
+wapiti is already the newest version (3.2.10+dfsg-4).
+whatweb is already the newest version (0.6.4-1).
+whiptail is already the newest version (0.52.25-2+b1).
+whois is already the newest version (5.6.6).
+wpscan is already the newest version (4.1.0-0kali1).
+xxd is already the newest version (2:9.2.0858-1).
+ldap-utils is already the newest version (2.6.14+dfsg-2).
+ldap-utils set to manually installed.
+postgresql-client is already the newest version (18+290).
+default-mysql-client is already the newest version (1.1.1).
+redis-tools is already the newest version (5:8.0.6-2).
+redis-tools set to manually installed.
+Solving dependencies...
+The following additional packages will be installed:
+  libltdl-dev
+Suggested packages:
+  libtool-doc gfortran | fortran95-compiler
+The following NEW packages will be installed:
+  libltdl-dev libtool pkg-config
+0 upgraded, 3 newly installed, 0 to remove and 6 not upgraded.
+Inst libltdl-dev (2.6.2-2 kali-last-snapshot [amd64])
+Inst libtool (2.6.2-2 kali-last-snapshot [all])
+Inst pkg-config (2.5.1-4 kali-last-snapshot [amd64])
+Conf libltdl-dev (2.6.2-2 kali-last-snapshot [amd64])
+Conf libtool (2.6.2-2 kali-last-snapshot [all])
+Conf pkg-config (2.5.1-4 kali-last-snapshot [amd64])

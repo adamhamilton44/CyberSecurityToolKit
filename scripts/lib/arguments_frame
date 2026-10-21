@@ -754,18 +754,18 @@ etc_postx_frame() {
     echo '
    _______________________________
  / \                              \.
-|   |  Class: Etc.                 |.
- \_ |  ----------                  |.
+|   |  Class: Etc                  |.
+ \_ |  -------------------         |.
     |                              |.
-    |  Tool: post exploit 2 go     |.
-    |  -----------------------     |.
+    |  Tool: Portable checks      |.
+    |  ----------------------      |.
     |                              |.
     |  Usage Short:                |.
     |  cstk -Ez                    |.
     |  --------                    |.
     |                              |.
     |  Usage Long:                 |.
-    |  cstk --etc --zip            |.
+    |  cstk --etc --zip                |.
     |  ------------------          |.
     |                              |.
     |   ___________________________|___
@@ -1063,4 +1063,15 @@ etc_ai_frame() {
     |  /                             /.
     \_/_____________________________/.
     '
+}
+
+# Read-only DEFENSE class frames.
+defense_web_tls_frame() {
+    printf '%s\n' 'Class: DEFENSE | Tool: Web/TLS Security Assessment' \
+        'Short: cstk -Dw HTTP_OR_HTTPS_URL' \
+        'Long: cstk --defense --web-tls HTTP_OR_HTTPS_URL'
+}
+defense_linux_audit_frame() {
+    printf '%s\n' 'Class: DEFENSE | Tool: Linux Security Audit' \
+        'Short: cstk -Dl | Long: cstk --defense --linux-audit'
 }

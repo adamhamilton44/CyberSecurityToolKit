@@ -7,12 +7,13 @@ _cstk_bash_completion() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--osint --payload --postx --etc --help --version --tty --check-updates --update --private-data --control -O -P -X -E -V -H -T -C -U -D"
+    opts="--osint --payload --postx --etc --defense --help --version --tty --check-updates --update --private-data --control -O -P -X -E -V -H -T -C -U -D"
 
-    if [[ "$cur" == -[OPXE]?* ]]; then
+    if [[ "$cur" == -[OPXED]?* ]]; then
         cls="${cur:1:1}"
         tail="${cur:2}"
         case "-$cls" in
+            -D) cmd_opts="l w" ;;
             -O) cmd_opts="n s f e b g m p v u h w" ;;
             -P) cmd_opts="n v r p t b s m a c" ;;
             -X) cmd_opts="s i e v b c g f k" ;;
@@ -27,6 +28,10 @@ _cstk_bash_completion() {
     fi
 
     case "$prev" in
+        --defense|-D)
+            cmd_opts="--linux-audit --web-tls"
+            [[ "$prev" == "-D" ]] && cmd_opts="l w"
+            ;;
         --osint|-O)
             cmd_opts="--findip --sweep --nmap --enum --breached --google --email --pass --vuln --username --ssh --waf"
             [[ "$prev" == "-O" ]] && cmd_opts="n s f e b g m p v u h w"
@@ -65,14 +70,18 @@ _cstk_zsh_completion() {
     cur="${words[CURRENT]}"
     prev="${words[CURRENT-1]}"
 
-    if (( CURRENT == 2 )); then
+    if (( CURRENT == 2 )) && [[ "$cur" == -D?* ]]; then
+        choices=(-Dl -Dw)
+    elif (( CURRENT == 2 )); then
         choices=(
-            --osint --payload --postx --etc --help --version --tty
+            --osint --payload --postx --etc --defense --help --version --tty
             --check-updates --update --private-data --control
             -O -P -X -E -V -H -T -C -U -D
         )
     else
         case "$prev" in
+            --defense) choices=(--linux-audit --web-tls) ;;
+            -D) choices=(l w) ;;
             --osint)
                 choices=(--findip --sweep --nmap --enum --breached --google --email --pass --vuln --username --ssh --waf)
                 ;;

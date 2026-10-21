@@ -22,3 +22,6 @@ Other/SecurityChecks/*
 *.pyd
 __pycache__/
 *.vscode/
+
+# Local extraction of the portable release; maintained sources live in tools/zip2go.
+/scripts/lib/CSTK_2Go/
