@@ -111,18 +111,57 @@ keep_sudo_alive() {
     done
 }
 
+verify_launcher_link() {
+    local expected actual
+    expected=$(realpath -e -- "$home_dir/cstk.sh") || return 1
+    actual=$(readlink -e -- /usr/local/bin/cstk) || return 1
+    [[ -L /usr/local/bin/cstk && -f /usr/local/bin/cstk &&
+       -x /usr/local/bin/cstk && "$actual" == "$expected" ]] || {
+        echo 'CSTK launcher must be an executable symlink to this checkout.' >&2
+        return 1
+    }
+}
+
 link_main_script() {
-    cstk_track_path /usr/local/bin/cstk || return 1
-    if [[ -L /usr/local/bin/cstk || -f /usr/local/bin/cstk ]]; then
-        rm -f /usr/local/bin/cstk || return 1
+    # Check the live destination even when a previous run journaled it already.
+    if [[ -e /usr/local/bin/cstk && ! -L /usr/local/bin/cstk &&
+          ! -f /usr/local/bin/cstk ]]; then
+        echo 'Cannot install launcher: /usr/local/bin/cstk is a directory or special file. Preserve and inspect it before retrying.' >&2
+        return 1
     fi
-    if [[ ! -e /usr/local/bin/cstk ]]; then
-        ln -s "${home_dir}/cstk.sh" /usr/local/bin/cstk || return 1
+    [[ -f "$home_dir/cstk.sh" && -x "$home_dir/cstk.sh" ]] || {
+        echo 'The checkout cstk.sh is missing or not executable.' >&2
+        return 1
+    }
+    cstk_track_path /usr/local/bin/cstk || return 1
+    # -T treats the destination as exactly this path, never as a target directory.
+    ln -sfnT -- "$home_dir/cstk.sh" /usr/local/bin/cstk || return 1
+    verify_launcher_link || return 1
+    echo -e "${G}[ 📌 ] The main script cstk.sh is now accessible globally.${X}"
+    echo -e "${G}You can run it using 'sudo cstk'.${X}"
+    read -r -p "Press Enter to continue..."
+}
 
-        echo -e "${G}[ 📌 ] The main script cstk.sh is now accessible globally.${X}"
-        echo -e "${G}You can run it using 'sudo cstk'.${X}"
-
-        read -r -p "Press Enter to continue..."
+verify_installed_launcher() {
+    local logfile="$home_dir/log/launcher_check.log"
+    verify_launcher_link || return 1
+    local command_path
+    hash -r
+    command_path=$(command -v cstk) || {
+        echo 'CSTK exists at /usr/local/bin/cstk, but the installer PATH cannot find it. Check sudo secure_path includes /usr/local/bin. No sudoers policy was changed.' >&2
+        return 1
+    }
+    [[ $(readlink -e -- "$command_path") == $(realpath -e -- "$home_dir/cstk.sh") ]] || {
+        echo "Another cstk command shadows this checkout: $command_path" >&2
+        return 1
+    }
+    [[ -f /usr/local/bin/cstk_wrapper && ! -L /usr/local/bin/cstk_wrapper &&
+       -x /usr/local/bin/cstk_wrapper ]] || return 1
+    cmp -s -- "$home_dir/scripts/lib/cstk_wrapper" /usr/local/bin/cstk_wrapper || return 1
+    if ! timeout -k 2 15 /usr/local/bin/cstk --help > "$logfile" 2>&1 ||
+       ! grep -Fq 'SYNOPSIS:' "$logfile"; then
+        echo "CSTK launcher self-check failed. Log: $logfile" >&2
+        return 1
     fi
 }
 
@@ -353,15 +392,7 @@ pipx_install() {
 
 pipx_run_install() {
     pipx_install droopescan || return 1
-    pipx_install naminter || return 1
     pipx_install holehe || return 1
-
-    if command -v bloodhound-ce-python >/dev/null 2>&1 ||
-       command -v bloodhound-python >/dev/null 2>&1; then
-        echo -e "${G}[ ✔  ] A BloodHound Python collector is already installed.${X}"
-    else
-        pipx_install bloodhound-ce bloodhound-ce-python
-    fi
 }
 
 install_man_page() {
@@ -547,7 +578,7 @@ package_candidates() {
     local pkg_type="$2"
 
     case "$pkg_type:$pkg" in
-        deb:p7zip-full)
+        deb:7zip|deb:p7zip-full)
             printf '%s\n' 7zip p7zip-full
             ;;
         deb:default-mysql-client)
@@ -813,7 +844,18 @@ install_dependencies() {
     }
 
     local required_commands=(
-        7zip amass apache-users apktool argon2 aria2 arjun arp-scan arsenal-ng assetfinder autoconf basez bc bloodhound braa build-essential bzip2 cargo cewl commix coreutils crackmapexec curl dirb dirsearch dmitry dnsrecon dpkg enum4linux exploitdb feroxbuster ffuf fierce fping fzf gcc git git-lfs sed gobuster golang golang-any gospider grep gzip hashcat hping3 httpx-toolkit hydra impacket-scripts john joomscan jq libc6-dev lynis make masscan medusa metasploit-framework mongodb-server-core mxcheck mysql-common nasm ncrack ncat nikto nmap npm nuclei onesixtyone openssh-client openssh-server openssl p7zip-full pyenv-runtime python3 python3-pip pipx automake libtool pkg-config wget redis rlwrap seclists sherlock skipfish smbclient smtp-user-enum snmpcheck sqlmap sslscan subfinder subjack sublist3r tar testssl.sh theharvester unrar unzip wafw00f wapiti whatweb whiptail whois wpscan xxd ldap-utils postgresql-client default-mysql-client redis-tools
+        7zip amass apache-users apktool aria2 arjun arp-scan arsenal-ng
+        assetfinder autoconf braa build-essential bzip2 cewl commix coreutils
+        crackmapexec curl dirb dirsearch dmitry dnsrecon dpkg enum4linux
+        exploitdb feroxbuster ffuf fierce fping fzf gcc git
+        git-lfs sed gobuster golang gospider grep gzip hashcat
+        hping3 httpx-toolkit hydra impacket-scripts john joomscan jq libc6-dev
+        lynis make medusa metasploit-framework mxcheck nasm ncrack ncat
+        nikto nmap nuclei onesixtyone openssh-client openssl python3 python3-pip
+        pipx automake libtool pkg-config wget seclists sherlock skipfish
+        smbclient smtp-user-enum snmpcheck sqlmap sslscan subfinder subjack sublist3r
+        tar testssl.sh theharvester unrar unzip wafw00f wapiti whatweb
+        whois wpscan xxd ldap-utils postgresql-client default-mysql-client redis-tools
     )
 
     [[ $# -gt 0 ]] && required_commands+=("$@")
@@ -1166,55 +1208,6 @@ install_shc() {
 
     else
         echo -e "${G}[ ✔  ] shc is already installed.${X}"
-    fi
-}
-
-install_vulscan() {
-
-    if [[ ! -d /usr/share/nmap/scripts/vulscan ]]; then
-
-        echo -e "${G}[ 📌 ] Installing Nmap vulscan...${X}"
-
-        echo "vulscan" >> "$github_install_file" || return 1
-        git clone \
-            https://github.com/scipag/vulscan \
-            /usr/share/nmap/scripts/vulscan || {
-                echo -e "${R}[ ❌ ] Failed to clone Nmap vulscan.${X}"
-                return 1
-            }
-
-        nmap --script-updatedb || {
-            echo -e "${R}[ ❌ ] Failed to update the Nmap script database.${X}"
-            return 1
-        }
-
-        echo -e "${G}[ ✅ ] Nmap vulscan.nse installed successfully.${X}"
-
-    else
-        echo -e "${G}[ ✔  ] Nmap vulscan.nse is already installed.${X}"
-    fi
-}
-
-install_katana() {
-    local katana_dir co
-    katana_dir="/opt/cstk/bin/katana"
-
-    if command -v katana >/dev/null 2>&1; then
-        echo -e "${G}[ ✔  ] katana is already present.${X}"
-        return 0
-    fi
-
-    echo -e "${C}[ 📌 ] Installing katana...${X}"
-
-    CGO_ENABLED=1 go install github.com/projectdiscovery/katana/cmd/katana@latest
-    co=$?
-
-    if [[ "$co" -eq 0 && -x "$katana_dir" ]]; then
-        echo -e "${G}[ ✅ ] Installed: katana.${X}"
-        echo "katana" >> "$github_install_file" || return 1
-    else
-        echo -e "${R}[ ❌ ] Failed to install katana.${X}"
-        return 1
     fi
 }
 
@@ -1597,8 +1590,6 @@ pipx_run_install || exit 1
 
 # Install additional GitHub-based tools.
 install_shc || exit 1
-install_vulscan || exit 1
-install_katana || exit 1
 install_nrich || exit 1
 install_mimipenguin || exit 1
 
@@ -1632,6 +1623,9 @@ set_hashes || exit 1
 
 # Finalize permissions and ownership.
 finish_setup || exit 1
+
+# A success banner requires a working installed command, not just completed writes.
+verify_installed_launcher || exit 1
 
 # Stop the sudo keep-alive process.
 if [[ -n "${SUDO_KEEPALIVE_PID:-}" ]]; then

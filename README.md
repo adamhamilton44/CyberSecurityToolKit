@@ -171,7 +171,7 @@ sudo cstk --update
 
 The combined updater:
 
-- works only with system packages, pipx applications, Go tools, and GitHub
+- works only with system packages, pipx applications, and GitHub
   repositories recorded or recognized by CSTK;
 - shows its scope and asks for confirmation before installing;
 - does not perform a full operating-system upgrade;
@@ -382,3 +382,27 @@ Zip2Go also includes explicit LinPEAS, LES and Unix Priv Check enumeration
 profiles. Use `enumeration.sh --tool linpeas`, `--tool les`, or `--tool upc` after
 reading the archive README. The profiles record upstream provenance, exact
 coverage and omitted checks; successful completion is not a security verdict.
+
+### Optional Katana crawler
+
+CSTK no longer builds Katana during installation or updates. The available
+`Osint_enum` source has one optional depth-3 Katana crawl next to a GoSpider
+crawl. It skips missing Katana; that limited integration does not justify a
+mandatory Go source build and its module downloads. Users who separately install
+Katana can retain that optional capability. Older Katana registry entries are
+ignored by the updater; existing binaries are not deleted during installation.
+Legacy uninstall cleanup remains available. The Go toolchain stays in the
+system dependency list for other tooling; this change removes Katana's build.
+
+### Default dependency policy
+
+The dependency audit reduced system install entries from 111 to 95. Unused
+packages, local database/SSH servers without a CSTK hosting workflow, catalogue-only
+examples and duplicate requirements no longer trigger automatic installation.
+Remote database checks retain their client packages. The unused Vulscan clone and
+optional naminter/BloodHound collector pipx installs were also removed; the
+updater skips their legacy source/pipx records. Existing installations are not
+purged by this change. See [DEPENDENCY_AUDIT.md](DEPENDENCY_AUDIT.md) for every
+reviewed dependency and [tools/dependency_policy.json](tools/dependency_policy.json)
+for decisions and rationale. Compiled/source equivalence and package command-name
+mismatches are explicitly identified rather than treated as verified coverage.

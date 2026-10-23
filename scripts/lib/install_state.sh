@@ -59,7 +59,9 @@ cstk_track_path() {
     printf '%s\n' "$path" > "$entry/path"
 }
 
-cstk_package_snapshot() {
+cstk_package_snapshot() (
+    # Inventory failures must not be hidden by a successful sort.
+    set -o pipefail
     case "$1" in
         apt-get) dpkg-query -W -f='${binary:Package} ${db:Status-Status}\n' |
             awk '$2 != "not-installed" && $2 != "config-files" { print $1 }' | LC_ALL=C sort -u ;;
@@ -67,12 +69,12 @@ cstk_package_snapshot() {
         brew) brew list --formula -1 | LC_ALL=C sort -u ;;
         *) return 1 ;;
     esac
-}
+)
 
 # Capture transitive dependencies even when a package command partially fails.
 cstk_package_transaction() (
     # A subshell confines the EXIT trap, including ordinary interruption cleanup.
-    local manager="$1" before after
+    local manager="$1" before after delta merged
     shift
     before=$(mktemp "$cstk_state_dir/packages.before.XXXXXX") || exit 1
     after=$(mktemp "$cstk_state_dir/packages.after.XXXXXX") || { rm -f "$before"; exit 1; }
@@ -82,13 +84,27 @@ cstk_package_transaction() (
     cstk_finish_transaction() {
         local rc=$?
         trap - EXIT
+        # Keep comparison collation identical to snapshot sorting, regardless
+        # of the invoking user's locale. Stage the ledger so a failed comparison
+        # cannot append a partial or incorrectly compared package list.
+        delta=$(mktemp "$cstk_state_dir/packages.delta.XXXXXX") || exit 1
+        merged=$(mktemp "$cstk_state_dir/packages.merged.XXXXXX") || exit 1
         if ! cstk_package_snapshot "$manager" > "$after" ||
-           ! comm -13 "$before" "$after" >> "$cstk_state_dir/packages" ||
-           ! LC_ALL=C sort -u "$cstk_state_dir/packages" -o "$cstk_state_dir/packages"; then
+           ! LC_ALL=C comm --check-order -13 "$before" "$after" > "$delta"; then
             echo 'Unable to record package changes; retain CSTK state for recovery.' >&2
             exit 1
         fi
-        rm -f -- "$before" "$after" || exit 1
+        if [[ -e "$cstk_state_dir/packages" ]]; then
+            cat "$cstk_state_dir/packages" "$delta" > "$merged" || exit 1
+        else
+            cat "$delta" > "$merged" || exit 1
+        fi
+        if ! LC_ALL=C sort -u "$merged" -o "$merged" ||
+           ! mv -f -- "$merged" "$cstk_state_dir/packages"; then
+            echo 'Unable to record package changes; retain CSTK state for recovery.' >&2
+            exit 1
+        fi
+        rm -f -- "$before" "$after" "$delta" || exit 1
         exit "$rc"
     }
     trap cstk_finish_transaction EXIT

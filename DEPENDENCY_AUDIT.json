@@ -1,0 +1,2628 @@
+{
+  "dependencies": [
+    {
+      "name": "7zip",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "7zip",
+        "7z",
+        "7zz"
+      ],
+      "references": [
+        "cstk.sh:92",
+        "cstk.sh:99",
+        "cstk.sh:409",
+        "cstk.sh:414",
+        "cstk.sh:463",
+        "cstk.sh:1250",
+        "cstk.sh:1261",
+        "reference/Etc_extract_archive.sh:23",
+        "reference/Etc_extract_archive.sh:43",
+        "reference/Osint_password_attack.sh:816",
+        "reference/Osint_password_attack.sh:876",
+        "reference/Osint_password_attack.sh:1097",
+        "reference/Osint_password_attack.sh:1111",
+        "reference/Osint_password_attack.sh:1112",
+        "reference/PostEx_bruteforce_archive.py:35",
+        "reference/PostEx_bruteforce_archive.py:36",
+        "reference/PostEx_bruteforce_archive.py:79",
+        "reference/PostEx_bruteforce_archive.py:93",
+        "reference/PostEx_bruteforce_archive.py:96"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:32",
+        "reference/PostEx_GTFONow.py:34"
+      ]
+    },
+    {
+      "name": "amass",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "amass"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:196",
+        "reference/Osint_enum.sh:198",
+        "reference/Osint_enum.sh:199",
+        "reference/Osint_enum.sh:200",
+        "reference/Osint_enum.sh:275",
+        "reference/Osint_enum.sh:276",
+        "reference/Osint_enum.sh:277"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "apache-users",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "apache-users"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:776",
+        "reference/Osint_enum.sh:777",
+        "reference/Osint_enum.sh:778"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "apktool",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "apktool"
+      ],
+      "references": [
+        "reference/Payload_apk_builder.sh:114",
+        "reference/Payload_apk_builder.sh:239",
+        "reference/Payload_apk_builder.sh:241",
+        "reference/Payload_apk_builder.sh:242",
+        "reference/Payload_apk_builder.sh:245",
+        "reference/Payload_apk_builder.sh:263",
+        "reference/Payload_apk_builder.sh:266"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "argon2",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "No executable reference found in the launcher or available maintained tool sources.",
+      "aliases": [
+        "argon2"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "aria2",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "Optional dataset download in install.sh invokes aria2c; retain until that workflow is separately changed.",
+      "aliases": [
+        "aria2",
+        "aria2c"
+      ],
+      "references": [],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:106",
+        "reference/PostEx_GTFONow.py:108"
+      ]
+    },
+    {
+      "name": "arjun",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "arjun"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:580",
+        "reference/Osint_enum.sh:581",
+        "reference/Osint_enum.sh:582"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "arp-scan",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "arp-scan"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:899",
+        "reference/Osint_enum.sh:903"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "arsenal-ng",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "arsenal-ng"
+      ],
+      "references": [
+        "cstk.sh:108",
+        "cstk.sh:1268",
+        "cstk.sh:2380",
+        "cstk.sh:2382",
+        "cstk.sh:2383"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "assetfinder",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "assetfinder"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:270",
+        "reference/Osint_enum.sh:271",
+        "reference/Osint_enum.sh:272",
+        "reference/Osint_enum.sh:273"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "autoconf",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "autoreconf for shc source build",
+      "aliases": [
+        "autoconf"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "basez",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "Only executable/example catalogue references found in matching shipped-tool sources.",
+      "aliases": [
+        "basez"
+      ],
+      "references": [],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:188",
+        "reference/PostEx_GTFONow.py:190",
+        "reference/PostEx_GTFONow.py:2192",
+        "reference/PostEx_GTFONow.py:2194"
+      ]
+    },
+    {
+      "name": "bc",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "Only executable/example catalogue references found in matching shipped-tool sources.",
+      "aliases": [
+        "bc"
+      ],
+      "references": [],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:203",
+        "reference/PostEx_GTFONow.py:205",
+        "reference/PostEx_GTFONow.py:2202",
+        "reference/PostEx_GTFONow.py:2204"
+      ]
+    },
+    {
+      "name": "bloodhound",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "No BloodHound application launch found; enumeration only prints a collector hint.",
+      "aliases": [
+        "bloodhound"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:889",
+        "reference/Osint_enum.sh:892"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "braa",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "braa"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:416",
+        "reference/Osint_enum.sh:417",
+        "reference/Osint_enum.sh:418"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "build-essential",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "C/C++ compilation and make",
+      "aliases": [
+        "build-essential"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "bzip2",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "bzip2",
+        "bunzip2"
+      ],
+      "references": [
+        "reference/Etc_extract_archive.sh:23",
+        "reference/Etc_extract_archive.sh:36"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:256",
+        "reference/PostEx_GTFONow.py:258",
+        "reference/PostEx_GTFONow.py:2223",
+        "reference/PostEx_GTFONow.py:2225"
+      ]
+    },
+    {
+      "name": "cargo",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "No Rust/Cargo build or runtime invocation found; Katana was a Go build.",
+      "aliases": [
+        "cargo"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "cewl",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "cewl"
+      ],
+      "references": [
+        "reference/Osint_password_attack.sh:1054",
+        "reference/Osint_password_attack.sh:1071",
+        "reference/Osint_password_attack.sh:1078",
+        "reference/Osint_password_attack.sh:1086",
+        "reference/Osint_password_attack.sh:1169"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "commix",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "commix"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:705",
+        "reference/Osint_enum.sh:707",
+        "reference/Osint_enum.sh:708",
+        "reference/Osint_enum.sh:709"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "coreutils",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "installation/report core commands",
+      "aliases": [
+        "coreutils"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "crackmapexec",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "crackmapexec"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:372",
+        "reference/Osint_enum.sh:373",
+        "reference/Osint_enum.sh:374",
+        "reference/Osint_enum.sh:847",
+        "reference/Osint_enum.sh:849",
+        "reference/Osint_enum.sh:851",
+        "reference/Osint_enum.sh:852",
+        "reference/Osint_enum.sh:853",
+        "reference/Osint_enum.sh:854",
+        "reference/Osint_enum.sh:855",
+        "reference/Osint_enum.sh:858",
+        "reference/Osint_enum.sh:859",
+        "reference/Osint_enum.sh:862",
+        "reference/Osint_enum.sh:863",
+        "reference/Osint_enum.sh:866",
+        "reference/Osint_enum.sh:867",
+        "reference/Osint_password_attack.sh:940",
+        "reference/Osint_password_attack.sh:941",
+        "reference/Osint_password_attack.sh:943"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "curl",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "curl"
+      ],
+      "references": [
+        "cstk.sh:1396",
+        "cstk.sh:1397",
+        "cstk.sh:1474",
+        "cstk.sh:1475",
+        "scripts/bin/web_tls_security_assessment:84",
+        "scripts/bin/web_tls_security_assessment:103",
+        "scripts/bin/web_tls_security_assessment:105",
+        "scripts/bin/web_tls_security_assessment:166",
+        "scripts/bin/web_tls_security_assessment:196",
+        "reference/Osint_enum.sh:225",
+        "reference/Osint_enum.sh:233",
+        "reference/Osint_enum.sh:237",
+        "reference/Osint_enum.sh:509",
+        "reference/Osint_enum.sh:554",
+        "reference/Osint_enum.sh:562",
+        "reference/Osint_enum.sh:570",
+        "reference/Osint_enum.sh:786",
+        "reference/Osint_http_waf_detect.sh:81",
+        "reference/Osint_http_waf_detect.sh:88",
+        "reference/Payload_CommandAndControl.py:2453"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:461",
+        "reference/PostEx_GTFONow.py:463",
+        "reference/PostEx_GTFONow.py:2331",
+        "reference/PostEx_GTFONow.py:2333"
+      ]
+    },
+    {
+      "name": "dirb",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "dirb"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:547",
+        "reference/Osint_enum.sh:548",
+        "reference/Osint_enum.sh:549"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "dirsearch",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "dirsearch"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:543",
+        "reference/Osint_enum.sh:544",
+        "reference/Osint_enum.sh:545"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "dmitry",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "dmitry"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:204",
+        "reference/Osint_enum.sh:206",
+        "reference/Osint_enum.sh:207",
+        "reference/Osint_enum.sh:209",
+        "reference/Osint_enum.sh:210"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "dnsrecon",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "dnsrecon"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:181",
+        "reference/Osint_enum.sh:182",
+        "reference/Osint_enum.sh:183",
+        "reference/Osint_enum.sh:184",
+        "reference/Osint_enum.sh:185"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "dpkg",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "dpkg"
+      ],
+      "references": [
+        "cstk.sh:1261",
+        "reference/Etc_extract_archive.sh:23",
+        "reference/Etc_extract_archive.sh:42",
+        "reference/Osint_ssh_enum_remote_host.sh:96"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:79",
+        "reference/PostEx_GTFONow.py:93",
+        "reference/PostEx_GTFONow.py:557",
+        "reference/PostEx_GTFONow.py:559",
+        "reference/PostEx_GTFONow.py:563"
+      ]
+    },
+    {
+      "name": "enum4linux",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "enum4linux"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:364",
+        "reference/Osint_enum.sh:365",
+        "reference/Osint_enum.sh:366"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "exploitdb",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "exploitdb",
+        "searchsploit"
+      ],
+      "references": [
+        "cstk.sh:1218",
+        "reference/Osint_auto_vuln_finder.sh:23",
+        "reference/Osint_auto_vuln_finder.sh:95"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "feroxbuster",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "feroxbuster"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:535",
+        "reference/Osint_enum.sh:536",
+        "reference/Osint_enum.sh:537"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "ffuf",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "ffuf"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:539",
+        "reference/Osint_enum.sh:540",
+        "reference/Osint_enum.sh:541"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "fierce",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "fierce"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:309",
+        "reference/Osint_enum.sh:310",
+        "reference/Osint_enum.sh:311"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "fping",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "fping"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:313",
+        "reference/Osint_enum.sh:316",
+        "reference/Osint_enum.sh:317"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:684",
+        "reference/PostEx_GTFONow.py:686"
+      ]
+    },
+    {
+      "name": "fzf",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "fzf"
+      ],
+      "references": [
+        "cstk.sh:60",
+        "cstk.sh:1595",
+        "cstk.sh:1623",
+        "reference/Osint_password_attack.sh:249",
+        "reference/Osint_password_attack.sh:250",
+        "reference/Osint_password_attack.sh:1174",
+        "reference/Osint_password_attack.sh:1175"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "gcc",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "C compilation",
+      "aliases": [
+        "gcc"
+      ],
+      "references": [],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:699",
+        "reference/PostEx_GTFONow.py:701",
+        "reference/PostEx_GTFONow.py:3757",
+        "reference/PostEx_GTFONow.py:3758",
+        "reference/PostEx_GTFONow.py:3777"
+      ]
+    },
+    {
+      "name": "git",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "git"
+      ],
+      "references": [
+        "reference/Etc_log_cleaner.sh:23",
+        "reference/Etc_log_cleaner.sh:40",
+        "reference/Etc_log_cleaner.sh:42"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:756",
+        "reference/PostEx_GTFONow.py:758",
+        "reference/PostEx_GTFONow.py:761",
+        "reference/PostEx_GTFONow.py:765",
+        "reference/PostEx_GTFONow.py:766",
+        "reference/PostEx_GTFONow.py:769",
+        "reference/PostEx_GTFONow.py:770",
+        "reference/PostEx_GTFONow.py:773"
+      ]
+    },
+    {
+      "name": "git-lfs",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "Git LFS release archive checkout",
+      "aliases": [
+        "git-lfs"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "sed",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "sed"
+      ],
+      "references": [
+        "cstk.sh:1104",
+        "scripts/bin/web_tls_security_assessment:235",
+        "scripts/bin/web_tls_security_assessment:238",
+        "reference/Etc_array_enc.sh:82",
+        "reference/Etc_array_enc.sh:83",
+        "reference/Etc_gpg_enc_dec.sh:62",
+        "reference/Etc_gpg_enc_dec.sh:63",
+        "reference/Etc_gpg_enc_dec.sh:76",
+        "reference/Etc_gpg_enc_dec.sh:77",
+        "reference/Osint_IP_Sweeper_Wizard.sh:312",
+        "reference/Osint_IP_Sweeper_Wizard.sh:319",
+        "reference/Osint_enum.sh:217",
+        "reference/Osint_enum.sh:227",
+        "reference/Payload_CommandAndControl.py:3406",
+        "reference/Payload_apk_builder.sh:114",
+        "reference/Payload_apk_builder.sh:254",
+        "reference/Payload_apk_builder.sh:255",
+        "reference/Payload_apk_builder.sh:256",
+        "reference/Payload_apk_builder.sh:257",
+        "reference/Payload_apk_builder.sh:258",
+        "reference/Payload_apk_builder.sh:259",
+        "reference/Payload_apk_builder.sh:260",
+        "reference/Payload_apk_builder.sh:261",
+        "reference/Payload_apk_builder.sh:262",
+        "reference/Payload_ransomware.sh:853",
+        "reference/Payload_ransomware_golang.sh:207"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:355",
+        "reference/PostEx_GTFONow.py:1532",
+        "reference/PostEx_GTFONow.py:1534",
+        "reference/PostEx_GTFONow.py:2265",
+        "reference/PostEx_GTFONow.py:2912",
+        "reference/PostEx_GTFONow.py:2914"
+      ]
+    },
+    {
+      "name": "gobuster",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "gobuster"
+      ],
+      "references": [
+        "cstk.sh:1213",
+        "reference/Osint_enum.sh:280",
+        "reference/Osint_enum.sh:282",
+        "reference/Osint_enum.sh:531",
+        "reference/Osint_enum.sh:532",
+        "reference/Osint_enum.sh:533"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "golang",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "golang",
+        "go"
+      ],
+      "references": [
+        "cstk.sh:1623",
+        "cstk.sh:1877",
+        "cstk.sh:1889",
+        "cstk.sh:2333",
+        "reference/Payload_make_ssh_keys.sh:77",
+        "reference/Payload_ransomware_golang.sh:13",
+        "reference/Payload_ransomware_golang.sh:14",
+        "reference/Payload_ransomware_golang.sh:208",
+        "reference/Payload_ransomware_golang.sh:212",
+        "reference/Payload_unzip_bomb.sh:35",
+        "reference/PostEx_filesofinterest.sh:62"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "golang-any",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "Duplicate Go toolchain requirement; retain golang.",
+      "aliases": [
+        "golang-any",
+        "go"
+      ],
+      "references": [
+        "cstk.sh:1623",
+        "cstk.sh:1877",
+        "cstk.sh:1889",
+        "cstk.sh:2333",
+        "reference/Payload_make_ssh_keys.sh:77",
+        "reference/Payload_ransomware_golang.sh:13",
+        "reference/Payload_ransomware_golang.sh:14",
+        "reference/Payload_ransomware_golang.sh:208",
+        "reference/Payload_ransomware_golang.sh:212",
+        "reference/Payload_unzip_bomb.sh:35",
+        "reference/PostEx_filesofinterest.sh:62"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "gospider",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "gospider"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:590",
+        "reference/Osint_enum.sh:591",
+        "reference/Osint_enum.sh:592"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "grep",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "grep"
+      ],
+      "references": [
+        "cstk.sh:1024",
+        "cstk.sh:1067",
+        "cstk.sh:1078",
+        "cstk.sh:1644",
+        "cstk.sh:1646",
+        "cstk.sh:1707",
+        "cstk.sh:2469",
+        "cstk.sh:2473",
+        "cstk.sh:2477",
+        "cstk.sh:2481",
+        "cstk.sh:2527",
+        "cstk.sh:2552",
+        "cstk.sh:2553",
+        "cstk.sh:2554",
+        "cstk.sh:2555",
+        "cstk.sh:2556",
+        "cstk.sh:2564",
+        "cstk.sh:2568",
+        "cstk.sh:2572",
+        "cstk.sh:2576",
+        "cstk.sh:2580",
+        "cstk.sh:2585",
+        "cstk.sh:2591",
+        "cstk.sh:2603",
+        "cstk.sh:2620",
+        "cstk.sh:2637",
+        "cstk.sh:2652",
+        "cstk.sh:2667",
+        "cstk.sh:2681",
+        "cstk.sh:2695",
+        "cstk.sh:2712",
+        "cstk.sh:2729",
+        "cstk.sh:2733",
+        "scripts/bin/web_tls_security_assessment:209",
+        "scripts/bin/web_tls_security_assessment:211",
+        "scripts/bin/web_tls_security_assessment:212",
+        "scripts/bin/web_tls_security_assessment:216",
+        "scripts/bin/web_tls_security_assessment:229",
+        "scripts/bin/web_tls_security_assessment:234",
+        "scripts/bin/web_tls_security_assessment:242",
+        "scripts/bin/web_tls_security_assessment:246",
+        "scripts/bin/web_tls_security_assessment:250",
+        "reference/Crypto_Catch.sh:78",
+        "reference/Osint_IP_Sweeper_Wizard.sh:130",
+        "reference/Osint_IP_Sweeper_Wizard.sh:136",
+        "reference/Osint_IP_Sweeper_Wizard.sh:141",
+        "reference/Osint_auto_vuln_finder.sh:57",
+        "reference/Osint_auto_vuln_finder.sh:114",
+        "reference/Osint_breach_parse.sh:89",
+        "reference/Osint_breach_parse_single.sh:64",
+        "reference/Osint_breach_parse_single.sh:70",
+        "reference/Osint_breach_parse_single.sh:76",
+        "reference/Osint_breach_parse_single.sh:81",
+        "reference/Osint_breach_parse_single.sh:88",
+        "reference/Osint_breach_parse_single.sh:95",
+        "reference/Osint_enum.sh:193",
+        "reference/Osint_enum.sh:283",
+        "reference/Osint_enum.sh:302",
+        "reference/Osint_enum.sh:344",
+        "reference/Osint_enum.sh:358",
+        "reference/Osint_enum.sh:380",
+        "reference/Osint_enum.sh:402",
+        "reference/Osint_enum.sh:424",
+        "reference/Osint_enum.sh:434",
+        "reference/Osint_enum.sh:444",
+        "reference/Osint_enum.sh:454",
+        "reference/Osint_enum.sh:464",
+        "reference/Osint_enum.sh:474",
+        "reference/Osint_enum.sh:554",
+        "reference/Osint_enum.sh:562",
+        "reference/Osint_enum.sh:570",
+        "reference/Osint_enum.sh:721",
+        "reference/Osint_enum.sh:733",
+        "reference/Osint_enum.sh:741",
+        "reference/Osint_enum.sh:750",
+        "reference/Osint_enum.sh:786",
+        "reference/Osint_enum.sh:798",
+        "reference/Osint_enum.sh:808",
+        "reference/Osint_enum.sh:850",
+        "reference/Osint_enum.sh:857",
+        "reference/Osint_enum.sh:861",
+        "reference/Osint_enum.sh:865",
+        "reference/Osint_enum.sh:906",
+        "reference/Osint_enum.sh:936",
+        "reference/Osint_http_waf_detect.sh:99",
+        "reference/Osint_http_waf_detect.sh:105",
+        "reference/Osint_http_waf_detect.sh:107",
+        "reference/Osint_http_waf_detect.sh:115",
+        "reference/Osint_sweeper.sh:38",
+        "reference/Osint_sweeper.sh:81",
+        "reference/Osint_sweeper.sh:87",
+        "reference/Osint_sweeper.sh:92",
+        "reference/Payload_CommandAndControl.py:2285",
+        "reference/Payload_CommandAndControl.py:2432",
+        "reference/Payload_CommandAndControl.py:2433",
+        "reference/Payload_CommandAndControl.py:2434",
+        "reference/Payload_bomb_attacks.sh:91",
+        "reference/Payload_bomb_attacks.sh:95",
+        "reference/Payload_bomb_attacks.sh:99",
+        "reference/Payload_bomb_attacks.sh:104",
+        "reference/Payload_bomb_attacks.sh:109",
+        "reference/Payload_bomb_attacks.sh:113",
+        "reference/PostEx_am_i_on_a_vm.sh:17",
+        "reference/PostEx_am_i_on_a_vm.sh:22",
+        "reference/PostEx_am_i_on_a_vm.sh:27",
+        "reference/PostEx_am_i_on_a_vm.sh:33",
+        "reference/PostEx_am_i_on_a_vm.sh:39",
+        "reference/PostEx_am_i_on_a_vm.sh:44",
+        "reference/PostEx_filesofinterest.sh:240",
+        "reference/PostEx_filesofinterest.sh:280",
+        "reference/PostEx_filesofinterest.sh:281"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:781",
+        "reference/PostEx_GTFONow.py:783",
+        "reference/PostEx_GTFONow.py:2508",
+        "reference/PostEx_GTFONow.py:2510"
+      ]
+    },
+    {
+      "name": "gzip",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "gzip"
+      ],
+      "references": [
+        "reference/Payload_CommandAndControl.py:4817",
+        "reference/Payload_CommandAndControl.py:4819"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:791",
+        "reference/PostEx_GTFONow.py:793",
+        "reference/PostEx_GTFONow.py:2518",
+        "reference/PostEx_GTFONow.py:2520"
+      ]
+    },
+    {
+      "name": "hashcat",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "hashcat"
+      ],
+      "references": [
+        "reference/Osint_password_attack.sh:762",
+        "reference/Osint_password_attack.sh:767",
+        "reference/Osint_password_attack.sh:769",
+        "reference/Osint_password_attack.sh:778",
+        "reference/Osint_password_attack.sh:782",
+        "reference/Osint_password_attack.sh:792",
+        "reference/Osint_password_attack.sh:793",
+        "reference/Osint_password_attack.sh:799",
+        "reference/Osint_password_attack.sh:801",
+        "reference/Osint_password_attack.sh:1167"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "hping3",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "hping3"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:319",
+        "reference/Osint_enum.sh:320",
+        "reference/Osint_enum.sh:321"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:816",
+        "reference/PostEx_GTFONow.py:818",
+        "reference/PostEx_GTFONow.py:821",
+        "reference/PostEx_GTFONow.py:822",
+        "reference/PostEx_GTFONow.py:2543",
+        "reference/PostEx_GTFONow.py:2545"
+      ]
+    },
+    {
+      "name": "httpx-toolkit",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "httpx-toolkit",
+        "httpx"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:350",
+        "reference/Osint_enum.sh:351",
+        "reference/Osint_enum.sh:352"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "hydra",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "hydra"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:728",
+        "reference/Osint_enum.sh:729",
+        "reference/Osint_enum.sh:730",
+        "reference/Osint_enum.sh:791",
+        "reference/Osint_enum.sh:793",
+        "reference/Osint_enum.sh:799",
+        "reference/Osint_enum.sh:801",
+        "reference/Osint_enum.sh:809",
+        "reference/Osint_enum.sh:811",
+        "reference/Osint_enum.sh:812",
+        "reference/Osint_password_attack.sh:634",
+        "reference/Osint_password_attack.sh:639",
+        "reference/Osint_password_attack.sh:659",
+        "reference/Osint_password_attack.sh:660",
+        "reference/Osint_password_attack.sh:663",
+        "reference/Osint_password_attack.sh:674",
+        "reference/Osint_password_attack.sh:687",
+        "reference/Osint_password_attack.sh:1164"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "impacket-scripts",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "impacket-scripts",
+        "impacket-GetNPUsers",
+        "impacket-GetUserSPNs",
+        "impacket-smbclient"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:873",
+        "reference/Osint_enum.sh:875",
+        "reference/Osint_enum.sh:879",
+        "reference/Osint_enum.sh:883",
+        "reference/Osint_enum.sh:885"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "john",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "john"
+      ],
+      "references": [
+        "cstk.sh:1684",
+        "reference/Etc_make_binary.sh:24",
+        "reference/Osint_password_attack.sh:175",
+        "reference/Osint_password_attack.sh:228",
+        "reference/Osint_password_attack.sh:229",
+        "reference/Osint_password_attack.sh:819",
+        "reference/Osint_password_attack.sh:820",
+        "reference/Osint_password_attack.sh:827",
+        "reference/Osint_password_attack.sh:828",
+        "reference/Osint_password_attack.sh:831",
+        "reference/Osint_password_attack.sh:834",
+        "reference/Osint_password_attack.sh:835",
+        "reference/Osint_password_attack.sh:838",
+        "reference/Osint_password_attack.sh:843",
+        "reference/Osint_password_attack.sh:844",
+        "reference/Osint_password_attack.sh:861",
+        "reference/Osint_password_attack.sh:889",
+        "reference/Osint_password_attack.sh:901",
+        "reference/Osint_password_attack.sh:903",
+        "reference/Osint_password_attack.sh:914",
+        "reference/Osint_password_attack.sh:918",
+        "reference/Osint_password_attack.sh:922",
+        "reference/Osint_password_attack.sh:925",
+        "reference/Osint_password_attack.sh:929",
+        "reference/Osint_password_attack.sh:931",
+        "reference/Osint_password_attack.sh:1171"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "joomscan",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "joomscan"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:565",
+        "reference/Osint_enum.sh:566",
+        "reference/Osint_enum.sh:567"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "jq",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "jq"
+      ],
+      "references": [
+        "cstk.sh:1476",
+        "cstk.sh:1477",
+        "cstk.sh:1478",
+        "cstk.sh:1481",
+        "cstk.sh:1482",
+        "cstk.sh:1483",
+        "cstk.sh:1484",
+        "cstk.sh:1485",
+        "cstk.sh:1486",
+        "cstk.sh:1487",
+        "reference/Osint_enum.sh:226",
+        "reference/Osint_enum.sh:238",
+        "reference/PostEx_browser_thief.sh:264",
+        "reference/PostEx_browser_thief.sh:265",
+        "reference/parse_cookie.sh:10",
+        "reference/parse_cookie.sh:11",
+        "reference/parse_cookie.sh:15",
+        "reference/parse_download.sh:10",
+        "reference/parse_download.sh:11",
+        "reference/parse_download.sh:15",
+        "reference/parse_extension.sh:10",
+        "reference/parse_extension.sh:11",
+        "reference/parse_extension.sh:15",
+        "reference/parse_history.sh:10",
+        "reference/parse_history.sh:11",
+        "reference/parse_history.sh:15",
+        "reference/parse_password.sh:10",
+        "reference/parse_password.sh:11",
+        "reference/parse_password.sh:15"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:888",
+        "reference/PostEx_GTFONow.py:890",
+        "reference/PostEx_GTFONow.py:2588",
+        "reference/PostEx_GTFONow.py:2590"
+      ]
+    },
+    {
+      "name": "libc6-dev",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "C build headers",
+      "aliases": [
+        "libc6-dev"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "lynis",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "lynis"
+      ],
+      "references": [
+        "reference/PostEx_linux_exploit_checker.sh:54",
+        "reference/PostEx_linux_exploit_checker.sh:56",
+        "reference/PostEx_linux_exploit_checker.sh:65",
+        "reference/PostEx_linux_exploit_checker.sh:83"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "make",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "source compilation",
+      "aliases": [
+        "make"
+      ],
+      "references": [
+        "reference/Etc_log_cleaner.sh:23",
+        "reference/Etc_log_cleaner.sh:45",
+        "reference/Payload_apk_builder.sh:251",
+        "reference/Payload_make_ssh_keys.sh:101"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:770",
+        "reference/PostEx_GTFONow.py:1029",
+        "reference/PostEx_GTFONow.py:1031",
+        "reference/PostEx_GTFONow.py:2649",
+        "reference/PostEx_GTFONow.py:2651"
+      ]
+    },
+    {
+      "name": "masscan",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "No invocation found in available tool sources; enumeration uses Nmap.",
+      "aliases": [
+        "masscan"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "medusa",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "medusa"
+      ],
+      "references": [
+        "reference/Osint_password_attack.sh:681",
+        "reference/Osint_password_attack.sh:687",
+        "reference/Osint_password_attack.sh:690",
+        "reference/Osint_password_attack.sh:702",
+        "reference/Osint_password_attack.sh:703",
+        "reference/Osint_password_attack.sh:705",
+        "reference/Osint_password_attack.sh:717",
+        "reference/Osint_password_attack.sh:1165"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "metasploit-framework",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "metasploit-framework",
+        "msfconsole",
+        "msfvenom",
+        "msf-pattern_create",
+        "msf-pattern_offset"
+      ],
+      "references": [
+        "cstk.sh:78",
+        "cstk.sh:1235",
+        "cstk.sh:2004",
+        "cstk.sh:2014",
+        "reference/Payload_CommandAndControl.py:4905",
+        "reference/Payload_CommandAndControl.py:4916",
+        "reference/Payload_apk_builder.sh:99",
+        "reference/Payload_apk_builder.sh:102",
+        "reference/Payload_apk_builder.sh:114",
+        "reference/Payload_apk_builder.sh:125",
+        "reference/Payload_apk_builder.sh:214",
+        "reference/Payload_apk_builder.sh:216",
+        "reference/Payload_apk_builder.sh:217",
+        "reference/Payload_apk_builder.sh:219",
+        "reference/Payload_apk_builder.sh:220",
+        "reference/Payload_apk_builder.sh:222",
+        "reference/Payload_apk_builder.sh:224",
+        "reference/Payload_apk_builder.sh:226",
+        "reference/Payload_apk_builder.sh:235",
+        "reference/Payload_apk_builder.sh:238",
+        "reference/Payload_apk_builder.sh:251",
+        "reference/msf_payload_create.sh:28",
+        "reference/msf_payload_create.sh:31",
+        "reference/msf_payload_create.sh:91",
+        "reference/msf_payload_create.sh:288",
+        "reference/msf_payload_inject.sh:29",
+        "reference/msf_payload_inject.sh:32",
+        "reference/msf_payload_inject.sh:92",
+        "reference/msf_payload_inject.sh:279"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1066",
+        "reference/PostEx_GTFONow.py:1068"
+      ]
+    },
+    {
+      "name": "mongodb-server-core",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "Reviewed enumeration uses mongosh client, not a local MongoDB server.",
+      "aliases": [
+        "mongodb-server-core"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "mxcheck",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "mxcheck"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:394",
+        "reference/Osint_enum.sh:396"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "mysql-common",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "Common configuration is a client dependency; retain default-mysql-client.",
+      "aliases": [
+        "mysql-common"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "nasm",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "nasm"
+      ],
+      "references": [
+        "cstk.sh:1830",
+        "cstk.sh:1831",
+        "cstk.sh:1839"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1127",
+        "reference/PostEx_GTFONow.py:1129",
+        "reference/PostEx_GTFONow.py:2716",
+        "reference/PostEx_GTFONow.py:2718"
+      ]
+    },
+    {
+      "name": "ncrack",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "ncrack"
+      ],
+      "references": [
+        "reference/Osint_password_attack.sh:687",
+        "reference/Osint_password_attack.sh:724",
+        "reference/Osint_password_attack.sh:729",
+        "reference/Osint_password_attack.sh:740",
+        "reference/Osint_password_attack.sh:741",
+        "reference/Osint_password_attack.sh:744",
+        "reference/Osint_password_attack.sh:755",
+        "reference/Osint_password_attack.sh:1166"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "ncat",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "ncat"
+      ],
+      "references": [
+        "reference/Payload_CommandAndControl.py:3904",
+        "reference/Payload_CommandAndControl.py:3908",
+        "reference/Payload_CommandAndControl.py:3910",
+        "reference/Payload_CommandAndControl.py:3911",
+        "reference/Payload_CommandAndControl.py:5665"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:103",
+        "reference/PostEx_GTFONow.py:324",
+        "reference/PostEx_GTFONow.py:416",
+        "reference/PostEx_GTFONow.py:448",
+        "reference/PostEx_GTFONow.py:1246",
+        "reference/PostEx_GTFONow.py:1691",
+        "reference/PostEx_GTFONow.py:1957",
+        "reference/PostEx_GTFONow.py:2072",
+        "reference/PostEx_GTFONow.py:2133",
+        "reference/PostEx_GTFONow.py:2298",
+        "reference/PostEx_GTFONow.py:2318",
+        "reference/PostEx_GTFONow.py:3006"
+      ]
+    },
+    {
+      "name": "nikto",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "nikto"
+      ],
+      "references": [
+        "cstk.sh:1213",
+        "reference/Osint_enum.sh:525",
+        "reference/Osint_enum.sh:526",
+        "reference/Osint_enum.sh:527"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "nmap",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "nmap"
+      ],
+      "references": [
+        "cstk.sh:55",
+        "cstk.sh:116",
+        "cstk.sh:1212",
+        "cstk.sh:1523",
+        "reference/Osint_IP_Sweeper_Wizard.sh:7",
+        "reference/Osint_IP_Sweeper_Wizard.sh:312",
+        "reference/Osint_IP_Sweeper_Wizard.sh:319",
+        "reference/Osint_IP_Sweeper_Wizard.sh:335",
+        "reference/Osint_IP_Sweeper_Wizard.sh:355",
+        "reference/Osint_IP_Sweeper_Wizard.sh:479",
+        "reference/Osint_IP_Sweeper_Wizard.sh:483",
+        "reference/Osint_IP_Sweeper_Wizard.sh:511",
+        "reference/Osint_IP_Sweeper_Wizard.sh:553",
+        "reference/Osint_breach_parse.sh:63",
+        "reference/Osint_enum.sh:109",
+        "reference/Osint_enum.sh:296",
+        "reference/Osint_enum.sh:297",
+        "reference/Osint_enum.sh:298",
+        "reference/Osint_enum.sh:299",
+        "reference/Osint_enum.sh:300",
+        "reference/Osint_enum.sh:302",
+        "reference/Osint_enum.sh:303",
+        "reference/Osint_enum.sh:304",
+        "reference/Osint_enum.sh:317",
+        "reference/Osint_enum.sh:341",
+        "reference/Osint_enum.sh:360",
+        "reference/Osint_enum.sh:361",
+        "reference/Osint_enum.sh:362",
+        "reference/Osint_enum.sh:366",
+        "reference/Osint_enum.sh:382",
+        "reference/Osint_enum.sh:383",
+        "reference/Osint_enum.sh:384",
+        "reference/Osint_enum.sh:388",
+        "reference/Osint_enum.sh:392",
+        "reference/Osint_enum.sh:402",
+        "reference/Osint_enum.sh:404",
+        "reference/Osint_enum.sh:405",
+        "reference/Osint_enum.sh:406",
+        "reference/Osint_enum.sh:414",
+        "reference/Osint_enum.sh:426",
+        "reference/Osint_enum.sh:427",
+        "reference/Osint_enum.sh:428",
+        "reference/Osint_enum.sh:436",
+        "reference/Osint_enum.sh:437",
+        "reference/Osint_enum.sh:438",
+        "reference/Osint_enum.sh:446",
+        "reference/Osint_enum.sh:447",
+        "reference/Osint_enum.sh:448",
+        "reference/Osint_enum.sh:456",
+        "reference/Osint_enum.sh:457",
+        "reference/Osint_enum.sh:458",
+        "reference/Osint_enum.sh:466",
+        "reference/Osint_enum.sh:467",
+        "reference/Osint_enum.sh:468",
+        "reference/Osint_enum.sh:476",
+        "reference/Osint_enum.sh:477",
+        "reference/Osint_enum.sh:478",
+        "reference/Osint_enum.sh:616",
+        "reference/Osint_enum.sh:618",
+        "reference/Osint_enum.sh:619",
+        "reference/Osint_enum.sh:620",
+        "reference/Osint_enum.sh:622",
+        "reference/Osint_enum.sh:661",
+        "reference/Osint_enum.sh:662",
+        "reference/Osint_enum.sh:663",
+        "reference/Osint_enum.sh:686",
+        "reference/Osint_enum.sh:798",
+        "reference/Osint_enum.sh:808",
+        "reference/Osint_enum.sh:846"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1178",
+        "reference/PostEx_GTFONow.py:1180",
+        "reference/PostEx_GTFONow.py:1184",
+        "reference/PostEx_GTFONow.py:2751",
+        "reference/PostEx_GTFONow.py:2753",
+        "reference/PostEx_GTFONow.py:2754"
+      ]
+    },
+    {
+      "name": "npm",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "Only executable/example catalogue references found; no maintained Node build workflow found.",
+      "aliases": [
+        "npm"
+      ],
+      "references": [],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1198",
+        "reference/PostEx_GTFONow.py:1200",
+        "reference/PostEx_GTFONow.py:1201"
+      ]
+    },
+    {
+      "name": "nuclei",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "nuclei"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:625",
+        "reference/Osint_enum.sh:627",
+        "reference/Osint_enum.sh:628",
+        "reference/Osint_enum.sh:629",
+        "reference/Osint_enum.sh:630",
+        "reference/Osint_enum.sh:632",
+        "reference/Osint_enum.sh:633"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "onesixtyone",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "onesixtyone"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:408",
+        "reference/Osint_enum.sh:409",
+        "reference/Osint_enum.sh:410"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "openssh-client",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "openssh-client",
+        "ssh",
+        "scp",
+        "sftp",
+        "ssh-keygen"
+      ],
+      "references": [
+        "cstk.sh:65",
+        "cstk.sh:77",
+        "cstk.sh:1220",
+        "cstk.sh:1234",
+        "cstk.sh:1719",
+        "cstk.sh:1985",
+        "tools/zip2go/permissions_audit.sh:25",
+        "tools/zip2go/security_config.sh:25",
+        "tools/zip2go/security_config.sh:29",
+        "tools/zip2go/security_config.sh:30",
+        "tools/zip2go/lib/assessment_helpers.py:103",
+        "tools/zip2go/lib/assessment_helpers.py:105",
+        "tools/zip2go/lib/assessment_helpers.py:110",
+        "tools/zip2go/lib/assessment_helpers.py:113",
+        "reference/Osint_enum.sh:422",
+        "reference/Osint_enum.sh:425",
+        "reference/Osint_enum.sh:427",
+        "reference/Osint_enum.sh:796",
+        "reference/Osint_enum.sh:800",
+        "reference/Osint_enum.sh:802",
+        "reference/Osint_password_attack.sh:441",
+        "reference/Osint_password_attack.sh:639",
+        "reference/Osint_password_attack.sh:690",
+        "reference/Osint_password_attack.sh:729",
+        "reference/Osint_ssh_enum_remote_host.sh:36",
+        "reference/Osint_ssh_enum_remote_host.sh:39",
+        "reference/Osint_ssh_enum_remote_host.sh:43",
+        "reference/Osint_ssh_enum_remote_host.sh:51",
+        "reference/Osint_ssh_enum_remote_host.sh:53",
+        "reference/Osint_ssh_enum_remote_host.sh:59",
+        "reference/Osint_ssh_enum_remote_host.sh:74",
+        "reference/Osint_ssh_enum_remote_host.sh:97",
+        "reference/Payload_CommandAndControl.py:5478",
+        "reference/Payload_CommandAndControl.py:5560",
+        "reference/Payload_CommandAndControl.py:5561",
+        "reference/Payload_CommandAndControl.py:5571",
+        "reference/Payload_make_ssh_keys.sh:27",
+        "reference/Payload_make_ssh_keys.sh:33",
+        "reference/Payload_make_ssh_keys.sh:60",
+        "reference/Payload_make_ssh_keys.sh:64",
+        "reference/Payload_make_ssh_keys.sh:66",
+        "reference/Payload_make_ssh_keys.sh:73",
+        "reference/Payload_make_ssh_keys.sh:74",
+        "reference/Payload_make_ssh_keys.sh:75",
+        "reference/Payload_make_ssh_keys.sh:77",
+        "reference/Payload_make_ssh_keys.sh:79",
+        "reference/Payload_make_ssh_keys.sh:81",
+        "reference/Payload_make_ssh_keys.sh:87",
+        "reference/Payload_make_ssh_keys.sh:93",
+        "reference/Payload_make_ssh_keys.sh:94",
+        "reference/Payload_make_ssh_keys.sh:95",
+        "reference/Payload_make_ssh_keys.sh:96",
+        "reference/Payload_make_ssh_keys.sh:100",
+        "reference/PostEx_filesofinterest.sh:212",
+        "reference/PostEx_filesofinterest.sh:213",
+        "reference/PostEx_filesofinterest.sh:214",
+        "reference/PostEx_filesofinterest.sh:215",
+        "reference/PostEx_filesofinterest.sh:216",
+        "reference/PostEx_filesofinterest.sh:217",
+        "reference/PostEx_filesofinterest.sh:218",
+        "reference/PostEx_filesofinterest.sh:219"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1512",
+        "reference/PostEx_GTFONow.py:1514",
+        "reference/PostEx_GTFONow.py:1558",
+        "reference/PostEx_GTFONow.py:1560",
+        "reference/PostEx_GTFONow.py:1632",
+        "reference/PostEx_GTFONow.py:1634",
+        "reference/PostEx_GTFONow.py:1643",
+        "reference/PostEx_GTFONow.py:1645",
+        "reference/PostEx_GTFONow.py:2968",
+        "reference/PostEx_GTFONow.py:2970",
+        "reference/PostEx_GTFONow.py:3391",
+        "reference/PostEx_GTFONow.py:3403",
+        "reference/PostEx_GTFONow.py:3404",
+        "reference/PostEx_GTFONow.py:3431",
+        "reference/PostEx_GTFONow.py:3442",
+        "reference/PostEx_GTFONow.py:3455",
+        "reference/PostEx_GTFONow.py:3852",
+        "reference/PostEx_GTFONow.py:3859",
+        "reference/PostEx_GTFONow.py:3860",
+        "reference/PostEx_GTFONow.py:3867",
+        "reference/PostEx_GTFONow.py:3869",
+        "reference/PostEx_GTFONow.py:3875",
+        "reference/PostEx_GTFONow.py:3878",
+        "reference/PostEx_GTFONow.py:3887",
+        "reference/PostEx_GTFONow.py:3900",
+        "reference/PostEx_GTFONow.py:3903",
+        "reference/PostEx_GTFONow.py:3910",
+        "reference/PostEx_GTFONow.py:3912"
+      ]
+    },
+    {
+      "name": "openssh-server",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "No local sshd setup/start workflow found; retain openssh-client.",
+      "aliases": [
+        "openssh-server",
+        "sshd"
+      ],
+      "references": [
+        "cstk.sh:2188",
+        "cstk.sh:2207",
+        "tools/zip2go/security_config.sh:30"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "openssl",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "openssl"
+      ],
+      "references": [
+        "cstk.sh:102",
+        "cstk.sh:525",
+        "cstk.sh:1050",
+        "cstk.sh:1083",
+        "cstk.sh:1262",
+        "cstk.sh:2297",
+        "scripts/bin/web_tls_security_assessment:199",
+        "scripts/bin/web_tls_security_assessment:200",
+        "scripts/bin/web_tls_security_assessment:206",
+        "scripts/bin/web_tls_security_assessment:210",
+        "scripts/bin/web_tls_security_assessment:215",
+        "scripts/bin/web_tls_security_assessment:217",
+        "scripts/bin/web_tls_security_assessment:218",
+        "scripts/bin/web_tls_security_assessment:219",
+        "scripts/bin/web_tls_security_assessment:221",
+        "scripts/bin/web_tls_security_assessment:227",
+        "scripts/bin/web_tls_security_assessment:230",
+        "scripts/bin/web_tls_security_assessment:242",
+        "scripts/bin/web_tls_security_assessment:243",
+        "reference/Etc_openssl_helper.sh:20",
+        "reference/Etc_openssl_helper.sh:184",
+        "reference/Etc_openssl_helper.sh:209",
+        "reference/Etc_openssl_helper.sh:230",
+        "reference/Etc_openssl_helper.sh:242",
+        "reference/Etc_openssl_helper.sh:252",
+        "reference/Etc_openssl_helper.sh:267",
+        "reference/Etc_openssl_helper.sh:287",
+        "reference/Etc_openssl_helper.sh:301",
+        "reference/Etc_openssl_helper.sh:302",
+        "reference/Etc_openssl_helper.sh:309",
+        "reference/Etc_openssl_helper.sh:310",
+        "reference/Payload_ransomware.sh:808",
+        "reference/Payload_ransomware.sh:810",
+        "reference/Payload_ransomware_golang.sh:206",
+        "reference/Payload_unzip_bomb.sh:22",
+        "reference/Payload_unzip_bomb.sh:26"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1229",
+        "reference/PostEx_GTFONow.py:1231",
+        "reference/PostEx_GTFONow.py:1232",
+        "reference/PostEx_GTFONow.py:2777",
+        "reference/PostEx_GTFONow.py:2779",
+        "reference/PostEx_GTFONow.py:2780",
+        "reference/PostEx_GTFONow.py:2783"
+      ]
+    },
+    {
+      "name": "p7zip-full",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "Duplicate archive requirement; retain 7zip with legacy-name fallback.",
+      "aliases": [
+        "p7zip-full",
+        "7z",
+        "7zz"
+      ],
+      "references": [
+        "cstk.sh:92",
+        "cstk.sh:99",
+        "cstk.sh:409",
+        "cstk.sh:414",
+        "cstk.sh:463",
+        "cstk.sh:1250",
+        "cstk.sh:1261",
+        "reference/Etc_extract_archive.sh:23",
+        "reference/Etc_extract_archive.sh:43",
+        "reference/Osint_password_attack.sh:816",
+        "reference/Osint_password_attack.sh:876",
+        "reference/Osint_password_attack.sh:1097",
+        "reference/Osint_password_attack.sh:1111",
+        "reference/Osint_password_attack.sh:1112",
+        "reference/PostEx_bruteforce_archive.py:35",
+        "reference/PostEx_bruteforce_archive.py:36",
+        "reference/PostEx_bruteforce_archive.py:79",
+        "reference/PostEx_bruteforce_archive.py:93",
+        "reference/PostEx_bruteforce_archive.py:96"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:32",
+        "reference/PostEx_GTFONow.py:34"
+      ]
+    },
+    {
+      "name": "pyenv-runtime",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "No pyenv invocation; installer uses isolated pipx environments.",
+      "aliases": [
+        "pyenv-runtime"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "python3",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "python3"
+      ],
+      "references": [
+        "cstk.sh:1689",
+        "cstk.sh:1705",
+        "cstk.sh:2193",
+        "cstk.sh:2197",
+        "cstk.sh:2432",
+        "scripts/source/cstk_ai/cstk_ai.py:1",
+        "scripts/source/cstk_ai/cstk_engagement.py:1",
+        "tools/zip2go/HideInfo.sh:22",
+        "tools/zip2go/HideInfo.sh:23",
+        "tools/zip2go/am_i_on_a_vm.sh:22",
+        "tools/zip2go/am_i_on_a_vm.sh:23",
+        "tools/zip2go/archive_helper.sh:22",
+        "tools/zip2go/archive_helper.sh:24",
+        "tools/zip2go/enumeration.sh:26",
+        "tools/zip2go/enumeration.sh:27",
+        "tools/zip2go/file_inventory.sh:33",
+        "tools/zip2go/files_of_interest.sh:33",
+        "tools/zip2go/make_ssh_keys.sh:22",
+        "tools/zip2go/make_ssh_keys.sh:23",
+        "tools/zip2go/modern_wordlist_creater.sh:22",
+        "tools/zip2go/modern_wordlist_creater.sh:23",
+        "tools/zip2go/random_user_agent.sh:22",
+        "tools/zip2go/random_user_agent.sh:23",
+        "tools/zip2go/serve_files.sh:23",
+        "tools/zip2go/serve_files.sh:24",
+        "tools/zip2go/sweeper.sh:22",
+        "tools/zip2go/sweeper.sh:23",
+        "tools/zip2go/lib/assessment_helpers.py:1",
+        "tools/zip2go/lib/enumeration.py:1",
+        "tools/zip2go/lib/inventory.py:1",
+        "tools/zip2go/lib/portable_utils.py:1",
+        "tools/zip2go/lib/serve_files.py:1",
+        "reference/Etc_py_web_server.py:1",
+        "reference/Etc_py_web_server.py:35",
+        "reference/Etc_py_web_server.py:36",
+        "reference/Etc_py_web_server.py:78",
+        "reference/Etc_py_web_server.py:80",
+        "reference/Osint_password_attack.sh:838",
+        "reference/Osint_password_attack.sh:844",
+        "reference/Payload_CommandAndControl.py:1",
+        "reference/Payload_CommandAndControl.py:2232",
+        "reference/Payload_CommandAndControl.py:2451",
+        "reference/Payload_CommandAndControl.py:3029",
+        "reference/Payload_CommandAndControl.py:5522",
+        "reference/PostEx_bruteforce_archive.py:1"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1"
+      ]
+    },
+    {
+      "name": "python3-pip",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "Python packaging/bootstrap",
+      "aliases": [
+        "python3-pip"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "pipx",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "isolated Python application installation",
+      "aliases": [
+        "pipx"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "automake",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "shc autoreconf/Automake build",
+      "aliases": [
+        "automake"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "libtool",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "source build support",
+      "aliases": [
+        "libtool"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "pkg-config",
+      "kind": "system",
+      "decision": "Retain prerequisite",
+      "reason": "source build support",
+      "aliases": [
+        "pkg-config"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "wget",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "wget"
+      ],
+      "references": [
+        "reference/Payload_CommandAndControl.py:2452",
+        "reference/Payload_CommandAndControl.py:5402",
+        "reference/PostEx_filesofinterest.sh:292",
+        "reference/PostEx_filesofinterest.sh:293"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1980",
+        "reference/PostEx_GTFONow.py:1982",
+        "reference/PostEx_GTFONow.py:3175",
+        "reference/PostEx_GTFONow.py:3177"
+      ]
+    },
+    {
+      "name": "redis",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "Reviewed enumeration uses redis-cli; retain redis-tools instead of a server package.",
+      "aliases": [
+        "redis"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:750",
+        "reference/Osint_enum.sh:751",
+        "reference/Osint_enum.sh:753",
+        "reference/Osint_enum.sh:755"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "rlwrap",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "Only executable/example catalogue references found in matching shipped-tool sources.",
+      "aliases": [
+        "rlwrap"
+      ],
+      "references": [],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1427",
+        "reference/PostEx_GTFONow.py:1429",
+        "reference/PostEx_GTFONow.py:2870",
+        "reference/PostEx_GTFONow.py:2872"
+      ]
+    },
+    {
+      "name": "seclists",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "seclists"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:801",
+        "reference/Osint_enum.sh:812",
+        "reference/Osint_password_attack.sh:25",
+        "reference/Osint_password_attack.sh:283"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "sherlock",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "sherlock"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:215",
+        "reference/Osint_enum.sh:218",
+        "reference/Osint_enum.sh:219"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "skipfish",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "skipfish"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:644",
+        "reference/Osint_enum.sh:646",
+        "reference/Osint_enum.sh:647",
+        "reference/Osint_enum.sh:648"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "smbclient",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "smbclient"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:368",
+        "reference/Osint_enum.sh:370",
+        "reference/Osint_enum.sh:883",
+        "reference/Osint_enum.sh:886"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1579",
+        "reference/PostEx_GTFONow.py:1581"
+      ]
+    },
+    {
+      "name": "smtp-user-enum",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "smtp-user-enum"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:386",
+        "reference/Osint_enum.sh:388",
+        "reference/Osint_enum.sh:390",
+        "reference/Osint_enum.sh:392"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "snmpcheck",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "snmpcheck",
+        "snmp-check"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:412",
+        "reference/Osint_enum.sh:413",
+        "reference/Osint_enum.sh:414"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "sqlmap",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "sqlmap"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:687",
+        "reference/Osint_enum.sh:689",
+        "reference/Osint_enum.sh:690",
+        "reference/Osint_enum.sh:691",
+        "reference/Osint_enum.sh:692",
+        "reference/Osint_enum.sh:694",
+        "reference/Osint_enum.sh:695",
+        "reference/Osint_enum.sh:698",
+        "reference/Osint_enum.sh:700",
+        "reference/Osint_http_waf_detect.sh:78"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1622",
+        "reference/PostEx_GTFONow.py:1624"
+      ]
+    },
+    {
+      "name": "sslscan",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "sslscan"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:653",
+        "reference/Osint_enum.sh:654",
+        "reference/Osint_enum.sh:655"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "subfinder",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "subfinder"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:265",
+        "reference/Osint_enum.sh:266",
+        "reference/Osint_enum.sh:267",
+        "reference/Osint_enum.sh:268"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "subjack",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "subjack"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:289",
+        "reference/Osint_enum.sh:291"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "sublist3r",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "sublist3r"
+      ],
+      "references": [
+        "cstk.sh:1213",
+        "reference/Osint_enum.sh:260",
+        "reference/Osint_enum.sh:261",
+        "reference/Osint_enum.sh:262",
+        "reference/Osint_enum.sh:263"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "tar",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "tar"
+      ],
+      "references": [
+        "cstk.sh:99",
+        "cstk.sh:401",
+        "cstk.sh:402",
+        "cstk.sh:462",
+        "cstk.sh:1261",
+        "tools/zip2go/archive_helper.sh:21",
+        "reference/Etc_extract_archive.sh:23",
+        "reference/Etc_extract_archive.sh:34",
+        "reference/Etc_extract_archive.sh:35",
+        "reference/Etc_extract_archive.sh:39",
+        "reference/Etc_extract_archive.sh:44",
+        "reference/Payload_CommandAndControl.py:2453",
+        "reference/Payload_CommandAndControl.py:3358",
+        "reference/Payload_CommandAndControl.py:3366",
+        "reference/Payload_CommandAndControl.py:3369",
+        "reference/Payload_CommandAndControl.py:3372",
+        "reference/Payload_CommandAndControl.py:3398",
+        "reference/Payload_CommandAndControl.py:3403",
+        "reference/Payload_CommandAndControl.py:3425",
+        "reference/Payload_CommandAndControl.py:3436",
+        "reference/Payload_CommandAndControl.py:3441",
+        "reference/Payload_CommandAndControl.py:3445",
+        "reference/Payload_CommandAndControl.py:3553",
+        "reference/Payload_CommandAndControl.py:3630",
+        "reference/Payload_CommandAndControl.py:3631",
+        "reference/Payload_CommandAndControl.py:3632",
+        "reference/Payload_CommandAndControl.py:3634",
+        "reference/Payload_CommandAndControl.py:3637",
+        "reference/Payload_CommandAndControl.py:3651",
+        "reference/Payload_CommandAndControl.py:3660",
+        "reference/Payload_CommandAndControl.py:3678",
+        "reference/Payload_CommandAndControl.py:3681",
+        "reference/Payload_CommandAndControl.py:3683",
+        "reference/Payload_CommandAndControl.py:3723",
+        "reference/Payload_CommandAndControl.py:4717",
+        "reference/Payload_CommandAndControl.py:4723",
+        "reference/Payload_CommandAndControl.py:4725",
+        "reference/Payload_CommandAndControl.py:5672",
+        "reference/Payload_CommandAndControl.py:5685",
+        "reference/Payload_CommandAndControl.py:5686"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1722",
+        "reference/PostEx_GTFONow.py:1724"
+      ]
+    },
+    {
+      "name": "testssl.sh",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "testssl.sh"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:657",
+        "reference/Osint_enum.sh:658",
+        "reference/Osint_enum.sh:659"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "theharvester",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "theharvester",
+        "theHarvester"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:188",
+        "reference/Osint_enum.sh:190",
+        "reference/Osint_enum.sh:191",
+        "reference/Osint_enum.sh:192",
+        "reference/Osint_enum.sh:193"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "unrar",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "unrar"
+      ],
+      "references": [
+        "reference/Etc_extract_archive.sh:23",
+        "reference/Etc_extract_archive.sh:37",
+        "reference/Osint_password_attack.sh:1096",
+        "reference/Osint_password_attack.sh:1110",
+        "reference/PostEx_bruteforce_archive.py:38",
+        "reference/PostEx_bruteforce_archive.py:98"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "unzip",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "unzip"
+      ],
+      "references": [
+        "reference/Etc_extract_archive.sh:23",
+        "reference/Etc_extract_archive.sh:40",
+        "reference/Osint_password_attack.sh:1095",
+        "reference/Osint_password_attack.sh:1109",
+        "reference/Payload_CommandAndControl.py:3782",
+        "reference/Payload_CommandAndControl.py:3800",
+        "reference/Payload_bomb_attacks.sh:164",
+        "reference/Payload_bomb_attacks.sh:165",
+        "reference/Payload_bomb_attacks.sh:172",
+        "reference/Payload_unzip_bomb.sh:27",
+        "reference/Payload_unzip_bomb.sh:39",
+        "reference/Payload_unzip_bomb.sh:49"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1865",
+        "reference/PostEx_GTFONow.py:1867",
+        "reference/PostEx_GTFONow.py:3100",
+        "reference/PostEx_GTFONow.py:3102"
+      ]
+    },
+    {
+      "name": "wafw00f",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "wafw00f"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:513",
+        "reference/Osint_enum.sh:515"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "wapiti",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "wapiti"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:637",
+        "reference/Osint_enum.sh:639",
+        "reference/Osint_enum.sh:640",
+        "reference/Osint_enum.sh:641"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "whatweb",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "whatweb"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:346",
+        "reference/Osint_enum.sh:347",
+        "reference/Osint_enum.sh:348",
+        "reference/Osint_enum.sh:519",
+        "reference/Osint_enum.sh:520",
+        "reference/Osint_enum.sh:521"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "whiptail",
+      "kind": "system",
+      "decision": "Remove automatic install",
+      "reason": "Only executable/example catalogue references found; launcher uses shell prompts.",
+      "aliases": [
+        "whiptail"
+      ],
+      "references": [],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1985",
+        "reference/PostEx_GTFONow.py:1987",
+        "reference/PostEx_GTFONow.py:3180",
+        "reference/PostEx_GTFONow.py:3182"
+      ]
+    },
+    {
+      "name": "whois",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "whois"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:147",
+        "reference/Osint_enum.sh:149",
+        "reference/Osint_enum.sh:150",
+        "reference/Osint_enum.sh:151"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "wpscan",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "wpscan"
+      ],
+      "references": [
+        "cstk.sh:1213",
+        "reference/Osint_enum.sh:557",
+        "reference/Osint_enum.sh:558",
+        "reference/Osint_enum.sh:559"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "xxd",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "xxd"
+      ],
+      "references": [
+        "reference/Etc_gpg_enc_dec.sh:50",
+        "reference/Etc_gpg_enc_dec.sh:82"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:2046",
+        "reference/PostEx_GTFONow.py:2048",
+        "reference/PostEx_GTFONow.py:3206",
+        "reference/PostEx_GTFONow.py:3208"
+      ]
+    },
+    {
+      "name": "ldap-utils",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "ldap-utils",
+        "ldapsearch"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:480",
+        "reference/Osint_enum.sh:481",
+        "reference/Osint_enum.sh:482"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "postgresql-client",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "postgresql-client",
+        "psql"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:735",
+        "reference/Osint_enum.sh:737"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1367",
+        "reference/PostEx_GTFONow.py:1369"
+      ]
+    },
+    {
+      "name": "default-mysql-client",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "default-mysql-client",
+        "mysql",
+        "mariadb"
+      ],
+      "references": [
+        "cstk.sh:1213",
+        "reference/Etc_hash_idenify.py:32",
+        "reference/Etc_hash_idenify.py:82",
+        "reference/Etc_hash_idenify.py:550",
+        "reference/Osint_enum.sh:442",
+        "reference/Osint_enum.sh:444",
+        "reference/Osint_enum.sh:445",
+        "reference/Osint_enum.sh:447",
+        "reference/Osint_enum.sh:721",
+        "reference/Osint_enum.sh:722",
+        "reference/Osint_enum.sh:723",
+        "reference/Osint_enum.sh:724",
+        "reference/Osint_enum.sh:725",
+        "reference/Osint_enum.sh:726",
+        "reference/Osint_enum.sh:729",
+        "reference/Osint_enum.sh:730",
+        "reference/Osint_ssh_enum_remote_host.sh:82",
+        "reference/PostEx_filesofinterest.sh:166",
+        "reference/PostEx_filesofinterest.sh:193"
+      ],
+      "catalogue_references": [
+        "reference/PostEx_GTFONow.py:1117",
+        "reference/PostEx_GTFONow.py:1119"
+      ]
+    },
+    {
+      "name": "redis-tools",
+      "kind": "system",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "redis-tools",
+        "redis-cli"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:752",
+        "reference/Osint_enum.sh:754"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "droopescan",
+      "kind": "pipx",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "droopescan"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:573",
+        "reference/Osint_enum.sh:574",
+        "reference/Osint_enum.sh:575"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "naminter",
+      "kind": "pipx",
+      "decision": "Remove automatic install",
+      "reason": "No executable use found; username generation uses CSTK/Python directly.",
+      "aliases": [
+        "naminter"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "holehe",
+      "kind": "pipx",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "holehe"
+      ],
+      "references": [
+        "cstk.sh:1634",
+        "cstk.sh:1644",
+        "cstk.sh:1646"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "bloodhound-ce",
+      "kind": "pipx",
+      "decision": "Remove automatic install",
+      "reason": "Collector only appears as optional guidance in the available enumeration source, not an invoked workflow.",
+      "aliases": [
+        "bloodhound-ce",
+        "bloodhound-ce-python",
+        "bloodhound-python"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:891",
+        "reference/Osint_enum.sh:893"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "mongosh",
+      "kind": "download-or-package",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "mongosh"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:743",
+        "reference/Osint_enum.sh:745"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "nrich",
+      "kind": "download-or-package",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "nrich"
+      ],
+      "references": [
+        "cstk.sh:1218",
+        "reference/Osint_auto_vuln_finder.sh:23",
+        "reference/Osint_auto_vuln_finder.sh:32",
+        "reference/Osint_auto_vuln_finder.sh:56",
+        "reference/Osint_auto_vuln_finder.sh:57"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "mimipenguin",
+      "kind": "source",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "mimipenguin"
+      ],
+      "references": [
+        "cstk.sh:2183",
+        "cstk.sh:2184",
+        "cstk.sh:2192",
+        "cstk.sh:2193",
+        "cstk.sh:2194",
+        "cstk.sh:2195",
+        "cstk.sh:2201"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "shc",
+      "kind": "source-build",
+      "decision": "Retain; source references",
+      "reason": "References require interpretation; static matches do not prove execution or usefulness.",
+      "aliases": [
+        "shc"
+      ],
+      "references": [
+        "cstk.sh:1789",
+        "cstk.sh:1813",
+        "cstk.sh:1861",
+        "cstk.sh:1954",
+        "tools/zip2go/HideInfo.sh:4",
+        "tools/zip2go/am_i_on_a_vm.sh:4",
+        "tools/zip2go/archive_helper.sh:4",
+        "tools/zip2go/enumeration.sh:4",
+        "tools/zip2go/file_inventory.sh:4",
+        "tools/zip2go/files_of_interest.sh:4",
+        "tools/zip2go/make_ssh_keys.sh:4",
+        "tools/zip2go/modern_wordlist_creater.sh:4",
+        "tools/zip2go/network_info.sh:4",
+        "tools/zip2go/permissions_audit.sh:4",
+        "tools/zip2go/random_user_agent.sh:4",
+        "tools/zip2go/run_me.sh:4",
+        "tools/zip2go/security_config.sh:4",
+        "tools/zip2go/serve_files.sh:4",
+        "tools/zip2go/sweeper.sh:4",
+        "tools/zip2go/system_info.sh:4",
+        "tools/zip2go/verify.sh:4",
+        "tools/zip2go/web_tls_check.sh:4",
+        "reference/Etc_array_enc.sh:89",
+        "reference/Etc_make_binary.sh:37",
+        "reference/Payload_bomb_attacks.sh:72",
+        "reference/Payload_bomb_attacks.sh:130",
+        "reference/Payload_make_ssh_keys.sh:35",
+        "reference/Payload_make_ssh_keys.sh:84",
+        "reference/Payload_ransomware.sh:35",
+        "reference/Payload_ransomware.sh:36",
+        "reference/Payload_ransomware.sh:910",
+        "reference/Payload_ransomware.sh:911"
+      ],
+      "catalogue_references": []
+    },
+    {
+      "name": "vulscan",
+      "kind": "source",
+      "decision": "Remove automatic install",
+      "reason": "No runtime invocation found in reviewed CSTK launcher/tool sources; only installer/updater/cleanup references existed.",
+      "aliases": [
+        "vulscan"
+      ],
+      "references": [],
+      "catalogue_references": []
+    },
+    {
+      "name": "katana",
+      "kind": "Go-build",
+      "decision": "Remove automatic install",
+      "reason": "One optional depth-3 crawl beside GoSpider; automatic build/update already retired.",
+      "aliases": [
+        "katana"
+      ],
+      "references": [
+        "reference/Osint_enum.sh:586",
+        "reference/Osint_enum.sh:587",
+        "reference/Osint_enum.sh:588"
+      ],
+      "catalogue_references": []
+    }
+  ],
+  "unmatched_compiled_entries": [
+    "Etc_cstk_ai",
+    "linux-386",
+    "linux-amd64",
+    "linux-arm64",
+    "mac-amd64",
+    "mac-arm64",
+    "msf_binary_weather",
+    "web_tls_security_assessment",
+    "windows-amd64.exe",
+    "windows-arm64.exe"
+  ]
+}

@@ -323,6 +323,11 @@ check_python_tools() {
         return 1
     fi
     for pkg in "${PYTHON_PACKAGES[@]}"; do
+        case "$pkg" in
+            naminter|bloodhound-ce)
+                info "Skipping retired optional pipx application: $pkg"
+                continue ;;
+        esac
         if pipx list --short 2>/dev/null | awk -v wanted="$pkg" '$1 == wanted {found=1} END {exit !found}'; then
             ((installed++))
         else
@@ -343,6 +348,11 @@ update_python_tools() {
     }
 
     for pkg in "${PYTHON_PACKAGES[@]}"; do
+        case "$pkg" in
+            naminter|bloodhound-ce)
+                info "Skipping retired optional pipx application: $pkg"
+                continue ;;
+        esac
         if ! pipx list --short 2>/dev/null | awk -v wanted="$pkg" '$1 == wanted {found=1} END {exit !found}'; then
             warn "Skipping missing pipx application: $pkg"
             continue
@@ -367,7 +377,7 @@ check_github_tools() {
     for tool in "${GITHUB_TOOLS[@]}"; do
         case "$tool" in
             katana)
-                info "katana is recorded; its latest Go module will be resolved if update is approved."
+                info "Katana is optional and no longer managed by CSTK; skipping the legacy record."
                 ;;
             mimipenguin)
                 check_git_repo mimipenguin "$home_dir/Other/Downloads/mimipenguin" || true
@@ -376,33 +386,13 @@ check_github_tools() {
                 check_git_repo shc "$home_dir/Other/Downloads/shc" || true
                 ;;
             vulscan)
-                check_git_repo vulscan /usr/share/nmap/scripts/vulscan || true
+                info "Vulscan is no longer managed by CSTK; skipping the legacy record."
                 ;;
             *)
                 warn "No verified update recipe exists for recorded tool '$tool'; it will be skipped."
                 ;;
         esac
     done
-}
-
-update_katana() {
-    local katana_path
-
-    command -v go >/dev/null 2>&1 || {
-        fail "Go is unavailable; katana cannot be updated."
-        return 1
-    }
-    if CGO_ENABLED=1 go install github.com/projectdiscovery/katana/cmd/katana@latest \
-        >"$log_dir/katana_update.log" 2>&1; then
-        katana_path="${GOBIN:-$(go env GOPATH)/bin}/katana"
-        if [[ -x "$katana_path" ]]; then
-            ok "katana updated through its verified Go module path."
-        else
-            fail "katana update completed but the expected binary is missing: $katana_path"
-        fi
-    else
-        fail "katana update failed; see $log_dir/katana_update.log"
-    fi
 }
 
 update_mimipenguin() {
@@ -440,26 +430,16 @@ update_shc() {
     fi
 }
 
-update_vulscan() {
-    update_git_repo vulscan /usr/share/nmap/scripts/vulscan || return 0
-    [[ "$REPO_CHANGED" -eq 1 ]] || return 0
-    if nmap --script-updatedb >"$log_dir/nmap_script_update.log" 2>&1; then
-        ok "Nmap script database refreshed for vulscan."
-    else
-        fail "vulscan updated but Nmap's script database refresh failed."
-    fi
-}
-
 update_github_tools() {
     local tool
 
     echo -e "${C}\nUpdating recorded GitHub and Go tools${X}"
     for tool in "${GITHUB_TOOLS[@]}"; do
         case "$tool" in
-            katana) update_katana ;;
+            katana) info "Skipping optional Katana; no Go modules will be downloaded." ;;
             mimipenguin) update_mimipenguin ;;
             shc) update_shc ;;
-            vulscan) update_vulscan ;;
+            vulscan) info "Skipping retired Vulscan; no repository will be downloaded." ;;
             *) warn "Skipped '$tool' because it has no verified update recipe." ;;
         esac
     done

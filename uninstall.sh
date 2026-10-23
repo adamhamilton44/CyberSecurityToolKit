@@ -103,18 +103,23 @@ remove_legacy_paths() {
     done
 }
 
+check_package_journal() {
+    local pending
+    for pending in "$cstk_state_dir"/packages.before.* "$cstk_state_dir"/packages.after.*; do
+        if [[ -e "$pending" || -L "$pending" ]]; then
+            failed 'interrupted package transaction requires ledger recovery; no uninstall changes made'
+            return 1
+        fi
+    done
+    return 0
+}
+
 remove_system_packages() {
     local manager pkg output removal
     local -a packages=()
     local current
     local list="$cstk_state_dir/packages"
-    local pending
-    for pending in "$cstk_state_dir"/packages.before.*; do
-        if [[ -f "$pending" ]]; then
-            failed 'interrupted package transaction requires ledger recovery; state retained'
-            return
-        fi
-    done
+    check_package_journal || return 1
     if (( legacy )); then
         list="$package_management_install_file"
         if command -v apt-get >/dev/null; then manager=apt-get
@@ -192,6 +197,8 @@ main() {
         legacy=1
         echo 'Legacy install: only recorded dependencies can be removed; historical unrecorded changes cannot be reconstructed.' >&2
     fi
+    # Reject unresolved ownership before removing environments, links or rc lines.
+    check_package_journal || return 1
     if [[ "${1:-}" != all ]]; then
         read -r -p 'Uninstall CSTK and its recorded dependencies? [y/N] ' choice || return 1
         [[ "$choice" =~ ^[Yy]$ ]] || return 0

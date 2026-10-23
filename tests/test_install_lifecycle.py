@@ -27,11 +27,12 @@ if name=='dpkg-query':
         for p in packages: print(p+' installed')
     else:
         package=args[-1]
-        if package=='pipx' and package not in packages: sys.exit(1)
+        if (os.environ.get('FORCE_ALL_MISSING') or package=='pipx' or package in os.environ.get('FORCE_MISSING','').split(',')) and package not in packages: sys.exit(1)
         print('installed',end='')
 elif name=='apt-get':
     if 'install' in args:
-        packages=sorted(set(packages+['pipx','python-helper']))
+        target=[args[-1]] if args[-1] and not args[-1].startswith('-') else []
+        packages=sorted(set(packages+['pipx','python-helper']+target))
         state.write_text(json.dumps(packages))
         if os.environ.get('FAIL_INSTALL'): sys.exit(1)
     if 'purge' in args:
@@ -54,9 +55,7 @@ elif name=='git':
     (dest/'.git').mkdir(exist_ok=True)
     if 'mimipenguin' in str(dest):
         for n in ['mimipenguin.sh','mimipenguin.py']: (dest/n).write_text('# test tool\n')
-elif name=='go':
-    dest=Path(os.environ['GOBIN'])/'katana'
-    dest.write_text('#!/bin/sh\nexit 0\n'); dest.chmod(0o755)
+elif name=='go': sys.exit('unexpected automatic Go build')
 elif name in ['nmap','mandb','mongosh','shc','nrich']: pass
 else: sys.exit('unexpected mock '+name)
 '''
@@ -108,12 +107,175 @@ class LifecycleTests(unittest.TestCase):
         result=self.run_box('bash install.sh',env,input='1\n1\n\n2\nn\n')
         return result
 
+    def test_non_c_locale_full_roundtrip(self):
+        # Punctuation sorts differently in C and common desktop UTF-8 locales.
+        (self.mounts['/mnt/mock']/'packages.json').write_text(
+            json.dumps(['alpha:amd64', 'alpha-tools', 'zlib1g:amd64']))
+        result=self.install(LC_ALL='en_US.utf8', FORCE_MISSING='apache-users,apktool,arp-scan,aria2,arjun')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertNotIn('not in sorted order',result.stdout+result.stderr)
+        state=self.mounts['/var']/'lib/cstk'
+        self.assertEqual(set((state/'packages').read_text().split()),{'pipx','python-helper','apache-users','apktool','arp-scan','aria2','arjun'})
+        for name in ['apache-users','apktool','arp-scan','aria2','arjun']:
+            log=(self.checkout/'log/package_manager'/(name+'.log')).read_text()
+            self.assertNotIn('not in sorted order',log)
+            self.assertNotIn('Unable to record package changes',log)
+        self.assertEqual(list(state.glob('packages.before.*')),[])
+        result=self.run_box('bash uninstall.sh all',{'LC_ALL':'en_US.utf8'})
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual(set(json.loads((self.mounts['/mnt/mock']/'packages.json').read_text())),
+                         {'alpha:amd64','alpha-tools','zlib1g:amd64'})
+
+    def test_every_dependency_install_command_and_uninstall(self):
+        # Exercise each dependency invocation, not only the already-installed
+        # branch. Managers are doubles; this does not assert mirror availability.
+        result=self.install(LC_ALL='en_US.utf8',FORCE_ALL_MISSING='1')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        packages=set(json.loads((self.mounts['/mnt/mock']/'packages.json').read_text()))
+        expected=set(json.loads((ROOT/'tools/dependency_policy.json').read_text())['default_system_packages'])
+        self.assertEqual(packages,expected|{'python-helper'})
+        self.assertTrue({'apache-users','apktool','arp-scan','aria2','arjun','pipx'} <= packages)
+        for log in (self.checkout/'log/package_manager').glob('*.log'):
+            self.assertNotIn('not in sorted order',log.read_text(),str(log))
+        result=self.run_box('bash uninstall.sh all',{'LC_ALL':'en_US.utf8'})
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual(json.loads((self.mounts['/mnt/mock']/'packages.json').read_text()),[])
+
+    def test_updater_skips_legacy_katana_record(self):
+        source=(self.checkout/'scripts/lib/cstk_update.sh').read_text()
+        source=source.rsplit('main "$@"',1)[0]
+        (self.checkout/'updater-functions.sh').write_text(source)
+        result=self.run_box('source updater-functions.sh check /mnt/CSTK; GITHUB_TOOLS=(katana vulscan); check_github_tools && update_github_tools')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn('no longer managed',result.stdout)
+        self.assertIn('no Go modules will be downloaded',result.stdout)
+        self.assertIn('Skipping retired Vulscan',result.stdout)
+        calls=self.mounts['/mnt/mock']/'calls'
+        self.assertFalse(calls.exists() and any(line.startswith('go ') for line in calls.read_text().splitlines()))
+
+    def test_retired_optional_pipx_records_are_not_upgraded(self):
+        source=(self.checkout/'scripts/lib/cstk_update.sh').read_text().rsplit('main "$@"',1)[0]
+        (self.checkout/'updater-functions.sh').write_text(source)
+        result=self.run_box('source updater-functions.sh check /mnt/CSTK; PYTHON_PACKAGES=(naminter bloodhound-ce); check_python_tools && update_python_tools')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn('Skipping retired optional pipx application: naminter',result.stdout)
+        calls=self.mounts['/mnt/mock']/'calls'
+        self.assertFalse(calls.exists() and 'pipx upgrade' in calls.read_text())
+
+    def test_removed_defaults_are_not_claimed_or_purged_when_preexisting(self):
+        original=['argon2','mongodb-server-core','redis','openssh-server','npm','pyenv-runtime']
+        (self.mounts['/mnt/mock']/'packages.json').write_text(json.dumps(original))
+        result=self.install()
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        result=self.run_box('bash uninstall.sh all')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual(set(json.loads((self.mounts['/mnt/mock']/'packages.json').read_text())),set(original))
+
+    def test_snapshot_failure_propagates_without_caller_pipefail(self):
+        result=self.run_box("source scripts/lib/install_state.sh; dpkg-query() { return 42; }; cstk_package_snapshot apt-get")
+        self.assertNotEqual(result.returncode,0)
+
+    def test_package_failure_preserves_status_and_dependency_ledger(self):
+        result=self.run_box("source scripts/lib/install_state.sh; home_dir=/mnt/CSTK; cstk_state_init && cstk_package_transaction apt-get apt-get install pipx", {'LC_ALL':'en_US.utf8','FAIL_INSTALL':'1'})
+        self.assertEqual(result.returncode,1)
+        self.assertNotIn('not in sorted order',result.stderr)
+        state=self.mounts['/var']/'lib/cstk'
+        self.assertEqual(set((state/'packages').read_text().split()),{'pipx','python-helper'})
+        self.assertEqual(list(state.glob('packages.before.*')),[])
+
+    def test_bad_snapshot_keeps_original_ledger_and_recovery_files(self):
+        result=self.run_box("""source scripts/lib/install_state.sh
+home_dir=/mnt/CSTK
+cstk_state_init || exit 1
+printf 'original-package\\n' > "$cstk_state_dir/packages"
+cstk_package_snapshot() { printf 'zlib\\nalpha\\n'; }
+cstk_package_transaction apt-get true
+""")
+        self.assertNotEqual(result.returncode,0)
+        state=self.mounts['/var']/'lib/cstk'
+        self.assertEqual((state/'packages').read_text(),'original-package\n')
+        self.assertTrue(list(state.glob('packages.before.*')))
+        result=self.run_box('bash uninstall.sh all')
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('ledger recovery',result.stderr)
+
+    def test_journaled_launcher_directory_is_rejected_without_modification(self):
+        source=(self.checkout/'install.sh').read_text().split('# Main installation process')[0]
+        (self.checkout/'functions.sh').write_text(source)
+        result=self.run_box('source functions.sh; cstk_state_init && cstk_track_path /usr/local/bin/cstk')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        directory=self.mounts['/usr/local']/'bin/cstk'
+        nested=directory/'usr/local/bin'; nested.mkdir(parents=True)
+        (nested/'keep').write_text('preserve')
+        result=self.run_box('source functions.sh; link_main_script')
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('directory or special file',result.stderr)
+        self.assertEqual((nested/'keep').read_text(),'preserve')
+        self.assertFalse((directory/'cstk.sh').exists())
+
+    def test_completion_banner_requires_launcher_to_remain_valid(self):
+        # Simulate destination corruption after the link step, before success.
+        path=self.checkout/'install.sh'
+        script=path.read_text().replace('finish_setup || exit 1\n',
+            'finish_setup || exit 1\nrm -f -- /usr/local/bin/cstk\nln -s /usr/bin/true /usr/local/bin/cstk\n')
+        path.write_text(script)
+        result=self.install()
+        self.assertNotEqual(result.returncode,0)
+        self.assertNotIn('Installation complete!',result.stdout)
+        self.assertTrue((self.mounts['/var']/'lib/cstk').exists())
+
+    def test_launcher_check_rejects_path_without_usr_local_bin(self):
+        result=self.install()
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        source=(self.checkout/'install.sh').read_text().split('# Main installation process')[0]
+        (self.checkout/'functions.sh').write_text(source)
+        result=self.run_box('source functions.sh; PATH=/usr/sbin:/usr/bin:/sbin:/bin; verify_installed_launcher')
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('Check sudo secure_path includes /usr/local/bin',result.stderr)
+        result=self.run_box('/usr/local/bin/cstk --version')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn('version:',result.stdout)
+
+    def test_launcher_wrong_link_and_missing_target_fail_final_check(self):
+        source=(self.checkout/'install.sh').read_text().split('# Main installation process')[0]
+        (self.checkout/'functions.sh').write_text(source)
+        link=self.mounts['/usr/local']/'bin/cstk'
+        for target in ['/usr/bin/true','/nonexistent-cstk']:
+            link.symlink_to(target)
+            result=self.run_box('source functions.sh; verify_installed_launcher')
+            self.assertNotEqual(result.returncode,0)
+            link.unlink()
+
+    def test_pending_journal_blocks_uninstall_before_any_artifact_removal(self):
+        result=self.install()
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        state=self.mounts['/var']/'lib/cstk'
+        (state/'packages.before.pending').write_text('base:amd64\n')
+        rc=self.mounts['/root']/'.bashrc'; original=rc.read_text()
+        result=self.run_box('bash uninstall.sh all')
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('no uninstall changes made',result.stderr)
+        self.assertTrue((self.mounts['/usr/local']/'bin/cstk').is_symlink())
+        self.assertTrue((self.mounts['/opt']/'cstk/pipx/holehe').exists())
+        self.assertTrue((self.mounts['/usr/share']/'man/man1/cstk.1.gz').exists())
+        self.assertEqual(rc.read_text(),original)
+
     def test_roundtrip_reinstall_and_user_data(self):
         result=self.install()
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
         state=self.mounts['/var']/'lib/cstk'
+        launcher=self.mounts['/usr/local']/'bin/cstk'
+        self.assertTrue(launcher.is_symlink())
+        self.assertEqual(os.readlink(launcher),'/mnt/CSTK/cstk.sh')
+        result=self.run_box('/usr/local/bin/cstk --help')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn('SYNOPSIS:',result.stdout)
         self.assertEqual(set((state/'packages').read_text().split()),{'pipx','python-helper'})
         self.assertTrue((self.mounts['/opt']/'cstk/pipx/holehe').exists())
+        self.assertFalse((self.mounts['/opt']/'cstk/bin/katana').exists())
+        calls=(self.mounts['/mnt/mock']/'calls').read_text().splitlines()
+        self.assertFalse(any(line.startswith('go ') for line in calls))
+        self.assertFalse((self.mounts['/usr/share']/'nmap/scripts/vulscan').exists())
         self.assertTrue((self.mounts['/etc']/'cstk/lib_decryption.key').exists())
         self.assertTrue((self.mounts['/usr/share']/'man/man1/cstk.1.gz').exists())
         rc=self.mounts['/root']/'.bashrc'
@@ -217,7 +379,7 @@ class LifecycleTests(unittest.TestCase):
 home_dir=/mnt/CSTK
 source scripts/lib/install_state.sh
 cstk_state_init && cstk_package_transaction apt-get dpkg -i /mnt/cstk-fixture-dependency.deb /mnt/cstk-fixture-tool.deb
-''')
+''', {'LC_ALL':'en_US.utf8'})
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
         state=self.mounts['/var']/'lib/cstk'
         self.assertEqual(set((state/'packages').read_text().split()),{'cstk-fixture-dependency','cstk-fixture-tool'})
