@@ -84,7 +84,10 @@ class CSTKAnalystV2(App):
             yield Static(id="right")
         yield Footer()
     def on_mount(self):
-        self._panels(); self.set_interval(30,self._refresh_hud); self._say("[bold #ffaf00]CSTK AI V2 ready.[/] Type /help, @, or press Ctrl+K."); self.query_one("#prompt",Input).focus()
+        self._panels(); self.set_interval(1,self._refresh_hud); self._say("[bold #ffaf00]CSTK AI V2 ready.[/] Type /help, @, or press Ctrl+K."); self.query_one("#prompt",Input).focus()
+        selected = os.environ.get("CSTK_ENGAGEMENT_SLUG")
+        if selected and self.engagements:
+            self._engagement(["use", selected])
         self._set_compact_layout(self.size.width)
     def on_resize(self,event:events.Resize): self._set_compact_layout(event.size.width)
     def _set_compact_layout(self,width):
@@ -112,9 +115,10 @@ class CSTKAnalystV2(App):
         if not self.engagements or not self.engagement_id: return
         try:
             hud=self.engagements.hud_snapshot(self.engagement_id)
-            signature=(hud["state"],hud["operational"],hud["inside_testing_window"],hud["timing"] in {"EXPIRED","NOT STARTED"})
+            signature=(hud["state"],hud["operational"],hud["inside_testing_window"],hud["timing"] in {"EXPIRED","NOT STARTED"},hud.get("revision_sha256"))
         except (BridgeError,OSError,KeyError,ValueError): signature=("ERROR",False,False,True)
         if self._last_hud_safety is not None and signature != self._last_hud_safety:
+            self.messages.clear()
             color="#5fff87" if signature[1] else "#ff5f5f"
             self._say(f"[{color} bold]ENGAGEMENT STATUS CHANGED:[/] {signature[0]} • {'OPERATIONAL' if signature[1] else 'STOP / REVIEW'}")
         self._last_hud_safety=signature
@@ -168,7 +172,7 @@ class CSTKAnalystV2(App):
             try:
                 loaded=load_provider(self.profile); self._activate_provider(loaded,"loaded saved profile")
             except (OSError,ValueError,TypeError) as e: self._say(f"[red]Load failed: {e}[/]")
-        elif cmd=="/scope": self.scope=" ".join(args) if args else self.scope; self._panels(); self._say(f"Scope: {self.scope}")
+        elif cmd=="/scope": self._say("Scope comes from the validated engagement record. Use /engagement use ID; operator notes cannot authorize targets.")
         elif cmd=="/privacy": self._say("Only typed text and expanded @ context are sent. Keys stay in process memory, are never saved, and session-entered keys are cleared on exit. No silent file reads or authorization logging.")
         elif cmd=="/clear": self.action_clear_chat()
         elif cmd=="/exit": self.exit()
@@ -181,7 +185,10 @@ class CSTKAnalystV2(App):
             if action=="list":
                 rows=self.engagements.list(); self._say("No engagements found." if not rows else "\n".join(f"{row.get('slug')}  {row.get('state')}  {row.get('name')}" for row in rows))
             elif action=="use" and rest:
-                item=self.engagements.detail(rest[0]); self.engagement_id=item["config"]["slug"]; self.scope=", ".join(target["value"] for target in item["config"]["scope"]["include"]); self._last_hud_safety=None; self._refresh_hud(); self._say(f"Selected {self.engagement_id} ({item['state']}). AI scope context is available only while active.")
+                item=self.engagements.detail(rest[0])
+                locked=os.environ.get("CSTK_ENGAGEMENT_SLUG")
+                if locked and item["config"]["slug"] != locked: raise BridgeError("switch engagements through the CSTK main manager, then reopen the AI")
+                self.messages.clear(); self.engagement_id=item["config"]["slug"]; self.scope=", ".join(target["value"] for target in item["config"]["scope"]["include"]); self._last_hud_safety=None; self._refresh_hud(); self._say(f"Selected {self.engagement_id} ({item['state']}). Outbound history cleared; scope context requires current operational authorization.")
             elif action=="show" and self.engagement_id:
                 item=self.engagements.detail(self.engagement_id); self._say(f"engagement: {self.engagement_id}\nstate: {item['state']}\nrevision: {item['revision']}\nsha256: {item['sha256']}\nactivation errors: {len(item['activation_errors'])}")
             elif action in {"progress","next"} and self.engagement_id:
@@ -229,13 +236,18 @@ class CSTKAnalystV2(App):
         self._say(f"[bold #ffaf00]AI MODEL CHANGED[/] {old} → {model}\nOutbound conversation context reset; the visible transcript remains on screen.")
     def _expand(self,text):
         engagement="[No active phase-2 engagement selected]"
+        scope_context="[No validated operational scope; operator text is not authorization]"
         if self.engagements and self.engagement_id:
-            try: engagement="[CSTK active engagement context: "+json.dumps(self.engagements.ai_context(self.engagement_id),sort_keys=True)+"]"
-            except BridgeError as error: engagement=f"[Engagement context withheld: {error}]"
-        vals={"@engagement":engagement,"@scope":f"[Authorized scope: {self.scope}]","@session":f"[Provider: {self.provider.name if self.provider else 'not set'}]","@privacy":"[Explicit context only; no autonomous tools]"}
+            try:
+                context=self.engagements.ai_context(self.engagement_id)
+                engagement="[CSTK active engagement context: "+json.dumps(context,sort_keys=True)+"]"
+                scope_context="[Validated scope: "+json.dumps(context["scope"],sort_keys=True)+"]"
+            except (BridgeError,OSError,KeyError,ValueError) as error: engagement=f"[Engagement context withheld: {error}]"
+        vals={"@engagement":engagement,"@scope":scope_context,"@session":f"[Provider: {self.provider.name if self.provider else 'not set'}]","@privacy":"[Explicit context only; no autonomous tools]"}
         for k,v in vals.items(): text=text.replace(k,v)
         return text
     def _send(self,text):
+        self._refresh_hud()
         if not self.provider: self._say("[red]Configure a provider with /provider first.[/]"); return
         self._say(f"[bold #00d7ff]YOU[/]  {text}"); self.messages.append(ChatMessage("user",self._expand(text)))
         try: request=prepare_chat_request(self.provider,self.messages)

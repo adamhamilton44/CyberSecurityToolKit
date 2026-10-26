@@ -5,6 +5,7 @@ revision, validation, and transition workflow can change authorization.
 """
 from __future__ import annotations
 import importlib.util
+import cstk_engagement as bundled_policy
 import json
 import os
 from datetime import datetime, timezone
@@ -33,6 +34,9 @@ class Phase2Bridge:
     def __init__(self, root: Path | None = None, engine_path: Path | None = None):
         self.root = root or Path.home()/".local/share/cstk/Engagements"
         self.engine_path = engine_path or Path(os.environ.get("CSTK_ENGAGEMENT_ENGINE", DEFAULT_ENGINE))
+        if engine_path is None and not os.environ.get("CSTK_ENGAGEMENT_ENGINE"):
+            self.engine = bundled_policy
+            return
         spec = importlib.util.spec_from_file_location("cstk_ai_phase2_engine", self.engine_path)
         if spec is None or spec.loader is None: raise BridgeError(f"unable to load engagement engine: {self.engine_path}")
         self.engine = importlib.util.module_from_spec(spec); spec.loader.exec_module(self.engine)
@@ -49,6 +53,9 @@ class Phase2Bridge:
         item = self.detail(identifier)
         if item["state"] != "active": raise BridgeError("engagement is not active; AI authorization context withheld")
         config = item["config"]
+        self.engine.assert_private_engagement_tree(item["directory"])
+        if item["activation_errors"] or not self.engine.authorization_current(config) or not self.engine._inside_testing_window(config, datetime.now(timezone.utc)):
+            raise BridgeError("engagement is not currently operational; AI authorization context withheld")
         return {
             "engagement_id": config["engagement_id"], "slug": config["slug"],
             "revision": item["revision"], "revision_sha256": item["sha256"],
@@ -76,7 +83,7 @@ class Phase2Bridge:
         emergency = contacts.get("emergency") or contacts.get("primary") or {}
         actions = config["actions"]; constraints = config["constraints"]
         inside_window = self.engine._inside_testing_window(config, current)
-        operational = item["state"] == "active" and starts <= current < ends and inside_window
+        operational = not item["activation_errors"] and item["state"] == "active" and starts <= current < ends and inside_window
         return {
             "state": item["state"].upper(), "operational": operational,
             "timing": timing, "client": config.get("client") or "NOT SET",

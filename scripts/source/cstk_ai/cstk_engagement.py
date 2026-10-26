@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Manage isolated CSTK engagement workspaces without network activity.
 
-Phase 1 deliberately handles storage, revisioning, state, selection, and audit
-only. Target/action enforcement is a later phase and must not be inferred from
-the presence of an active engagement.
+Storage, lifecycle, immutable revisions, audit, and per-operation scope policy.
+Only adapters that invoke authorization for every destination may send traffic.
 """
 
 from __future__ import annotations
@@ -15,6 +14,7 @@ import fcntl
 import hashlib
 import ipaddress
 import json
+import math
 import os
 import re
 import sys
@@ -303,6 +303,9 @@ def target_error(target: Any, label: str) -> str | None:
             if parsed.username or parsed.password or parsed.fragment:
                 raise ValueError("URL/API entry must not include userinfo or a fragment")
             _ = parsed.port
+            if parsed.query:
+                raise ValueError("scope URL/API entries describe paths, not query-specific permissions")
+            validate_network_target(value)
     except (ValueError, UnicodeError) as exc:
         return f"{label} is invalid: {exc}"
     return None
@@ -598,11 +601,11 @@ def validation_errors(config: dict[str, Any], *, activation: bool = False) -> li
                     except ValueError:
                         errors.append(f"constraints.ports[{rule_index}].ports[{value_index}] is invalid")
         rate = constraints.get("max_requests_per_second")
-        if not isinstance(rate, (int, float)) or isinstance(rate, bool) or rate <= 0:
+        if not isinstance(rate, (int, float)) or isinstance(rate, bool) or not math.isfinite(rate) or rate <= 0:
             errors.append("constraints.max_requests_per_second must be greater than zero")
         bandwidth = constraints.get("max_bandwidth_mbps")
         if bandwidth is not None and (
-            not isinstance(bandwidth, (int, float)) or isinstance(bandwidth, bool) or bandwidth <= 0
+            not isinstance(bandwidth, (int, float)) or isinstance(bandwidth, bool) or not math.isfinite(bandwidth) or bandwidth <= 0
         ):
             errors.append("constraints.max_bandwidth_mbps must be greater than zero or null")
         concurrency = constraints.get("max_concurrency")
@@ -772,7 +775,11 @@ def append_audit(engagement_dir: Path, event: str, details: dict[str, Any] | Non
             for line in stream:
                 if line.strip():
                     try:
-                        previous_hash = json.loads(line).get("event_sha256")
+                        old_record = json.loads(line)
+                        old_digest = old_record.pop("event_sha256", None)
+                        if old_record.get("previous_event_sha256") != previous_hash or sha256_bytes(canonical_json_bytes(old_record)) != old_digest:
+                            raise EngagementError("audit hash chain is damaged")
+                        previous_hash = old_digest
                     except json.JSONDecodeError as exc:
                         raise EngagementError("audit log contains invalid JSON") from exc
             config, revision, scope_hash = load_current_config(engagement_dir)
@@ -907,10 +914,10 @@ def revise_engagement(root: Path, identifier: str, source: dict[str, Any]) -> Pa
     return path
 
 
-def authorization_current(config: dict[str, Any]) -> bool:
+def authorization_current(config: dict[str, Any], now: dt.datetime | None = None) -> bool:
     authorization = config["authorization"]
-    now = dt.datetime.now(dt.timezone.utc)
-    return parse_datetime(authorization["valid_from"]).astimezone(dt.timezone.utc) <= now <= parse_datetime(
+    now = now or dt.datetime.now(dt.timezone.utc)
+    return parse_datetime(authorization["valid_from"]).astimezone(dt.timezone.utc) <= now < parse_datetime(
         authorization["valid_until"]
     ).astimezone(dt.timezone.utc)
 
@@ -978,6 +985,41 @@ def selection_values(root: Path, identifier: str) -> dict[str, str]:
     return values
 
 
+def validate_network_target(target: str) -> None:
+    """Reject alternate spellings which servers/proxies may normalize differently."""
+    if not isinstance(target, str) or not target or target != target.strip():
+        raise ValueError("empty or padded target")
+    if has_control_characters(target) or "\\" in target or any(c.isspace() for c in target):
+        raise ValueError("whitespace, controls, or backslashes in target")
+    if target.startswith(("http://", "https://")):
+        parsed = urllib.parse.urlsplit(target)
+        if not parsed.hostname or parsed.username is not None or parsed.password is not None or parsed.fragment:
+            raise ValueError("URL must have a host and no credentials or fragment")
+        _ = parsed.port
+        decoded = parsed.path or "/"
+        for _ in range(4):
+            if any(segment in (".", "..") for segment in decoded.split("/")) or "\\" in decoded or ";" in decoded or "//" in decoded or has_control_characters(decoded):
+                raise ValueError("ambiguous URL path")
+            updated = urllib.parse.unquote(decoded, errors="strict")
+            if updated == decoded:
+                break
+            if updated.count("/") != decoded.count("/"):
+                raise ValueError("encoded path separator")
+            decoded = updated
+        else:
+            raise ValueError("excessive URL encoding")
+        host = parsed.hostname
+    else:
+        host = target
+        if "/" in target or "://" in target:
+            raise ValueError("expected a single IP, DNS name, or HTTP(S) URL")
+    try:
+        ipaddress.ip_address(host)
+    except ValueError:
+        if not DNS_RE.fullmatch(host) or re.fullmatch(r"[0-9.]+", host):
+            raise ValueError("invalid network hostname")
+
+
 def _dns_matches(host: str, scope_type: str, scope_value: str) -> bool:
     host = host.rstrip(".").lower()
     scope_value = scope_value.rstrip(".").lower()
@@ -991,14 +1033,23 @@ def _dns_matches(host: str, scope_type: str, scope_value: str) -> bool:
 
 def _url_matches(candidate: urllib.parse.SplitResult, scope_value: str) -> bool:
     allowed = urllib.parse.urlsplit(scope_value)
+    validate_network_target(candidate.geturl())
+    validate_network_target(scope_value)
     candidate_port = candidate.port or (443 if candidate.scheme == "https" else 80)
     allowed_port = allowed.port or (443 if allowed.scheme == "https" else 80)
     if candidate.scheme.lower() != allowed.scheme.lower() or candidate.hostname != allowed.hostname:
         return False
     if candidate_port != allowed_port:
         return False
-    allowed_path = allowed.path or "/"
-    candidate_path = candidate.path or "/"
+    def canonical_path(value: str) -> str:
+        for _ in range(4):
+            decoded = urllib.parse.unquote(value, errors="strict")
+            if decoded == value:
+                return value
+            value = decoded
+        raise ValueError("excessive path encoding")
+    allowed_path = canonical_path(allowed.path or "/")
+    candidate_path = canonical_path(candidate.path or "/")
     if not allowed_path.endswith("/"):
         return candidate_path == allowed_path
     return candidate_path.startswith(allowed_path)
@@ -1037,7 +1088,16 @@ def _target_matches_entry(target: str, entry: dict[str, Any]) -> bool:
 
 def _target_allowed(config: dict[str, Any], target: str) -> tuple[bool, str]:
     scope = config["scope"]
-    if any(_target_matches_entry(target, entry) for entry in scope["exclude"]):
+    exclusions = []
+    for entry in scope["exclude"]:
+        exclusions.append(entry)
+        if entry.get("type") in ("url", "api"):
+            parsed_exclusion = urllib.parse.urlsplit(entry["value"])
+            if not parsed_exclusion.path.endswith("/"):
+                expanded = dict(entry)
+                expanded["value"] = urllib.parse.urlunsplit((parsed_exclusion.scheme, parsed_exclusion.netloc, parsed_exclusion.path + "/", "", ""))
+                exclusions.append(expanded)
+    if any(_target_matches_entry(target, entry) for entry in exclusions):
         return False, "target matches an explicit scope exclusion"
     if not any(_target_matches_entry(target, entry) for entry in scope["include"]):
         return False, "target does not match an in-scope entry"
@@ -1104,14 +1164,14 @@ def _inside_testing_window(config: dict[str, Any], now: dt.datetime) -> bool:
             local = now.astimezone(ZoneInfo(window["timezone"]))
         except (KeyError, ZoneInfoNotFoundError):
             continue
-        if weekday[local.weekday()] not in window["days"]:
-            continue
         start = dt.time.fromisoformat(window["start"])
         end = dt.time.fromisoformat(window["end"])
         current = local.time().replace(tzinfo=None)
-        if start <= end and start <= current <= end:
+        today = weekday[local.weekday()] in window["days"]
+        yesterday = weekday[(local.weekday() - 1) % 7] in window["days"]
+        if start <= end and today and start <= current < end:
             return True
-        if start > end and (current >= start or current <= end):
+        if start > end and ((today and current >= start) or (yesterday and current < end)):
             return True
     return False
 
@@ -1130,15 +1190,16 @@ def authorize_action(
     now: dt.datetime | None = None,
 ) -> dict[str, Any]:
     engagement_dir = resolve_engagement(root, identifier)
+    assert_private_engagement_tree(engagement_dir)
     config, revision, digest = load_current_config(engagement_dir)
-    reasons: list[str] = []
+    reasons: list[str] = validation_errors(config, activation=True)
     state = load_state(engagement_dir)
     current = now or dt.datetime.now(dt.timezone.utc)
     if current.tzinfo is None:
         raise EngagementError("authorization time must include a timezone")
     if state != "active":
         reasons.append("engagement is not active")
-    if not authorization_current(config):
+    if not authorization_current(config, current):
         reasons.append("authorization dates are not currently valid")
     if not _inside_testing_window(config, current):
         reasons.append("current time is outside every approved testing window")
@@ -1150,19 +1211,38 @@ def authorize_action(
         reasons.append("action requires fresh per-run confirmation")
     elif action not in config["actions"]["allow"] and action not in config["actions"]["confirm_each_run"]:
         reasons.append("action is not authorized")
-    target_ok, target_reason = _target_allowed(config, target)
+    try:
+        validate_network_target(target)
+        target_ok, target_reason = _target_allowed(config, target)
+    except (ValueError, UnicodeError) as exc:
+        target_ok, target_reason = False, f"invalid or ambiguous target: {exc}"
     if not target_ok:
         reasons.append(target_reason)
     parsed = urllib.parse.urlsplit(target)
-    hostname_target = bool(parsed.hostname and not re.fullmatch(r"[0-9a-fA-F:.]+", parsed.hostname)) or (
-        not parsed.scheme and not re.fullmatch(r"[0-9a-fA-F:.]+", target)
-    )
+    if parsed.scheme in ("http", "https") and parsed.hostname:
+        actual_port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        if protocol != "tcp" or port != actual_port:
+            reasons.append("supplied protocol/port does not match the URL")
+    host = parsed.hostname if parsed.scheme in ("http", "https") else target
+    try:
+        ipaddress.ip_address(host or "")
+        hostname_target = False
+    except ValueError:
+        hostname_target = True
     resolved = list(dict.fromkeys(resolved_ips))
+    # Explicit IP exclusions apply regardless of a hostname-only inclusion policy.
+    if any(_target_matches_entry(value, entry) for value in resolved
+           for entry in config["scope"]["exclude"] if entry.get("type") in ("ip", "cidr")):
+        reasons.append("a resolved address matches an explicit IP exclusion")
     if hostname_target and config["constraints"].get("dns_policy") == "both_required":
         if not resolved:
             reasons.append("DNS policy requires at least one resolved IP")
         elif any(not _ip_in_scope(config, value) for value in resolved):
             reasons.append("one or more resolved IPs are not explicitly in scope or are excluded")
+    if action in {"network.discovery", "vulnerability.scan", "web.active", "web.passive", "credential.online", "exploit.validation", "payload.deliver", "command_and_control"} and (protocol is None or port is None):
+        reasons.append("network actions require an explicit protocol and port")
+    if hostname_target and config["constraints"].get("dns_policy") == "manual_review_on_change":
+        reasons.append("manual DNS change review has no pinned approved baseline")
     if (protocol is None) != (port is None):
         reasons.append("protocol and port must be supplied together")
     elif protocol is not None and port is not None:
@@ -1189,7 +1269,14 @@ def authorize_action(
         "decided_at": current.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
         "reasons": reasons or [target_reason, "action and operational constraints are authorized"],
     }
-    append_audit(engagement_dir, "action_authorized" if allowed else "action_denied", decision)
+    audit_decision = copy.deepcopy(decision)
+    parsed_audit = urllib.parse.urlsplit(target)
+    if parsed_audit.scheme in ("http", "https"):
+        audit_decision["target"] = urllib.parse.urlunsplit((parsed_audit.scheme, parsed_audit.netloc, parsed_audit.path, "", ""))
+    if not allowed and config.get("data_handling", {}).get("out_of_scope_storage") == "minimal_fingerprint":
+        audit_decision.pop("target", None)
+        audit_decision["target_sha256"] = sha256_bytes(target.encode())
+    append_audit(engagement_dir, "action_authorized" if allowed else "action_denied", audit_decision)
     return decision
 
 

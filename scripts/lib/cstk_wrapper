@@ -22,6 +22,20 @@ if [[ -z "${CSTK_MAIN_RUNNER:-}" ]]; then
     exit 1
 fi
 
+# Revalidate selection from disk; do not trust inherited state labels.
+if [[ -n "${CSTK_ENGAGEMENT_ID:-}" ]]; then
+    if [[ "$user" == root ]]; then
+        "$home_dir/scripts/bin/Etc_engagement" --root "$CSTK_USER_DATA_DIR/Engagements" status "$CSTK_ENGAGEMENT_ID" || exit 4
+    else
+        runuser -u "$user" -- "$home_dir/scripts/bin/Etc_engagement" --root "$CSTK_USER_DATA_DIR/Engagements" status "$CSTK_ENGAGEMENT_ID" || exit 4
+    fi
+fi
+if [[ -n "${CSTK_ENGAGEMENT_ID:-}" || "${CSTK_STANDALONE_LAB:-}" != 1 ]]; then
+case "$(basename -- "${1:-}")" in
+    Etc_extract_archive|Etc_openssl_helper|Etc_gpg_enc_dec|Etc_make_binary|Etc_array_enc|Etc_hash_idenify) ;;
+    *) echo "STOP: this legacy helper has no reviewed scope adapter. Use Engagements (G)." >&2; exit 4 ;;
+esac
+fi
 export PATH="$home_dir/scripts/bin:/opt/cstk/bin:$PATH"
 clean_env=(env -i \
     PATH="$PATH" \
@@ -40,6 +54,12 @@ clean_env=(env -i \
     CSTK_KEYS_DIR="$CSTK_KEYS_DIR" \
     CSTK_LOGGING_ENABLED="$CSTK_LOGGING_ENABLED" \
     CSTK_LOGGING_LEVEL="$CSTK_LOGGING_LEVEL" \
+    CSTK_ENGAGEMENT_ID="${CSTK_ENGAGEMENT_ID:-}" \
+    CSTK_ENGAGEMENT_SLUG="${CSTK_ENGAGEMENT_SLUG:-}" \
+    CSTK_ENGAGEMENT_DIR="${CSTK_ENGAGEMENT_DIR:-}" \
+    CSTK_SCOPE_REVISION="${CSTK_SCOPE_REVISION:-}" \
+    CSTK_SCOPE_SHA256="${CSTK_SCOPE_SHA256:-}" \
+    CSTK_SESSION_ID="${CSTK_SESSION_ID:-}" \
     home_dir="$home_dir" \
 )
 

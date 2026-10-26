@@ -47,4 +47,17 @@ class Phase2BridgeTests(unittest.TestCase):
         self.assertGreater(hud["included_targets"],0); self.assertGreater(hud["denied_actions"],0)
         self.assertNotEqual(hud["emergency_contact"],"NOT SET"); self.assertFalse(hud["operational"])
 
+    def test_expired_active_record_cannot_be_ai_authorization_context(self):
+        from unittest.mock import patch
+        item=self.bridge.detail(self.created.name); item["state"]="active"; item["activation_errors"]=[]
+        with patch.object(self.bridge,"detail",return_value=item), patch.object(self.bridge.engine,"authorization_current",return_value=False):
+            with self.assertRaisesRegex(BridgeError,"not currently operational"):
+                self.bridge.ai_context(self.created.name)
+    def test_closed_window_cannot_be_ai_authorization_context(self):
+        from unittest.mock import patch
+        item=self.bridge.detail(self.created.name); item["state"]="active"; item["activation_errors"]=[]
+        with patch.object(self.bridge,"detail",return_value=item), patch.object(self.bridge.engine,"authorization_current",return_value=True),patch.object(self.bridge.engine,"_inside_testing_window",return_value=False):
+            with self.assertRaisesRegex(BridgeError,"not currently operational"):
+                self.bridge.ai_context(self.created.name)
+
 if __name__=="__main__": unittest.main()
