@@ -25,3 +25,17 @@ __pycache__/
 
 # Local extraction of the portable release; maintained sources live in tools/zip2go.
 /scripts/lib/CSTK_2Go/
+
+# Generated development reports are local artifacts, not release contents.
+/CSTK_GAPS.md
+/DEPENDENCY_APT_SIMULATION.log
+/DEPENDENCY_AUDIT.json
+/DEPENDENCY_AUDIT.md
+/INSTALL_APT_FRESH_SIMULATION.log
+/INSTALL_UNINSTALL_AUDIT.md
+/KALI_APT_SIMULATION.log
+/ZIP2GO_BUILD_REPORT.md
+
+/build/
+/dist/
+*.x.c

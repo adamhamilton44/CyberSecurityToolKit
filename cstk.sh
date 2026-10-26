@@ -45,6 +45,10 @@
 #/                         use the installed loopback-only CSTK control API client as the invoking user
 #/                 --refresh-hashes
 #/                         interactively authorize and rebuild the local integrity manifest
+#/                 -G, --engagements
+#/                         manage engagements, scope, lifecycle and guarded operations
+#/                 --use ID [class tool]
+#/                         select an active engagement for this process
 #/    TOOLS:
 #//D  DEFENSE CLASS:          -D | --defense
 #//D  l | --linux-audit         Linux Security Audit (requires its separately supplied executable)
@@ -113,6 +117,8 @@
 #//S  [ sudo cstk -Dw https://example.com/ ] Web/TLS assessment
 #//S  [ sudo cstk --defense --web-tls https://example.com/ ] Web/TLS assessment
 #//S  [ sudo cstk -Dl ] OR [ sudo cstk --defense --linux-audit ] Linux audit
+#//S  [ sudo cstk --engagements ] Manage engagements and guarded operations
+#//S  [ sudo cstk --use ID ] Select an active engagement for the menu session
 #//S  [ sudo cstk -On ] OR  [ sudo cstk --osint --nmap      ]  Run OSINT nmap helper
 #//S  [ sudo cstk -Pn ] OR  [ sudo cstk --payload --netcat  ]  Run payload netcat helper
 #//S  [ sudo cstk -Xe ] OR  [ sudo cstk --postx --inmemory  ]  Run the best-effort live-memory password audit
@@ -400,7 +406,7 @@ create_private_data_archive() {
         plain)
             archive="$cstk_export_dir/cstk-private-data-$stamp.tar.gz"
             if ! run_as_cstk_user tar --create --gzip --file "$archive" \
-                --directory "$CSTK_USER_DATA_DIR" Loot Malware Logs Keys; then
+                --directory "$CSTK_USER_DATA_DIR" Loot Malware Logs Keys Engagements; then
                 rm -f -- "$archive"
                 return 1
             fi
@@ -415,7 +421,7 @@ create_private_data_archive() {
             echo -e "${Y}7-Zip will ask twice for a password. The password is not stored by CSTK.${X}"
             if ! (
                 cd -- "$CSTK_USER_DATA_DIR" &&
-                run_as_cstk_user "$archiver" a -t7z -mhe=on -p "$archive" Loot Malware Logs Keys
+                run_as_cstk_user "$archiver" a -t7z -mhe=on -p "$archive" Loot Malware Logs Keys Engagements
             ); then
                 rm -f -- "$archive"
                 return 1
@@ -484,12 +490,272 @@ private_data_menu() {
 
 finish_cstk_session() {
     local rc=$?
+    stop_engagement_hud
+    tput csr 0 "$(( $(tput lines 2>/dev/null || echo 24) - 1 ))" 2>/dev/null || true
     trap - EXIT
     secure_user_data_permissions >/dev/null 2>&1 || true
     exit "$rc"
 }
 
 initialize_user_context || exit 1
+CSTK_ENGAGEMENTS_DIR="$CSTK_USER_DATA_DIR/Engagements"
+engagement_helper="$bin/Etc_engagement"
+# Caller-provided selection variables cannot establish an engagement session.
+unset CSTK_ENGAGEMENT_ID CSTK_ENGAGEMENT_SLUG CSTK_ENGAGEMENT_DIR CSTK_ENGAGEMENT_STATE
+unset CSTK_SCOPE_REVISION CSTK_SCOPE_SHA256 CSTK_SESSION_ID CSTK_STANDALONE_LAB
+export CSTK_ENGAGEMENTS_DIR
+run_engagement_helper() {
+    if [[ ! -x "$engagement_helper" || -L "$engagement_helper" ]]; then
+        echo -e "${R}[ ERROR ] CSTK engagement manager not found: $engagement_helper${X}" >&2
+        return 1
+    fi
+    run_as_cstk_user env HOME="$user_home" USER="$user" LOGNAME="$user" \
+        "$engagement_helper" --root "$CSTK_ENGAGEMENTS_DIR" "$@"
+}
+
+apply_engagement_selection() {
+    local identifier selection_output key value
+
+    identifier="$1"
+    selection_output="$(run_engagement_helper select "$identifier" --format tsv)" || return 1
+
+    while IFS=$'\t' read -r key value; do
+        case "$key" in
+            CSTK_ENGAGEMENT_ID) CSTK_ENGAGEMENT_ID="$value" ;;
+            CSTK_ENGAGEMENT_SLUG) CSTK_ENGAGEMENT_SLUG="$value" ;;
+            CSTK_ENGAGEMENT_DIR) CSTK_ENGAGEMENT_DIR="$value" ;;
+            CSTK_ENGAGEMENT_STATE) CSTK_ENGAGEMENT_STATE="$value" ;;
+            CSTK_SCOPE_REVISION) CSTK_SCOPE_REVISION="$value" ;;
+            CSTK_SCOPE_SHA256) CSTK_SCOPE_SHA256="$value" ;;
+            CSTK_SESSION_ID) CSTK_SESSION_ID="$value" ;;
+            CSTK_LOOT_DIR) CSTK_LOOT_DIR="$value" ;;
+            CSTK_MALWARE_DIR) CSTK_MALWARE_DIR="$value" ;;
+            CSTK_LOG_DIR) CSTK_LOG_DIR="$value" ;;
+            CSTK_EVIDENCE_DIR) CSTK_EVIDENCE_DIR="$value" ;;
+            CSTK_REPORT_DIR) CSTK_REPORT_DIR="$value" ;;
+            CSTK_AUDIT_DIR) CSTK_AUDIT_DIR="$value" ;;
+            CSTK_RUNS_DIR) CSTK_RUNS_DIR="$value" ;;
+            CSTK_TEMP_DIR) CSTK_TEMP_DIR="$value" ;;
+            *)
+                echo -e "${R}[ ERROR ] Unexpected engagement selection field: $key${X}" >&2
+                return 1
+                ;;
+        esac
+    done <<< "$selection_output"
+
+    if [[ -z "$CSTK_ENGAGEMENT_ID" || -z "$CSTK_ENGAGEMENT_DIR" ||
+          -z "$CSTK_SCOPE_REVISION" || -z "$CSTK_SCOPE_SHA256" ||
+          "$CSTK_ENGAGEMENT_STATE" != "active" ]]; then
+        echo -e "${R}[ ERROR ] The engagement selection was incomplete or inactive.${X}" >&2
+        return 1
+    fi
+
+    CSTK_KEYS_DIR="$CSTK_ENGAGEMENT_DIR/Keys"
+    [[ ! -L "$CSTK_KEYS_DIR" ]] || { echo "Unsafe engagement Keys directory" >&2; return 1; }
+    run_as_cstk_user mkdir -p -- "$CSTK_KEYS_DIR" || return 1
+    Keys="$CSTK_KEYS_DIR"
+    export CSTK_KEYS_DIR Keys
+    Loot="$CSTK_LOOT_DIR"
+    Malware="$CSTK_MALWARE_DIR"
+    log="$CSTK_LOG_DIR"
+    unset CSTK_STANDALONE_LAB
+    export CSTK_ENGAGEMENT_ID CSTK_ENGAGEMENT_SLUG CSTK_ENGAGEMENT_DIR
+    export CSTK_ENGAGEMENT_STATE CSTK_SCOPE_REVISION CSTK_SCOPE_SHA256 CSTK_SESSION_ID
+    export CSTK_LOOT_DIR CSTK_MALWARE_DIR CSTK_LOG_DIR CSTK_EVIDENCE_DIR CSTK_REPORT_DIR
+    export CSTK_AUDIT_DIR CSTK_RUNS_DIR CSTK_TEMP_DIR Loot Malware log
+
+    secure_user_data_permissions || {
+        echo -e "${R}[ ERROR ] Unable to secure the selected engagement workspace.${X}" >&2
+        return 1
+    }
+    start_engagement_hud
+    echo -e "${G}[ OK ] Engagement selected for this CSTK session: $CSTK_ENGAGEMENT_SLUG"
+    echo -e "${g}Revision $CSTK_SCOPE_REVISION (${CSTK_SCOPE_SHA256:0:12})${X}"
+}
+
+choose_engagement_for_session() {
+    local identifier
+
+    if [[ ! -t 0 || ! -t 1 ]]; then
+        echo -e "${R}[ ERROR ] A non-interactive run must specify --use ENGAGEMENT_ID.${X}" >&2
+        return 2
+    fi
+    while true; do
+        clear
+        echo -e "${O}CSTK Engagement Selection${X}"
+        echo
+        run_engagement_helper list --format table || return 1
+        echo
+        echo "Enter an active engagement slug or ID."
+        echo "C - Create/manage engagements"
+        echo "X - Exit"
+        read -r -p "Engagement ==> " identifier
+        case "$identifier" in
+            [Cc]) engagement_manager_menu ;;
+            [Xx]) return 2 ;;
+            "") continue ;;
+            *) apply_engagement_selection "$identifier" && return 0 ;;
+        esac
+        echo
+        read -r -p "Press Enter to continue..."
+    done
+}
+
+engagement_manager_menu() {
+    local choice identifier state config_path
+
+    if [[ ! -t 0 || ! -t 1 ]]; then
+        echo -e "${R}[ ERROR ] Engagement management requires an interactive terminal.${X}" >&2
+        return 2
+    fi
+    while true; do
+        clear
+        echo -e "${O}CSTK Engagement Manager${X}"
+        echo
+        run_engagement_helper list --format table || return 1
+        echo
+        show_engagement_status || true
+        echo "C - Create a draft with the guided questionnaire"
+        echo "U - Use an active engagement for this session"
+        echo "P - Pause the selected engagement"
+        echo "N - Guarded TCP port check (explicit IP/CIDR, max 256 addresses)"
+        echo "W - Guarded HTTP(S) request (scope checked on every redirect)"
+        echo "I - Inspect the current revision"
+        echo "V - Validate activation requirements"
+        echo "S - Change state (ready/active/paused/closed/archived)"
+        echo "R - Create a new revision from a reviewed JSON file"
+        echo "X - Return"
+        echo
+        read -r -p "Engagement Manager ==> " choice
+        case "$choice" in
+            [Uu])
+                read -r -p "Engagement slug or ID: " identifier
+                apply_engagement_selection "$identifier"
+                ;;
+            [Pp])
+                [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" ]] && run_engagement_helper transition "$CSTK_ENGAGEMENT_SLUG" paused
+                ;;
+            [Nn]) run_guarded_operation tcp ;;
+            [Ww]) run_guarded_operation web ;;
+            [Cc]) run_engagement_helper create ;;
+            [Ii])
+                read -r -p "Engagement slug or ID: " identifier
+                run_engagement_helper show "$identifier"
+                ;;
+            [Vv])
+                read -r -p "Engagement slug or ID: " identifier
+                run_engagement_helper validate "$identifier"
+                ;;
+            [Ss])
+                read -r -p "Engagement slug or ID: " identifier
+                read -r -p "New state: " state
+                run_engagement_helper transition "$identifier" "$state"
+                ;;
+            [Rr])
+                read -r -p "Engagement slug or ID: " identifier
+                read -r -p "Reviewed JSON file path: " config_path
+                run_engagement_helper revise "$identifier" --config "$config_path"
+                ;;
+            [Xx]) return 0 ;;
+            *) echo -e "${Y}Choose C, I, V, S, R, or X.${X}" ;;
+        esac
+        echo
+        read -r -p "Press Enter to continue..."
+    done
+}
+
+stop_engagement_hud() {
+    if [[ -n "${CSTK_HUD_PID:-}" ]]; then
+        kill "$CSTK_HUD_PID" 2>/dev/null || true
+        wait "$CSTK_HUD_PID" 2>/dev/null || true
+        unset CSTK_HUD_PID
+    fi
+}
+
+start_engagement_hud() {
+    stop_engagement_hud
+    if [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" && -t 1 ]]; then
+        if [[ "$user" == root ]]; then
+            "$engagement_helper" --root "$CSTK_ENGAGEMENTS_DIR" hud "$CSTK_ENGAGEMENT_SLUG" &
+        else
+            runuser -u "$user" -- "$engagement_helper" --root "$CSTK_ENGAGEMENTS_DIR" hud "$CSTK_ENGAGEMENT_SLUG" &
+        fi
+        CSTK_HUD_PID=$!
+    fi
+}
+
+show_engagement_status() {
+    if [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" ]]; then
+        run_engagement_helper status "$CSTK_ENGAGEMENT_SLUG"
+    elif [[ "${CSTK_STANDALONE_LAB:-}" == 1 ]]; then
+        echo "STANDALONE LAB | NO ENGAGEMENT SCOPE ENFORCEMENT"
+    else
+        echo "ENGAGEMENT: none selected | G: engagement | L: standalone lab (unguarded)"
+    fi
+}
+
+# Every CSTK clear/redraw restores the current engagement status.
+clear() {
+    local rows
+    rows="$(tput lines 2>/dev/null || echo 24)"
+    tput csr 0 "$((rows - 1))" 2>/dev/null || true
+    command clear 2>/dev/null || true
+    if [[ -n "${CSTK_ENGAGEMENT_ID:-}" && -t 1 && "$rows" -ge 16 ]]; then
+        # Reserve the top six rows across CSTK menus and ordinary terminal output.
+        show_engagement_status | head -n 6 | cut -c "1-$(tput cols 2>/dev/null || echo 80)"
+        tput csr 6 "$((rows - 1))" 2>/dev/null || true
+        tput cup 6 0 2>/dev/null || true
+    else
+        show_engagement_status || true
+    fi
+}
+
+select_standalone_lab() {
+    local answer
+    [[ -z "${CSTK_ENGAGEMENT_ID:-}" ]] || { echo "Exit this session before entering standalone lab mode."; return 1; }
+    echo "Standalone lab mode has NO engagement scope enforcement. Do not use it for client engagements."
+    read -r -p "Type LAB to enable legacy tools for this session: " answer
+    [[ "$answer" == LAB ]] || return 1
+    export CSTK_STANDALONE_LAB=1
+}
+
+engagement_dispatch_guard() {
+    local tool="$1"
+    if [[ -z "${CSTK_ENGAGEMENT_ID:-}" && "${CSTK_STANDALONE_LAB:-}" == 1 ]]; then
+        return 0
+    fi
+    case "$tool" in
+        cstk_ai_analyst|google_dorks|username_gen|users_and_shells|extract_arch|r_b_g_wrapper|gpg_lookalike_wrapper|hash_id|create_exe_binary|post_x_2_go|array_enc_script)
+            if [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" ]]; then
+                show_engagement_status || return 1
+            fi
+            return 0 ;;
+    esac
+    echo "STOP: $tool has no engagement-safe adapter. Use G for guarded TCP or web operations."
+    echo "Legacy tools cannot run through CSTK until their targets, redirects, and limits are enforced."
+    return 1
+}
+
+run_guarded_operation() {
+    local adapter="$1" target ports confirm
+    [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" ]] || { echo "Select an active engagement with G first."; return 1; }
+    show_engagement_status || return 1
+    read -r -p "Target (TCP: explicit IP/CIDR; web: full HTTP(S) URL): " target
+    ports="443"
+    if [[ "$adapter" == tcp ]]; then
+        read -r -p "TCP ports, comma separated: " ports
+    fi
+    read -r -p "Authorize this one bounded operation within the recorded rules? Type RUN: " confirm
+    [[ "$confirm" == RUN ]] || return 1
+    stop_engagement_hud
+    tput csr 0 "$(( $(tput lines 2>/dev/null || echo 24) - 1 ))" 2>/dev/null || true
+    run_engagement_helper run "$CSTK_ENGAGEMENT_SLUG" --adapter "$adapter" --target "$target" --ports "$ports" --confirm
+    local rc=$?
+    clear
+    start_engagement_hud
+    return "$rc"
+}
+
 
 verify_integrity_refresh_key() {
     local supplied_hash
@@ -536,9 +802,10 @@ dec_file() {
 }
 
 wait_and_return() {
+    [[ -t 0 && -t 1 ]] || return 0
     secure_user_data_permissions >/dev/null 2>&1 || true
     echo -e "${B} \nEnter key for main menu ${R} \nX to exit.\n ${X} "
-    read -r -n 1 -p "${AA}" op
+    read -r -n 1 -p "${AA}" op || return 0
     if [[ "$op" =~ [Xx] ]]; then
         exit
     fi
@@ -1183,15 +1450,19 @@ main_menu() {
          ${O}SYSTEM CONFIGURATION:${g}
          5 -${B} Toggle Authentication ${Y}(Currently: $AUTH_ENABLED)  ${g}
          6 -${B} Toggle Animated Headers ${Y}(Currently: $FONTS_ENABLED)  ${g}
+         L -${B} Explicit Standalone Lab Mode  ${g}\n
+         G -${B} Engagements / Scope / Guarded Operations  ${g}\n
          7 -${B} Private Loot / Malware / Logs and Backups  ${g}
          8 -${B} DEFENSE  ${g}
          U -${B} Check / Install CSTK Updates  ${g}
          T -${B} TTY Shell Upgrade Guide  ${g}
          X -${R} exit ${X}\n\n\n "
 
-    read -r -p "${O} ${AA} ${X}" num
+    read -r -p "${O} ${AA} ${X}" num || return 0
     case "$num" in
         [1-4]) handle_input "$num" ;;
+        [Gg]) clear; engagement_manager_menu; main_menu ;;
+        [Ll]) select_standalone_lab; main_menu ;;
         5) toggle_auth && sleep 3 && main_menu ;;
         6) toggle_fonts && sleep 3 && main_menu ;;
         7) clear; private_data_menu; main_menu ;;
@@ -1274,7 +1545,7 @@ handle_input() {
             ;;
         *)  main_menu ;;
     esac
-    read -r -p "${O} ${a} ${X}" choice
+    read -r -p "${O} ${a} ${X}" choice || return 0
     execute_tool "$1" "$choice"
 }
 
@@ -1465,6 +1736,7 @@ getip() {
 # Class:OSINT - Tool:IP Lookup - Option 1 (Automated Script Run)
 # Scripts needing a ip address and or port number will call this function for help
 find_that_ip() {
+    engagement_dispatch_guard find_that_ip || { wait_and_return; return 1; }
     local data data2 status ports vuln city regionName country zip lat lon isp ip_results
     clear
     osint_findip_frame
@@ -1507,6 +1779,7 @@ find_that_ip() {
 
 # Class:OSINT - Tool:Ping Sweeper - Option 2 (Wrapper used)
 sweep_ip() {
+    engagement_dispatch_guard sweep_ip || { wait_and_return; return 1; }
 	local file
 	file="$bin/Osint_sweeper"
     clear
@@ -1522,6 +1795,7 @@ sweep_ip() {
 
 # Class:OSINT - Tool:Nmap helper script - Option 3  (Wrapper used)
 nmap_tool() {
+    engagement_dispatch_guard nmap_tool || { wait_and_return; return 1; }
 	local file
 	file="$bin/Osint_IP_Sweeper_Wizard"
     clear
@@ -1535,6 +1809,7 @@ nmap_tool() {
 
 # Class:OSINT - Tool:Automated Enumeration Script - Option 4 (Wrapper used)
 enum_tool() {
+    engagement_dispatch_guard enum_tool || { wait_and_return; return 1; }
 	local enum_bin
 	enum_bin="$bin/Osint_enum"
     clear
@@ -1552,6 +1827,7 @@ enum_tool() {
 
 # Class:OSINT - Tool:Email Parser - Option 5 (Wrapper used)
 breach_parse_wrapper() {
+    engagement_dispatch_guard breach_parse_wrapper || { wait_and_return; return 1; }
     local breach_parse_bin breach_parse_single_bin data
 	breach_parse_bin="$bin/Osint_breach_parse"
 	breach_parse_single_bin="$bin/Osint_breach_parse_single"
@@ -1583,6 +1859,7 @@ breach_parse_wrapper() {
 
 # Class:OSINT - Tool:Google Dorks - Option 6
 google_dorks() {
+    engagement_dispatch_guard google_dorks || { wait_and_return; return 1; }
     clear
     osint_googledorks_frame
     sleep 5
@@ -1633,6 +1910,7 @@ google_dorks() {
 
 # Class:OSINT - Tool: holehe email finder - Program 7
 email_search() {
+    engagement_dispatch_guard email_search || { wait_and_return; return 1; }
     clear
     osint_socialemail_frame
     sleep 5
@@ -1653,6 +1931,7 @@ email_search() {
 
 # Class:OSINT - Tool: password attack - Program 8 (Wrapper Used)
 pass_attack() {
+    engagement_dispatch_guard pass_attack || { wait_and_return; return 1; }
 	local file
 	file="$bin/Osint_password_attack"
     clear
@@ -1665,6 +1944,7 @@ pass_attack() {
 
 # Class:OSINT - Tool: Automated Vulnerability Search tool - Program 9 (Wrapper Used)
 vuln_searcher() {
+    engagement_dispatch_guard vuln_searcher || { wait_and_return; return 1; }
 	local file
 	file="$bin/Osint_auto_vuln_finder"
     clear
@@ -1677,6 +1957,7 @@ vuln_searcher() {
 
 # Class:OSINT - Tool: Username Generator - Program A
 username_gen() {
+    engagement_dispatch_guard username_gen || { wait_and_return; return 1; }
     local name1 name2 name3 role1 role2 role3
     clear
     osint_username_gen_frame
@@ -1718,6 +1999,7 @@ EOF
 
 # Class:OSINT - Tool: SSH Enumeration - Program B (Wrapper Used)
 ssh_enum() {
+    engagement_dispatch_guard ssh_enum || { wait_and_return; return 1; }
 	local file
 	file="$bin/Osint_ssh_enum_remote_host"
     clear
@@ -1740,6 +2022,7 @@ ssh_enum() {
 
 # Class:OSINT - Tool Waf Detect - Program C (Wrapper Used)
 waf_detect() {
+    engagement_dispatch_guard waf_detect || { wait_and_return; return 1; }
     local file
     file="$bin/Osint_http_waf_detect"
     clear
@@ -1753,6 +2036,7 @@ waf_detect() {
 # ##### PAYLOADS FUNCTIONS #####
 # Class:PAYLOADS - Tool: Netcat Bind/Reverse Shells - Option 1
 netcat_choice() {
+    engagement_dispatch_guard netcat_choice || { wait_and_return; return 1; }
     clear
     payloads_nc_frame
     sleep 5
@@ -1775,6 +2059,7 @@ netcat_choice() {
 
 # Class: PAYLOADS - Tool: Netcat Bind Shell Payload - Option 1-A
 netcat_shells_bind() {
+    engagement_dispatch_guard netcat_shells_bind || { wait_and_return; return 1; }
     local file ncb template final_script
     file="$lib/NetcatBindShell"
     ncb="$lib/HCDOUNASIXNTM7Q3YR-X-encoded.enc"
@@ -1799,6 +2084,7 @@ netcat_shells_bind() {
 
 # Class: PAYLOADS - Tool: Netcat Reverse Shell - Option 1-B
 netcat_shells_reverse() {
+    engagement_dispatch_guard netcat_shells_reverse || { wait_and_return; return 1; }
     local file ncr template final_script
     file="$lib/NetcatReverseShell"
     ncr="$lib/QI2NTM7Q3YRVBGDBR-X-encoded.enc"
@@ -1823,6 +2109,7 @@ netcat_shells_reverse() {
 
 # Class: PAYLOADS - Tool: Netcat Assembly Shell - Option 1-C
 netcat_shells_assembly() {
+    engagement_dispatch_guard netcat_shells_assembly || { wait_and_return; return 1; }
     trap 'rm -f "$Malware/execute.asm" "$Malware/execute.o"; secure_user_data_permissions >/dev/null 2>&1 || true' SIGQUIT SIGILL SIGTERM SIGHUP EXIT 2>/dev/null
     clear
     payloads_nc_frame
@@ -1846,6 +2133,7 @@ netcat_shells_assembly() {
 
 # Class: PAYLOADS - Tools: Linux Back door Creator - Option 2
 rev_shells() {
+    engagement_dispatch_guard rev_shells || { wait_and_return; return 1; }
     local rvs file template final_script
     rvs="$lib/YXOKETATIH4WMF4KG-X-encoded.enc"
     file="$lib/LinuxReverseShell"
@@ -1871,6 +2159,7 @@ rev_shells() {
 
 # Class: PAYLOADS - Tools: Ransomware - Option 3
 ransomware_shell_options() {
+    engagement_dispatch_guard ransomware_shell_options || { wait_and_return; return 1; }
     clear
     payloads_ransomware_frame
     sleep 5
@@ -1888,6 +2177,7 @@ ransomware_shell_options() {
 
 # Class: PAYLOADS - Tools: Ransomware in Go - Option 3-A
 ransomware_in_go() {
+    engagement_dispatch_guard ransomware_in_go || { wait_and_return; return 1; }
     local file
     file="$bin/Payload_ransomware_golang"
     export CSTK_MAIN_RUNNER=1
@@ -1896,6 +2186,7 @@ ransomware_in_go() {
 }
 # Class: PAYLOADS - Tool: Ransomware encrypt/decrypt script - Option 3
 ransomware_quick_dirty() {
+    engagement_dispatch_guard ransomware_quick_dirty || { wait_and_return; return 1; }
     local file
     file="$home_dir/scripts/bin/Payload_ransomware"
     export CSTK_MAIN_RUNNER=1
@@ -1905,6 +2196,7 @@ ransomware_quick_dirty() {
 
 # Class:PAYLOADS - Tool:Multi reverse shell option script - Option 4 (wrapper used)
 rev_shells_all() {
+    engagement_dispatch_guard rev_shells_all || { wait_and_return; return 1; }
     local mss file DES_DIR start_files end_files new_files
     mss="$lib/KEpwd83JDNWO864ErrfdPl-X-encoded.enc"
     file="$bin/multi_shells_script.sh"
@@ -1933,6 +2225,7 @@ rev_shells_all() {
 
 # Class: PAYLOADS - Tool: no touch disk payload - Option 5
 no_touch_script() {
+    engagement_dispatch_guard no_touch_script || { wait_and_return; return 1; }
     local file HTTP HOST SCRIPT out_script template script
     file="$bin/NoTouchScript.sh"
     trap 'rm -f "$bin/NoTouchScript.sh" "$bin/NoTouchScript.sh.x.c"' SIGQUIT SIGILL SIGTERM SIGHUP EXIT 2>/dev/null
@@ -1963,6 +2256,7 @@ no_touch_script() {
 
 # Class: PAYLOADS - Tool: DoS Bomb Attack - Option 6 (Wrapper used)
 dos_bomb_attack() {
+    engagement_dispatch_guard dos_bomb_attack || { wait_and_return; return 1; }
     local file
 	file="$bin/Payload_bomb_attacks"
     payloads_dosbomb_frame
@@ -1984,6 +2278,7 @@ dos_bomb_attack() {
 
 # Class: PAYLOADS - Tool: SSH Attack - Option 7 (Wrapper used)
 ssh_attack() {
+    engagement_dispatch_guard ssh_attack || { wait_and_return; return 1; }
     local file
 	file="$bin/Payload_make_ssh_keys"
     payloads_sshattack_frame
@@ -1995,6 +2290,7 @@ ssh_attack() {
 
 # Class: PAYLOADS - Tool: Metasploit payload tools - Option 8 (Wrapper used)
 msf_payloads() {
+    engagement_dispatch_guard msf_payloads || { wait_and_return; return 1; }
     local msfvenom_bin msf_embed_binary
 	msfvenom_bin="$bin/msf_payload_create"
 	msf_embed_binary="$bin/msf_payload_inject"
@@ -2013,6 +2309,7 @@ msf_payloads() {
 
 # Class: PAYLOADS - Tool: APK Builder (msfvenom) - Option 9 (Wrapper used)
 apk_killer() {
+    engagement_dispatch_guard apk_killer || { wait_and_return; return 1; }
 	local file
 	file="$bin/Payload_apk_builder"
     clear
@@ -2057,6 +2354,7 @@ apk_killer() {
 }
 # Class: PAYLOADS - Tool: Command And Control Server - Option A (Wrapper used)
 cnc_server() {
+    engagement_dispatch_guard cnc_server || { wait_and_return; return 1; }
     file="$bin/Payload_CommandAndControl"
     clear
     payloads_cnc_server_frame
@@ -2068,6 +2366,7 @@ cnc_server() {
 # ##### POST EXPLOIT TOOLS #####
 # Class: POST EXPLOIT - Tools: Check if VM - Option 1
 check_the_vm() {
+    engagement_dispatch_guard check_the_vm || { wait_and_return; return 1; }
 	local file
 	file="$bin/PostEx_am_i_on_a_vm"
     clear
@@ -2080,6 +2379,7 @@ check_the_vm() {
 
 # Class: POST EXPLOIT - Tool: Web Browser Info Stealer - Option 2 (Wrapper used)
 browser_data_wrapper() {
+    engagement_dispatch_guard browser_data_wrapper || { wait_and_return; return 1; }
 	local file
 	file="$bin/PostEx_browser_thief"
     clear
@@ -2092,6 +2392,7 @@ browser_data_wrapper() {
 
 # Class: POST EXPLOIT - Tool: Crypto Finder - Option 3 (Wrapper Used)
 crypto_catch() {
+    engagement_dispatch_guard crypto_catch || { wait_and_return; return 1; }
     local file
     file="$bin/Crypto_Catch"
     clear
@@ -2104,6 +2405,7 @@ crypto_catch() {
 
 # Class: POST EXPLOIT - Tool: File Permissions Exploit - Option 4 (Wrapper Used)
 check_gtfob() {
+    engagement_dispatch_guard check_gtfob || { wait_and_return; return 1; }
 	local file
 	file="$bin/PostEx_GTFONow"
     clear
@@ -2122,6 +2424,7 @@ check_gtfob() {
 
 # Class: POST EXPLOIT - Tool: Kernel Exploit - Option 5 (Wrapper Used)
 linux_exploits_check() {
+    engagement_dispatch_guard linux_exploits_check || { wait_and_return; return 1; }
     local file
     file="$bin/PostEx_linux_exploit_checker"
     clear
@@ -2135,6 +2438,7 @@ linux_exploits_check() {
 
 # Class: POST EXPLOIT - Tool: Command on start up - Option 6
 startup_command() {
+    engagement_dispatch_guard startup_command || { wait_and_return; return 1; }
     clear
     postx_onstart_frame
     sleep 5
@@ -2152,6 +2456,7 @@ startup_command() {
 
 # Class: POST EXPLOIT - Tool: Brute force archive - Option 7 (Wrapper Used)
 brute_force_file() {
+    engagement_dispatch_guard brute_force_file || { wait_and_return; return 1; }
 	local file
 	file="$bin/PostEx_bruteforce_archive"
     clear
@@ -2164,6 +2469,7 @@ brute_force_file() {
 
 # Class: POST EXPLOIT - Tool: Files of interest - Option 8 (Wrapper Used)
 files_of_interest() {
+    engagement_dispatch_guard files_of_interest || { wait_and_return; return 1; }
 	local file
 	file="$bin/PostEx_filesofinterest"
     clear
@@ -2179,6 +2485,7 @@ files_of_interest() {
 
 # Class: POST EXPLOIT - Tool: In-Memory Password Audit - Option 10
 inmem_password_stealer() {
+    engagement_dispatch_guard inmem_password_stealer || { wait_and_return; return 1; }
     local dir file runner answer save_output output_file rc process supported_found
     dir="$home_dir/Other/Downloads/mimipenguin/"
     file="$dir/mimipenguin"
@@ -2252,6 +2559,7 @@ inmem_password_stealer() {
 # ##### ETC #####
 # Class: ETC - Tool: Users and Shells - Option 1 (AWK)
 users_and_shells() {
+    engagement_dispatch_guard users_and_shells || { wait_and_return; return 1; }
     clear
     etc_usershells_frame
     sleep 5
@@ -2272,6 +2580,7 @@ users_and_shells() {
 
 # Class: ETC - Tool: Python Web server - Option 2 (Wrapper Used)
 py_web_server() {
+    engagement_dispatch_guard py_web_server || { wait_and_return; return 1; }
 	local file
 	file="$bin/Etc_py_web_server"
     clear
@@ -2284,6 +2593,7 @@ py_web_server() {
 
 # Class: ETC - Tool: File Extractor - Option 3 (Wrapper Used)
 extract_arch() {
+    engagement_dispatch_guard extract_arch || { wait_and_return; return 1; }
 	local file
 	file="$bin/Etc_extract_archive"
     clear
@@ -2296,6 +2606,7 @@ extract_arch() {
 
 # Class: ETC - Tool: openssl helper - Option 4 (Wrapper Used)
 r_b_g_wrapper() {
+    engagement_dispatch_guard r_b_g_wrapper || { wait_and_return; return 1; }
 	local file
 	file="$bin/Etc_openssl_helper"
     clear
@@ -2308,6 +2619,7 @@ r_b_g_wrapper() {
 
 # Class: ETC - Tool: Gpg Look a like - Option 5 (Wrapper Used)
 gpg_lookalike_wrapper() {
+    engagement_dispatch_guard gpg_lookalike_wrapper || { wait_and_return; return 1; }
 	local file
 	file="$bin/Etc_gpg_enc_dec"
     clear
@@ -2320,6 +2632,7 @@ gpg_lookalike_wrapper() {
 
 # Class: ETC - Tool: Create exe Binary - Option 6 (Wrapper Used)
 create_exe_binary() {
+    engagement_dispatch_guard create_exe_binary || { wait_and_return; return 1; }
 	local file
 	file="$bin/Etc_make_binary"
     clear
@@ -2332,6 +2645,7 @@ create_exe_binary() {
 
 # Class: ETC - Tool: Post exploit tools to go - Option 7
 post_x_2_go() {
+    engagement_dispatch_guard post_x_2_go || { wait_and_return; return 1; }
 	local file
 	file="$lib/CSTK_Zip2Go.zip"
     [[ -t 1 ]] && clear
@@ -2353,6 +2667,7 @@ post_x_2_go() {
 
 # Class: ETC - Tool: Array Encrypted Script - Option 8 (Wrapper Used)
 array_enc_script() {
+    engagement_dispatch_guard array_enc_script || { wait_and_return; return 1; }
 	local file
 	file="$bin/Etc_array_enc"
     clear
@@ -2365,6 +2680,7 @@ array_enc_script() {
 
 # Class: ETC - Tool: Log Cleaner - Option 9 (Wrapper Used)
 log_cleaning_tool() {
+    engagement_dispatch_guard log_cleaning_tool || { wait_and_return; return 1; }
 	local file
 	file="$bin/Etc_log_cleaner"
     clear
@@ -2376,6 +2692,7 @@ log_cleaning_tool() {
 }
 # Class: ETC - Tool: Arsenal - Option A
 arsenal() {
+    engagement_dispatch_guard arsenal || { wait_and_return; return 1; }
     local file
     file="$(command -v arsenal-ng || true)"
     if [[ -z "$file" || ! -x "$file" ]]; then
@@ -2394,6 +2711,7 @@ arsenal() {
 
 # Class: ETC - Tool: Hash Identify - Option B (Wrapper Used)
 hash_id() {
+    engagement_dispatch_guard hash_id || { wait_and_return; return 1; }
     local file
     file="$bin/Etc_hash_idenify"
     clear
@@ -2406,6 +2724,7 @@ hash_id() {
 
 # Class: ETC - Tool: CSTK AI Analyst - Option C
 cstk_ai_analyst() {
+    engagement_dispatch_guard cstk_ai_analyst || { wait_and_return; return 1; }
     local file
     file="$bin/Etc_cstk_ai"
     if [[ ! -f "$file" || ! -x "$file" || -L "$file" ]]; then
@@ -2417,23 +2736,25 @@ cstk_ai_analyst() {
     etc_ai_frame
     # The analyst needs no privileged operation. Run it directly as the
     # invoking user so model traffic and private session state never run as root.
+    stop_engagement_hud
+    tput csr 0 "$(( $(tput lines 2>/dev/null || echo 24) - 1 ))" 2>/dev/null || true
     run_as_cstk_user "$file"
+    start_engagement_hud
     wait_and_return
 }
 
 run_control_client() {
-    local client token_file
-    client="/opt/cstk-api/cstk_control.py"
-    token_file="$user_home/.local/share/cstk-api/access.token"
-    if [[ -L "$client" || ! -f "$client" || ! -x "$client" ]]; then
-        echo -e "${R}CSTK local control client is not installed safely at $client.${X}" >&2
+    if [[ "$#" == 1 && "$1" == engagements ]]; then
+        run_engagement_helper list --format table
+    else
+        echo "Use the integrated engagement manager (G) for guarded operations." >&2
         return 1
     fi
-    run_as_cstk_user /usr/bin/python3 "$client" --token-file "$token_file" "$@"
 }
 
 # ##### DEFENSE: run read-only tools as the invoking user #####
 web_tls_assessment() {
+    engagement_dispatch_guard web_tls_assessment || return 1
     defense_web_tls_frame
     run_as_cstk_user "$bin/web_tls_security_assessment" "$@"
 }
@@ -2444,6 +2765,7 @@ linux_security_assessment() {
         echo "[SKIP] Linux Security Audit executable is unavailable in this checkout."
         return 3
     fi
+    engagement_dispatch_guard linux_security_assessment || return 1
     run_as_cstk_user "$bin/linux_security_audit" "$@"
 }
 
@@ -2491,9 +2813,20 @@ fi
 
 check_hash || exit 1
 prepare_user_data_dirs || exit 1
+run_as_cstk_user mkdir -p -- "$CSTK_ENGAGEMENTS_DIR" || exit 1
 trap finish_cstk_session EXIT
 
+if [[ "$1" == "--use" ]]; then
+    [[ $# -ge 2 ]] || { echo "--use requires an engagement ID" >&2; exit 2; }
+    apply_engagement_selection "$2" || exit 1
+    shift 2
+fi
+if [[ $# -eq 1 && "$1" =~ ^(-G|--engagements)$ ]]; then
+    engagement_manager_menu
+    exit $?
+fi
 if [[ $# -eq 0 ]]; then
+    [[ -t 0 && -t 1 ]] || { echo "The CSTK menu requires an interactive terminal." >&2; exit 2; }
     check_if_password_is_needed
 fi
 if [[ $# -eq 1 && "$1" =~ ^(-T|--tty)$ ]]; then

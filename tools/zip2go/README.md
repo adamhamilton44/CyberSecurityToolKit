@@ -133,7 +133,7 @@ sources, takes the current `scripts/bin/web_tls_security_assessment` source,
 builds optional launchers with shc/musl-gcc, writes checksums and build metadata,
 and atomically replaces `scripts/lib/CSTK_Zip2Go.zip`. Rebuild again after changing
 any source; do not edit generated archives manually. See the repository's
-`ZIP2GO_BUILD_REPORT.md` for verification and known limits.
+`tests/test_zip2go.py` and the limitations in this guide for verification and known limits.
 
 ## Additional local utilities
 

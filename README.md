@@ -95,6 +95,8 @@ sudo cstk
 | `2` | Open the payload-development tools |
 | `3` | Open the post-exploitation tools |
 | `4` | Open the supporting utilities |
+| `G` | Create, select, validate, pause, and manage engagements; run guarded TCP/web operations |
+| `L` | Explicit standalone lab mode with no engagement enforcement (unavailable inside a selected engagement session) |
 | `5` | Turn CSTK launcher authentication on or off |
 | `6` | Turn animated headers on or off |
 | `7` | Manage private Loot/Malware/Logs storage, logging, and backups |
@@ -376,7 +378,7 @@ sources support more Linux environments; bundled shc launchers target Linux
 x86-64 and still require Bash and their documented dependencies. The archive
 includes a checksum manifest and generated launcher sources. Maintainers rebuild
 it with `python3 tools/build_zip2go.py` after changing sources. See
-[ZIP2GO_BUILD_REPORT.md](ZIP2GO_BUILD_REPORT.md) for scope and validation.
+[portable toolkit source guide](tools/zip2go/README.md) for scope and validation.
 
 Zip2Go also includes explicit LinPEAS, LES and Unix Priv Check enumeration
 profiles. Use `enumeration.sh --tool linpeas`, `--tool les`, or `--tool upc` after
@@ -402,7 +404,73 @@ examples and duplicate requirements no longer trigger automatic installation.
 Remote database checks retain their client packages. The unused Vulscan clone and
 optional naminter/BloodHound collector pipx installs were also removed; the
 updater skips their legacy source/pipx records. Existing installations are not
-purged by this change. See [DEPENDENCY_AUDIT.md](DEPENDENCY_AUDIT.md) for every
-reviewed dependency and [tools/dependency_policy.json](tools/dependency_policy.json)
-for decisions and rationale. Compiled/source equivalence and package command-name
+purged by this change. See [tools/dependency_policy.json](tools/dependency_policy.json) for dependency
+decisions and rationale. Regenerate local reports with
+`python3 tools/audit_dependencies.py`; output goes to ignored `log/development/`. Compiled/source equivalence and package command-name
 mismatches are explicitly identified rather than treated as verified coverage.
+
+## Engagement sessions and scope enforcement
+
+Use main-menu **G**, or `sudo cstk --engagements`. Create a draft with the
+23-group guided questionnaire; inspect and validate it, then change its state
+from draft to ready to active. Use **U** in that manager to select it for the
+current process, or start with `sudo cstk --use ENGAGEMENT_ID`. No global active
+pointer is used. Existing AI engagements under `~/.local/share/cstk/Engagements`
+use the same record format and remain available. The older experimental
+lowercase `engagements` tree is not silently moved or merged.
+
+The terminal status area shows the selected client, scope revision/hash,
+authorization interval, included/excluded scope, limits, emergency contact,
+and ACTIVE or STOP/REVIEW. It refreshes once per second. CSTK menu output uses
+a reserved scroll region; the guarded-run screen and AI screen maintain their
+own live status. Terminals smaller than 60 columns by 16 rows cannot start a
+guarded run. Exiting restores the normal scroll region.
+
+The manager provides two reviewed, unprivileged adapters:
+
+- **N**: sequential TCP connection checks for explicit IP/CIDR targets, at most
+  256 addresses and 64 explicit ports, with no application payload.
+- **W**: one bounded HTTP(S) GET chain. Every destination is checked before
+  connection; all DNS answers must pass strict scope policy, and the connection
+  pins a numeric destination and binds the checked local source address.
+  Redirects follow the recorded policy, every hop is rechecked, HTTPS downgrade
+  is refused, and page links/resources are not fetched. Bodies are not stored;
+  only status, bounded byte count, and digest are retained. URL queries are
+  excluded from run/audit records.
+
+Every connection/request revalidates lifecycle, authorization dates, testing
+windows, selected revision, action, exclusions, protocol/port, and source
+address. Each run requires explicit RUN confirmation. Runs are serialized per
+engagement, paced to its request limit, capped at five minutes, and watched for
+pause, expiry, cancellation, and revision changes. Run records are private and
+decisions are audited. A denied destination is fingerprinted when the policy
+requires minimal out-of-scope storage. Custom traffic identifiers are applied
+only after validating header names/values.
+
+**Scope of enforcement:** legacy scanners, credential tools, payload routes,
+post-exploitation routes, unrestricted servers, Arsenal, and the separate
+control execution routes have no reviewed adapter here. They are refused
+through CSTK engagement dispatch and its wrapper. This release does not claim
+that those tools are engagement-safe. Local support utilities and defensive AI
+remain available. The selected engagement is automatically shown in the AI;
+non-operational records cannot be transmitted as authorization context.
+
+For independent lab use, main-menu **L** requires typing LAB and displays an
+unguarded-mode banner. A selected engagement cannot switch into this mode;
+exit the process first. This is an explicit unguarded workflow, not an
+engagement authorization mechanism. Directly launched programs outside CSTK
+are outside this application guard; this is not a host firewall/sandbox.
+
+The checked source is the actual local bound address. NAT/VPN public egress
+cannot be established from that value; WSL/NAT engagements whose rules require
+an unverifiable public source must remain blocked until the network path is
+independently verified. Application reads are paced; TCP/TLS/DNS overhead and
+kernel buffering are not a hard network-bandwidth shaper. Stop-condition text,
+legal consent, encryption-at-rest, retention, and real-world incident response
+still require the operator's controls. DNS resolution uses the host's configured
+resolver; it does not probe the target application before URL scope validation.
+
+The new manager is distributed as `scripts/bin/Etc_engagement`, packaged with
+PyInstaller. Its editable launcher/adapter source is maintained externally in
+`CSTK_bin_files/Engagements`; it imports the same policy source used by the AI.
+No existing opaque library resource is renamed or decrypted by this update.

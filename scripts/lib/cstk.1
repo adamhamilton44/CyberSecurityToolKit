@@ -469,3 +469,14 @@ private keys, breached-account records, or generated payloads in a report.
 .BR openssl (1),
 .BR ssh (1),
 .BR sha256sum (1)
+
+.SH ENGAGEMENTS
+Use -G or --engagements to create, select, validate, and manage engagements.
+Use --use ID to select an active engagement for this process.
+Main menu G provides guarded TCP checks and bounded HTTP(S) requests.
+The live status area displays scope, authorization, operational status, and
+emergency contact. Unsupported legacy tools are blocked in engagement mode.
+Main menu L requires explicit LAB confirmation for unguarded standalone use;
+it is unavailable inside a selected engagement session.
+Every guarded destination and redirect is authorized before connection.
+This is an application-level guard, not a host firewall or network shaper.

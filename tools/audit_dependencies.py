@@ -44,7 +44,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--reference', type=Path,
                         default=Path('/home/adam/Documents/Github/CSTK_bin_files'))
-    parser.add_argument('--output', type=Path, default=ROOT/'DEPENDENCY_AUDIT.md')
+    parser.add_argument('--output', type=Path, default=ROOT/'log/development/DEPENDENCY_AUDIT.md')
     args = parser.parse_args()
     policy = json.loads((ROOT/'tools/dependency_policy.json').read_text())
     installer = (ROOT/'install.sh').read_text()
@@ -107,6 +107,7 @@ def main():
              ', '.join(f'`{name}`' for name in unmatched), '',
              'Reproduce with `python3 tools/audit_dependencies.py --reference /path/to/CSTK_bin_files`. '
              'Full reference locations and catalogue matches are in the companion JSON.']
+    args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text('\n'.join(text)+'\n')
     args.output.with_suffix('.json').write_text(json.dumps({'dependencies': rows,
         'unmatched_compiled_entries': unmatched}, indent=2)+'\n')

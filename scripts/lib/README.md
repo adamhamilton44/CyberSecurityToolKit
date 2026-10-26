@@ -69,4 +69,4 @@ runner, bounded metadata checks, an explicit selected-file HTTP service, the
 maintained Web/TLS checker, a permission/traffic guide, checksums, readable
 sources, and optional Linux x86-64 shc launchers. It does not require CSTK's
 wrapper or root. Rebuild with `python3 tools/build_zip2go.py`; generated launcher
-C sources are included. See `ZIP2GO_BUILD_REPORT.md` in the repository root.
+C sources are included. See `tools/zip2go/README.md` for maintained scope and verification guidance.

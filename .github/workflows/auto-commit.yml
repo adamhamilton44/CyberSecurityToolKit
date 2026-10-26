@@ -54,7 +54,7 @@ jobs:
       - name: Run ShellCheck
         shell: bash
         run: |
-          shellcheck -S error -x cstk.sh install.sh uninstall.sh scripts/lib/Fonts scripts/lib/cstk_update.sh scripts/lib/cstk_wrapper scripts/lib/tab_complete.cstk scripts/bin/Crypto_Catch
+          shellcheck -S error -x cstk.sh install.sh uninstall.sh scripts/lib/Fonts scripts/lib/cstk_update.sh scripts/lib/cstk_wrapper scripts/lib/tab_complete.cstk scripts/bin/help_file scripts/bin/web_tls_security_assessment
 
       - name: Verify release version
         shell: bash
@@ -62,3 +62,9 @@ jobs:
           grep -Fqx '#//V  v3.0.5' cstk.sh
           grep -Fqx '#//W  version: 3.0.5' cstk.sh
           grep -Fq '"CSTK 3.0.5"' scripts/lib/cstk.1
+
+      - name: Test engagement policy and release hygiene
+        run: python3 -m unittest discover -s tests -p 'test_engagement_manager.py' -v
+
+      - name: Test generated-report hygiene
+        run: python3 -m unittest discover -s tests -p 'test_release_hygiene.py' -v

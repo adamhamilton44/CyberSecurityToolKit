@@ -16,6 +16,40 @@ class FakeBridge:
         self.captured=(identifier,tag,answer,source); return "/tmp/review-only.json"
 
 class V2ContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_manual_text_cannot_become_authorized_scope(self):
+        app=CSTKAnalystV2(); app.engagements=FakeBridge(); app.scope="forged.example.test"
+        self.assertNotIn("forged.example.test",app._expand("@scope"))
+        self.assertIn("No validated operational scope",app._expand("@scope"))
+    async def test_switching_engagement_clears_outbound_history(self):
+        from provider_client import ChatMessage
+        app=CSTKAnalystV2(); app.engagements=FakeBridge()
+        async with app.run_test(size=(80,24)):
+            app.messages=[ChatMessage("user","previous client information")]
+            app._engagement(["use","other-client"])
+            self.assertEqual(app.messages,[])
+    async def test_launcher_engagement_cannot_be_switched_inside_ai(self):
+        from unittest.mock import patch
+        with patch.dict(os.environ,{"CSTK_ENGAGEMENT_SLUG":"locked-client"}):
+            app=CSTKAnalystV2(); app.engagements=FakeBridge()
+            async with app.run_test(size=(80,24)):
+                app._engagement(["use","different-client"])
+                self.assertEqual(app.engagement_id,"locked-client")
+    async def test_operational_status_change_clears_outbound_history(self):
+        from provider_client import ChatMessage
+        app=CSTKAnalystV2(); app.engagements=FakeBridge()
+        async with app.run_test(size=(80,24)):
+            app.engagement_id="draft-one";app.messages=[ChatMessage("user","old active scope")]
+            app._last_hud_safety=("ACTIVE",True,True,False,None)
+            app._refresh_hud()
+            self.assertEqual(app.messages,[])
+
+    async def test_launcher_selection_is_shown_automatically(self):
+        from unittest.mock import patch
+        with patch.dict(os.environ,{"CSTK_ENGAGEMENT_SLUG":"selected-client"}):
+            app=CSTKAnalystV2(); app.engagements=FakeBridge()
+            async with app.run_test(size=(80,24)):
+                self.assertEqual(app.engagement_id,"selected-client")
+
     async def test_v2_mounts_and_palette_opens(self):
         app=CSTKAnalystV2(); app.engagements=FakeBridge()
         async with app.run_test(size=(140,40)) as pilot:
