@@ -24,6 +24,7 @@ log_dir="$home_dir/log/updates/$run_stamp"
 warnings=0
 failures=0
 self_update_blocked=0
+self_update_reason=""
 self_updated=0
 REPO_CHANGED=0
 REPO_STATE="unknown"
@@ -132,6 +133,26 @@ print_scope() {
     echo "This does not perform a full operating-system upgrade or autoremove packages."
 }
 
+repo_git_as_owner() {
+    local owner="$1" path="$2" owner_uid
+    local -a agent_env=()
+    shift 2
+
+    if [[ -n "${SSH_AUTH_SOCK:-}" ]]; then
+        owner_uid="$(id -u "$owner")" || return 1
+        if [[ ! -S "$SSH_AUTH_SOCK" || -L "$SSH_AUTH_SOCK" ||
+              "$(stat -c '%u' -- "$SSH_AUTH_SOCK")" != "$owner_uid" ]]; then
+            echo "Refusing an SSH agent socket not owned by the checkout account." >&2
+            return 1
+        fi
+        agent_env+=("SSH_AUTH_SOCK=$SSH_AUTH_SOCK")
+    fi
+    # sudo resets the environment again when returning to the checkout owner.
+    # Set only the validated agent socket after that boundary; never forward keys.
+    sudo -H -u "$owner" env "${agent_env[@]}" \
+        git -c safe.directory="$path" -C "$path" "$@"
+}
+
 repo_git() {
     local path="$1"
     local owner
@@ -139,7 +160,7 @@ repo_git() {
 
     owner="$(stat -c '%U' "$path")" || return 1
     if [[ "$EUID" -eq 0 && "$owner" != "root" ]] && command -v sudo >/dev/null 2>&1; then
-        sudo -H -u "$owner" git -c safe.directory="$path" -C "$path" "$@"
+        repo_git_as_owner "$owner" "$path" "$@"
     else
         git -c safe.directory="$path" -C "$path" "$@"
     fi
@@ -167,7 +188,11 @@ check_git_repo() {
         return 2
     }
     if ! repo_git "$path" fetch --quiet --prune >"$log_dir/${label//[^A-Za-z0-9]/_}_fetch.log" 2>&1; then
-        warn "$label remote check failed; see the update log."
+        warn "$label remote check failed; see $log_dir/${label//[^A-Za-z0-9]/_}_fetch.log"
+        if grep -Eq 'Permission denied \(publickey|authentication agent|Could not open a connection to your authentication agent' \
+            "$log_dir/${label//[^A-Za-z0-9]/_}_fetch.log"; then
+            warn "SSH authentication failed. Load the checkout owner's key, then run: sudo --preserve-env=SSH_AUTH_SOCK cstk --update"
+        fi
         REPO_STATE="fetch-failed"
         return 1
     fi
@@ -331,7 +356,7 @@ check_python_tools() {
         if pipx list --short 2>/dev/null | awk -v wanted="$pkg" '$1 == wanted {found=1} END {exit !found}'; then
             ((installed++))
         else
-            warn "$pkg is recorded by CSTK but is not installed in this pipx environment."
+            warn "$pkg is recorded but missing or unusable in the current CSTK pipx environment (a removed Python interpreter can cause this)."
         fi
     done
     info "$installed recorded pipx application(s) will query their indexes if update is approved."
@@ -384,6 +409,9 @@ check_github_tools() {
                 ;;
             shc)
                 check_git_repo shc "$home_dir/Other/Downloads/shc" || true
+                ;;
+            mongosh-archive)
+                info "mongosh was installed from a verified archive; archive upgrades require the installer, so this update check skips it."
                 ;;
             vulscan)
                 info "Vulscan is no longer managed by CSTK; skipping the legacy record."
@@ -448,8 +476,11 @@ update_github_tools() {
 check_cstk_self_update() {
     echo -e "${C}\nCSTK self-update check${X}"
     check_git_repo CSTK "$home_dir" || true
+    case "$REPO_STATE" in
+        current|behind) self_update_blocked=0; self_update_reason="" ;;
+        *) self_update_blocked=1; self_update_reason="$REPO_STATE" ;;
+    esac
     if [[ "$REPO_STATE" == "not-git" ]]; then
-        self_update_blocked=1
         echo -e "${Y}CSTK self-update requires an authenticated Git checkout.${X}"
         echo "This copy contains no .git metadata, so CSTK will not overwrite it from an archive."
     fi
@@ -486,19 +517,24 @@ update_cstk_self() {
     if [[ ! -d "$home_dir/.git" ]]; then
         warn "CSTK self-update skipped: the current installation is not a Git checkout."
         self_update_blocked=1
+        self_update_reason="not-git"
         return 2
     fi
     if [[ -n "$(repo_git "$home_dir" status --porcelain --untracked-files=no 2>/dev/null)" ]]; then
         warn "CSTK self-update skipped because tracked local changes are present."
         self_update_blocked=1
+        self_update_reason="dirty"
         return 2
     fi
     before="$(repo_git "$home_dir" rev-parse HEAD)" || return 1
     update_git_repo CSTK "$home_dir" || {
         self_update_blocked=1
+        self_update_reason="$REPO_STATE"
         return 2
     }
     after="$(repo_git "$home_dir" rev-parse HEAD)" || return 1
+    self_update_blocked=0
+    self_update_reason=""
     if [[ "$before" != "$after" ]]; then
         self_updated=1
         printf 'previous=%s\nupdated=%s\n' "$before" "$after" >"$log_dir/cstk_commits.log"
@@ -513,6 +549,9 @@ confirm_update() {
     echo
     echo -e "${Y}The update can download packages and execute verified upstream build steps as root.${X}"
     echo "CSTK will preserve local data, Bank contents, logs, authentication settings, and keys."
+    if [[ "$self_update_blocked" -eq 1 ]]; then
+        warn "CSTK itself is blocked (${self_update_reason:-see warnings}); proceeding can only update eligible dependencies."
+    fi
     read -r -p "Continue with all recorded CSTK updates? [y/N]: " answer
     [[ "$answer" =~ ^[Yy]([Ee][Ss])?$ ]]
 }
@@ -523,7 +562,7 @@ print_summary() {
     echo "  Failures: $failures"
     echo "  Logs: $log_dir"
     if [[ "$self_update_blocked" -eq 1 ]]; then
-        echo -e "${Y}  CSTK self-update: blocked until this installation has an authenticated Git checkout.${X}"
+        echo -e "${Y}  CSTK self-update: blocked (${self_update_reason:-see warnings above}); installed files were not advanced.${X}"
     fi
 }
 
@@ -554,7 +593,8 @@ main() {
 
     if [[ "$mode" == "check" ]]; then
         print_summary
-        return 0
+        [[ "$self_update_blocked" -eq 0 ]]
+        return $?
     fi
 
     if ! confirm_update; then
@@ -580,4 +620,6 @@ main() {
     fi
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

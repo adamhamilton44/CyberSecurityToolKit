@@ -68,3 +68,6 @@ jobs:
 
       - name: Test generated-report hygiene
         run: python3 -m unittest discover -s tests -p 'test_release_hygiene.py' -v
+
+      - name: Test updater authentication and diagnostics
+        run: python3 -m unittest discover -s tests -p 'test_update_auth.py' -v

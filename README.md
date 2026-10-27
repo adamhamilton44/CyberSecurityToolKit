@@ -190,6 +190,20 @@ never be placed on a command line.
 
 Update logs are written beneath `log/updates/`.
 
+For an SSH remote whose private key is loaded in your user's agent, preserve
+its socket across sudo:
+
+```bash
+sudo --preserve-env=SSH_AUTH_SOCK cstk --update
+```
+
+CSTK validates the agent socket's owner and forwards only that socket when Git
+runs as the checkout owner. It never copies the private key. A failed remote
+check means the installed branch has not advanced; a clean working tree can
+still be behind `origin/main`. Missing or broken pipx environments and missing
+third-party source checkouts are separate dependency warnings. The updater does
+not reinstall unrelated user applications to repair them.
+
 ## Integrity protection
 
 CSTK verifies protected program files before opening its menus or dispatching
