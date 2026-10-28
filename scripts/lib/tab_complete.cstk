@@ -2,7 +2,7 @@
 # shellcheck shell=bash disable=SC2154,SC2207
 _cstk_global_options() {
     printf '%s\n' --osint --payload --postx --etc --defense --help --version --tty \
-        --check-updates --update --private-data --control --engagements --use \
+        --check-updates --update --private-data --control --engagements --report --use \
         --refresh-hashes -O -P -X -E -D -h -H -v -V -T -C -U -G
 }
 _cstk_tool_options() {

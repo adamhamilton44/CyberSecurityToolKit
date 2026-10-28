@@ -13,3 +13,6 @@ scripts/lib/GD_*.txt whitespace=-trailing-space
 
 # Preserve pinned upstream sources and their provenance hashes verbatim.
 scripts/tools/zip2go/vendor/* whitespace=-trailing-space,-blank-at-eof,-space-before-tab
+
+# Preserve upstream reporting dependency notices verbatim.
+scripts/source/reporting/notices/** whitespace=-trailing-space,-blank-at-eof,-space-before-tab

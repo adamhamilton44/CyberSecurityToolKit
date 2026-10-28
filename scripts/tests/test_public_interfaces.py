@@ -40,7 +40,7 @@ class PublicInterfaceTests(unittest.TestCase):
     def test_global_aliases_and_engagement_prefixed_completion(self):
         for shell in ('bash','zsh'):
             options=self.complete(shell,['cstk',''])
-            self.assertTrue({'-h','-H','-v','-V','--refresh-hashes','--use'}<=options)
+            self.assertTrue({'-h','-H','-v','-V','--refresh-hashes','--use','--report'}<=options)
             self.assertEqual(self.complete(shell,['cstk','--use','client','-D']),{'-Dl','-Dw','-Dc','-Dp'})
             self.assertEqual(self.complete(shell,['cstk','--use','client','--defense','']),{'--linux-audit','--web-tls','--web-check','--project'})
     def test_help_output_matches_current_public_routes(self):
@@ -53,7 +53,7 @@ class PublicInterfaceTests(unittest.TestCase):
             self.assertIn('-Dp',proc.stdout)
             self.assertNotIn('local API',proc.stdout)
         manual=(ROOT/'scripts/lib/cstk.1').read_text().replace('\\-','-')
-        for option in ('--web-check','--project','--refresh-hashes','--engagements','--use','--cnc'):
+        for option in ('--web-check','--project','--refresh-hashes','--engagements','--use','--report','--cnc'):
             self.assertIn(option,manual)
         self.assertNotIn('inventory|tcp-connect',manual)
     def test_all_defense_frames_have_working_option_examples(self):

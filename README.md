@@ -492,8 +492,8 @@ still require the operator's controls. DNS resolution uses the host's configured
 resolver; it does not probe the target application before URL scope validation.
 
 The new manager is distributed as `scripts/bin/Etc_engagement`, packaged with
-PyInstaller. Its editable launcher/adapter source is maintained externally in
-`CSTK_bin_files/Engagements`; it imports the same policy source used by the AI.
+PyInstaller. Its editable launcher/adapter source is maintained in
+`scripts/source/cstk_ai/engagement_runtime.py`; it imports the same policy source used by the AI.
 No existing opaque library resource is renamed or decrypted by this update.
 
 
@@ -556,3 +556,46 @@ dependency when its separately supplied executable is absent. It writes unique
 reports under the invoking user's private Logs and Loot directories, runs
 without root, and explicitly reports that privileged checks may be incomplete.
 Its existing standalone-lab restriction remains in place.
+
+### Encrypted engagement notebooks and professional reporting
+
+Open **G → B**, or `sudo cstk --report ENGAGEMENT_ID`. This works for review
+and reporting after an engagement is closed. Create a separate notebook
+passphrase and complete the reporting questions (client, audience, objectives,
+actual testing dates, limitations, delivery, retention and other report context).
+These questions do not alter the approved scope or authorize testing.
+
+The notebook stays unlocked in that process until you exit. **T/W** run the
+existing guarded TCP/HTTP adapters and save concise structured evidence quietly
+into the encrypted notebook. The regular G → N/W routes prompt for the passphrase
+per run. Capture is required even with diagnostic logging off; failed capture
+stops the supported operation visibly. Changed scope must be reviewed and
+imported before more checks. All destination, redirect, source-IP, expiry,
+cancellation and testing-window checks remain in the guard.
+
+Notes use owner-only AES-256-GCM storage with a scrypt-wrapped random key.
+Passphrases are never saved in command arguments or environment variables;
+there is no recovery mechanism. Only this notebook is encrypted: existing
+private audit/run records and imported source files retain their own policies.
+No background key service is installed. Full-disk encryption and the operating
+system's swap/backups policy remain separate controls.
+
+Review evidence and candidate findings, add impact and remediation, export a
+draft, and finalize the reviewed unchanged draft. The tool writes editable Word,
+PDF and Markdown using recorded input without AI. Reports are intentionally
+plaintext in private directories. LibreOffice (`soffice`) is required for PDF;
+the installer offers `libreoffice-writer` as an optional tracked dependency.
+Missing LibreOffice does not prevent capture or review.
+
+Finalization retains encrypted notes. Deletion is explicit and checks the final
+report hashes, retention eligibility and legal hold; it does not securely erase
+backups. Private-data backups include Engagements; uninstall/update retain them.
+Unsupported legacy tools remain blocked and do not gain automatic capture.
+See [reporting guide](scripts/source/reporting/README.md) for review/retention
+commands, and [integration contract](scripts/source/reporting/INTEGRATION.md).
+
+For branch verification, run `sha256sum -c scripts/source/reporting/RELEASE_SHA256SUMS` from the repository root. This reviewed
+source/binary manifest supplements the locally generated runtime integrity
+manifest; installation or runtime synchronization must generate the latter for
+the checkout being deployed. Keep the main installation separate while testing
+a feature branch.

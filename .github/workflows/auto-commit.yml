@@ -64,10 +64,10 @@ jobs:
           grep -Fq '"CSTK 3.0.5"' scripts/lib/cstk.1
 
       - name: Test engagement policy and release hygiene
-        run: python3 -m unittest discover -s tests -p 'test_engagement_manager.py' -v
+        run: python3 -m unittest discover -s scripts/tests -p 'test_engagement_manager.py' -v
 
       - name: Test generated-report hygiene
-        run: python3 -m unittest discover -s tests -p 'test_release_hygiene.py' -v
+        run: python3 -m unittest discover -s scripts/tests -p 'test_release_hygiene.py' -v
 
       - name: Test updater authentication and diagnostics
-        run: python3 -m unittest discover -s tests -p 'test_update_auth.py' -v
+        run: python3 -m unittest discover -s scripts/tests -p 'test_update_auth.py' -v

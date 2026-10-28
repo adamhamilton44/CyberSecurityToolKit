@@ -1,0 +1,23 @@
+{
+  "client": "Example Client",
+  "engagement_name": "Customer portal configuration assessment",
+  "engagement_reference": "EXAMPLE-2026-042",
+  "assessment_type": "External web configuration assessment",
+  "author": "Example Security Team",
+  "audience": "The security lead, service owners, and engineering teams",
+  "recipients": "Example Client security lead and authorized service owners",
+  "classification": "Confidential",
+  "objectives": "Identify actionable configuration weaknesses in the approved customer portal endpoints",
+  "business_context": "The customer portal supports account access and service requests. Protecting session identifiers and maintaining reliable access are the primary business concerns.",
+  "priority_assets": "The approved login endpoint and its session-handling controls are the priority. The payment service remains excluded.",
+  "testing_end": "2026-10-28",
+  "methodology": "The assessment used bounded unauthenticated HTTP response review, TLS certificate checks, and a single TCP connectivity check. The professional reviewed every reported finding and assigned its severity.",
+  "limitations": "The work did not include authenticated user roles, business-logic testing, exploitation, application source review, or comprehensive cipher enumeration. A failed legacy TLS probe was inconclusive under the local client policy.",
+  "delivery_method": "The approved encrypted client delivery portal",
+  "evidence_policy": "Report sanitized header observations and short validation notes. Do not retain passwords, bearer tokens, session cookie values, or customer records.",
+  "retention_days": "30",
+  "legal_hold": "no",
+  "remediation_context": "Service owners should agree deployment dates and arrange targeted validation after changes. The proposed dates below are planning targets supplied for this example.",
+  "executive_context": "Two configuration findings require remediation planning: a session cookie without the Secure attribute and a missing Content Security Policy on the selected HTML response. Neither observation demonstrates account compromise. The recommendations focus on transport protection and browser defense in depth.",
+  "testing_start": "2026-10-28"
+}

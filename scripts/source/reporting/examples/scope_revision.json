@@ -1,0 +1,28 @@
+{
+  "engagement_id": "b7430238-0f3f-46c6-932a-89591bdc227e",
+  "name": "Customer portal configuration assessment",
+  "client": "Example Client",
+  "authorization": {
+    "reference": "EXAMPLE-ROE-042",
+    "valid_from": "2026-10-28T00:00:00Z",
+    "valid_until": "2026-10-29T00:00:00Z"
+  },
+  "scope": {
+    "include": [
+      {
+        "type": "url",
+        "value": "https://portal.example.test/login"
+      },
+      {
+        "type": "ip",
+        "value": "192.0.2.10"
+      }
+    ],
+    "exclude": [
+      {
+        "type": "hostname",
+        "value": "payments.example.test"
+      }
+    ]
+  }
+}
