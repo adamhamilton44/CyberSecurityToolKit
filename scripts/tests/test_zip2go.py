@@ -18,7 +18,7 @@ import urllib.error
 import urllib.request
 import zipfile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 ARCHIVE = ROOT / 'scripts/lib/CSTK_Zip2Go.zip'
 
 

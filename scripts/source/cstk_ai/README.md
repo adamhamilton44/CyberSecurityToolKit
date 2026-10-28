@@ -37,6 +37,12 @@ Useful engagement commands:
 /engagement answer TARGET_LIST example.test
 ```
 
+Run `/setup` for a guided form with validation. It saves non-secret connection
+metadata and opens a separate masked credential prompt when needed. Saved
+profiles load automatically on launch. The form accepts OpenAI-compatible chat
+APIs; providers using another protocol require a transport adapter. Setup sends
+no network request.
+
 Provider examples:
 
 ```text

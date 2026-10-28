@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import sys
 from pathlib import Path
 import platform
 import shutil
@@ -10,8 +11,8 @@ import subprocess
 import tempfile
 import zipfile
 
-ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / 'tools/zip2go'
+ROOT = Path(sys.executable if getattr(sys, "frozen", False) else __file__).resolve().parents[2]
+SOURCE = ROOT / 'scripts/tools/zip2go'
 DEST = ROOT / 'scripts/lib/CSTK_Zip2Go.zip'
 ENTRY_POINTS = ('run_me.sh', 'system_info.sh', 'network_info.sh', 'permissions_audit.sh',
                 'security_config.sh', 'file_inventory.sh', 'serve_files.sh', 'verify.sh', 'web_tls_check.sh',

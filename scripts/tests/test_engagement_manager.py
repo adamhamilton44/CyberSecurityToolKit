@@ -15,7 +15,7 @@ import unittest
 from pathlib import Path
 
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "source" / "cstk_ai" / "cstk_engagement.py"
+MODULE_PATH = Path(__file__).resolve().parents[2] / "scripts" / "source" / "cstk_ai" / "cstk_engagement.py"
 SPEC = importlib.util.spec_from_file_location("cstk_engagement", MODULE_PATH)
 assert SPEC and SPEC.loader
 engagement = importlib.util.module_from_spec(SPEC)
@@ -454,7 +454,7 @@ class EngagementManagerTests(unittest.TestCase):
 
 class DispatchBoundaryTests(unittest.TestCase):
     def test_guided_target_functions_check_engagement_before_dispatch(self):
-        source = (Path(__file__).resolve().parents[1] / "cstk.sh").read_text()
+        source = (Path(__file__).resolve().parents[2] / "cstk.sh").read_text()
         for name in ("nmap_tool", "enum_tool", "sweep_ip", "waf_detect", "ssh_enum", "pass_attack", "web_tls_assessment"):
             body = source.split(name + "() {", 1)[1].split("\n}", 1)[0]
             first = next(line.strip() for line in body.splitlines() if line.strip())

@@ -23,7 +23,7 @@ Other/SecurityChecks/*
 __pycache__/
 *.vscode/
 
-# Local extraction of the portable release; maintained sources live in tools/zip2go.
+# Local extraction of the portable release; maintained sources live in scripts/tools/zip2go.
 /scripts/lib/CSTK_2Go/
 
 # Generated development reports are local artifacts, not release contents.

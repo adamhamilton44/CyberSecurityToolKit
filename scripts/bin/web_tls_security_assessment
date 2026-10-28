@@ -37,7 +37,10 @@ loot=${CSTK_LOOT_DIR:-$base/Loot}; logs=${CSTK_LOG_DIR:-$base/Logs}
 mkdir -p -- "$loot" || exit 1
 report_dir=$(mktemp -d "$loot/web-tls-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX") || exit 1
 report="$report_dir/report.txt"
-work=$(mktemp -d) || exit 1
+# sudo/runuser may retain root's TMPDIR, which the invoking user cannot access.
+# Keep scratch data inside the already private, user-owned report directory.
+work=$(mktemp -d "$report_dir/.work.XXXXXXXXXX") || exit 1
+export TMPDIR="$work"
 trap 'rm -rf -- "$work"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM

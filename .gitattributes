@@ -12,4 +12,4 @@ scripts/lib/Fonts whitespace=-trailing-space,-blank-at-eof
 scripts/lib/GD_*.txt whitespace=-trailing-space
 
 # Preserve pinned upstream sources and their provenance hashes verbatim.
-tools/zip2go/vendor/* whitespace=-trailing-space,-blank-at-eof,-space-before-tab
+scripts/tools/zip2go/vendor/* whitespace=-trailing-space,-blank-at-eof,-space-before-tab

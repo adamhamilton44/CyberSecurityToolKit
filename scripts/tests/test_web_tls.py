@@ -10,7 +10,7 @@ import tempfile
 import threading
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TOOL = ROOT / 'scripts/bin/web_tls_security_assessment'
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -142,6 +142,14 @@ subjectAltName = DNS:localhost
     def url(self, scheme='http', path='/', host='127.0.0.1'):
         server = self.https if scheme == 'https' else self.http
         return f'{scheme}://{host}:{server.server_port}{path}'
+    def test_inherited_unusable_root_tmpdir_does_not_break_assessment(self):
+        env=dict(self.env, TMPDIR='/proc/cstk-root-only-temp')
+        proc, report=self.run_tool(self.url(),env=env)
+        self.assertEqual(proc.returncode,0,proc.stderr)
+        self.assertIn('CSTK Web/TLS assessment',report)
+        self.assertNotIn('mktemp:',proc.stderr)
+        self.assertEqual(list((self.out/'Loot').glob('web-tls-*/.work.*')),[])
+
     def test_invalid_targets(self):
         for target in ['file:///etc/passwd', '-o', 'https://user:pass@localhost/',
                        'https://localhost:0/', 'https://localhost:65536/',

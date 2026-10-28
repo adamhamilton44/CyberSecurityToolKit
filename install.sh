@@ -1427,6 +1427,26 @@ breached_parser() {
     fi
 }
 
+# Optional Docker tools: cache images at install time; launch only on demand.
+install_container_tools() {
+    local answer
+    [[ -t 0 ]] || { echo 'Optional Docker tools: images will download on first launch.'; return 0; }
+    read -r -p 'Prepare Docker / Web Check / Trivy now? [y/N]: ' answer
+    [[ "$answer" =~ ^[Yy]([Ee][Ss])?$ ]] || return 0
+    if ! command -v docker >/dev/null 2>&1; then
+        if command -v apt-get >/dev/null 2>&1; then
+            cstk_package_transaction apt-get apt-get install -y docker.io || return 1
+        else
+            echo 'Install Docker with your system package manager, then rerun the image prefetch.'
+            return 1
+        fi
+    fi
+    if ! docker info >/dev/null 2>&1; then
+        command -v systemctl >/dev/null 2>&1 && systemctl start docker || return 1
+    fi
+    "${home_dir}/scripts/bin/cstk_containers" prefetch
+}
+
 set_hashes() {
 
     local SHA_PATH BIN_DIR LIB_DIR HASH_FILE TEMP_HASH_FILE
@@ -1584,6 +1604,9 @@ touch \
 # Install all required system dependencies.
 install_dependencies || exit 1
 install_mongosh || exit 1
+
+# A failed optional image download must not prevent the core installation.
+install_container_tools || echo 'Optional Docker preparation failed; retry scripts/bin/cstk_containers prefetch later.'
 
 # Install Python tools through pipx.
 pipx_run_install || exit 1

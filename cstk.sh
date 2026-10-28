@@ -27,9 +27,9 @@
 #/                         run a tool from the post exploit class
 #/                 -E, --etc
 #/                         run a tool from the etc class
-#/                 -H, --help
+#/                 -h, -H, --help
 #/                         short form help shows a short help menu, long form help shows a full help menu
-#/                 -V, --version
+#/                 -v, -V, --version
 #/                         short form shows version number only, long form shows full version number
 #/                 -T, --tty
 #/                         display the guide for upgrading a basic Linux shell to a full TTY
@@ -41,18 +41,25 @@
 #/                         open the read-only defensive assessment tools
 #/                 --private-data
 #/                         manage the current user's private Loot, Malware, Logs, and logging preference
-#/                 --control {engagements|inventory|tcp-connect}
-#/                         use the installed loopback-only CSTK control API client as the invoking user
+#/                 --control engagements
+#/                         list local engagement records (compatibility alias; no API service required)
 #/                 --refresh-hashes
 #/                         interactively authorize and rebuild the local integrity manifest
 #/                 -G, --engagements
 #/                         manage engagements, scope, lifecycle and guarded operations
 #/                 --use ID [class tool]
 #/                         select an active engagement for this process
+#/    EXECUTION MODES:
+#/                 G / --engagements provides guarded TCP and web operations.
+#/                 Main-menu L requires LAB confirmation for unsupported legacy tools.
+#/                 Direct legacy routes remain blocked without standalone lab selection.
+#/                 Web Check start can request LAB interactively; stop/status need no selection.
 #/    TOOLS:
 #//D  DEFENSE CLASS:          -D | --defense
-#//D  l | --linux-audit         Linux Security Audit (requires its separately supplied executable)
+#//D  l | --linux-audit         Linux Security Audit (bundled executable or installed Lynis)
 #//D  w | --web-tls             Read-only Web/TLS assessment; requires an explicit HTTP/HTTPS URL
+#//D  c | --web-check           Local Web Check: start | stop | status (standalone lab)
+#//D  p | --project             Trivy project audit; explicit local directory required
 #//O
 #//O  OSINT CLASS:            -O | --osint
 #//O  ------------------------------------------------------------------------------------------
@@ -105,10 +112,10 @@
 #//E  users and shells         u | --users      list users and their default shells
 #//E  openssl helper           o | --openssl    hashing, keys, encrypt/decrypt helpers
 #//E  gpg lookalike            l | --lookalike  create a secret message that looks like a gpg key
-#//E  create binary            e | --exe        turn a Bash script into an unreadable binary executable
+#//E  create binary            e | --exe        compile a Bash script into an executable wrapper
 #//E  log cleaning tool        c | --clean      helper scripts to clean selected logs
 #//E  hash identify            h | --hashid     attempts to identify the hash type from user input or a file
-#//E  post exploit kit         z | --zip        create a zip-protected post-exploitation toolkit for user who gained a shell
+#//E  portable assessment kit  z | --zip        export the Zip2Go local assessment archive
 #//E  arsenal-ng               g | --ng         use the current systems arsenal of tools to your advantage with syntax and usage help
 #//E  AI analyst               i | --ai         defensive model-assisted analysis without autonomous tools or shell access
 #//E
@@ -116,6 +123,9 @@
 #//S  Examples:
 #//S  [ sudo cstk -Dw https://example.com/ ] Web/TLS assessment
 #//S  [ sudo cstk --defense --web-tls https://example.com/ ] Web/TLS assessment
+#//S  [ sudo cstk -Dc start ] Start/open local Web Check (asks for LAB); stop/status also accepted
+#//S  [ sudo cstk -Dp /absolute/project/path ] Trivy dependency, secret, IaC and license audit
+#//S  [ sudo cstk -Ei ] Open AI Analyst; type /setup to configure your provider
 #//S  [ sudo cstk -Dl ] OR [ sudo cstk --defense --linux-audit ] Linux audit
 #//S  [ sudo cstk --engagements ] Manage engagements and guarded operations
 #//S  [ sudo cstk --use ID ] Select an active engagement for the menu session
@@ -127,7 +137,7 @@
 #//S  [ sudo cstk -C  ] OR  [ sudo cstk --check-updates     ]  Check for CSTK-managed updates
 #//S  [ sudo cstk -U  ] OR  [ sudo cstk --update             ]  Check and install approved updates
 #//S  [ sudo cstk --private-data                            ]  Manage private Loot, Malware, Logs, and backups
-#//S  [ sudo cstk --control engagements                       ]  List local API engagement records
+#//S  [ sudo cstk --control engagements                       ]  List local engagement records (compatibility alias)
 #//S
 #//V  v3.0.5
 #//W  version: 3.0.5
@@ -1440,23 +1450,21 @@ main_menu() {
     else
         logo_main
     fi
-    echo -e "\n ${O}
-         Enter Class Number: \n\n ${g}
-         ${O}TOOLS:${g}
-         1 -${B} OSINT         ${g}
-         2 -${B} PAYLOADS      ${g}
-         3 -${B} POST EXPLOIT  ${g}
-         4 -${B} ETC  ${g}\n
-         ${O}SYSTEM CONFIGURATION:${g}
-         5 -${B} Toggle Authentication ${Y}(Currently: $AUTH_ENABLED)  ${g}
-         6 -${B} Toggle Animated Headers ${Y}(Currently: $FONTS_ENABLED)  ${g}
-         L -${B} Explicit Standalone Lab Mode  ${g}\n
-         G -${B} Engagements / Scope / Guarded Operations  ${g}\n
-         7 -${B} Private Loot / Malware / Logs and Backups  ${g}
-         8 -${B} DEFENSE  ${g}
-         U -${B} Check / Install CSTK Updates  ${g}
-         T -${B} TTY Shell Upgrade Guide  ${g}
-         X -${R} exit ${X}\n\n\n "
+    printf '%b\n' "${O}TOOLS:${g}" \
+        " 1 -${B} OSINT${g}" \
+        " 2 -${B} PAYLOADS${g}" \
+        " 3 -${B} POST EXPLOIT${g}" \
+        " 4 -${B} ETC${g}" \
+        " 5 -${B} Toggle Authentication ${Y}(Currently: $AUTH_ENABLED)${g}" \
+        " 6 -${B} Toggle Animated Headers ${Y}(Currently: $FONTS_ENABLED)${g}" \
+        " 7 -${B} Private Loot / Malware / Logs and Backups${g}" \
+        " 8 -${B} DEFENSE${g}" \
+        "${O}SESSION / SYSTEM:${g}" \
+        " G -${B} Engagements / Scope / Guarded Operations${g}" \
+        " L -${B} Explicit Standalone Lab Mode${g}" \
+        " T -${B} TTY Shell Upgrade Guide${g}" \
+        " U -${B} Check / Install CSTK Updates${g}" \
+        " X -${R} Exit${X}"
 
     read -r -p "${O} ${AA} ${X}" num || return 0
     case "$num" in
@@ -2738,7 +2746,7 @@ cstk_ai_analyst() {
     # invoking user so model traffic and private session state never run as root.
     stop_engagement_hud
     tput csr 0 "$(( $(tput lines 2>/dev/null || echo 24) - 1 ))" 2>/dev/null || true
-    run_as_cstk_user "$file"
+    run_as_cstk_user env HOME="$user_home" USER="$user" LOGNAME="$user" "$file"
     start_engagement_hud
     wait_and_return
 }
@@ -2761,25 +2769,65 @@ web_tls_assessment() {
 
 linux_security_assessment() {
     defense_linux_audit_frame
-    if [[ ! -x "$bin/linux_security_audit" ]]; then
-        echo "[SKIP] Linux Security Audit executable is unavailable in this checkout."
+    engagement_dispatch_guard linux_security_assessment || return 1
+    if [[ -x "$bin/linux_security_audit" ]]; then
+        run_as_cstk_user "$bin/linux_security_audit" "$@"
+    elif command -v lynis >/dev/null 2>&1; then
+        local stamp
+        stamp="$(date +%Y%m%d-%H%M%S)-$$"
+        echo 'Using Lynis. Runs as the invoking user; privileged checks may be incomplete.'
+        run_as_cstk_user lynis audit system --quick --no-colors \
+            --logfile "$CSTK_LOG_DIR/lynis-$stamp.log" \
+            --report-file "$Loot/lynis-$stamp.dat"
+    else
+        echo '[SKIP] Install lynis or supply scripts/bin/linux_security_audit.'
         return 3
     fi
-    engagement_dispatch_guard linux_security_assessment || return 1
-    run_as_cstk_user "$bin/linux_security_audit" "$@"
+}
+
+# Web Check accepts arbitrary targets in its own UI; retain the existing lab gate.
+web_check_menu() {
+    local action
+    defense_web_check_frame
+    printf '%b\n' "${C}WEB CHECK${X}" \
+        "${Y}1${X} - ${G}Start / open browser${X}" \
+        "${Y}2${X} - ${G}Stop${X}" \
+        "${Y}3${X} - ${G}Status${X}"
+    read -r -p "${C}Web Check ${Y}==> ${X}" action || return 0
+    case "$action" in
+        1) engagement_dispatch_guard web_check || return 1
+           "$bin/cstk_containers" web-check start ;;
+        2) "$bin/cstk_containers" web-check stop ;;
+        3) "$bin/cstk_containers" web-check status ;;
+        *) printf '%b\n' "${Y}Choose 1, 2, or 3.${X}"; return 2 ;;
+    esac
+}
+
+project_security_assessment() {
+    # Local file audit: no remote engagement target is probed.
+    defense_project_frame
+    "$bin/cstk_containers" project "$@"
 }
 
 defense_menu() {
     local choice target
     while true; do
-        printf '\nDEFENSE\n1 - Linux Security Audit\n2 - Web/TLS Security Assessment\nX - Return\n'
-        read -r -p "Defense ==> " choice || return 0
+        printf '%b\n' "${C}DEFENSE${X}" \
+            "${Y}1${X} - ${G}Linux Security Audit${X}" \
+            "${Y}2${X} - ${G}Web/TLS Security Assessment${X}" \
+            "${Y}3${X} - ${G}Web Check ${B}(local browser)${X}" \
+            "${Y}4${X} - ${G}Project Audit ${B}(dependencies / secrets / IaC)${X}" \
+            "${Y}X${X} - ${R}Return${X}"
+        read -r -p "${C}Defense ${Y}==> ${X}" choice || return 0
         case "$choice" in
             1) linux_security_assessment ;;
-            2) read -r -p "Explicit HTTP/HTTPS target URL: " target || return 0
+            2) read -r -p "${C}Explicit HTTP/HTTPS target URL: ${X}" target || return 0
                [[ -n "$target" ]] && web_tls_assessment "$target" ;;
+            3) web_check_menu ;;
+            4) read -r -p "${C}Local project directory: ${X}" target || return 0
+               [[ -n "$target" ]] && project_security_assessment "$target" ;;
             [Xx]) return 0 ;;
-            *) echo "Choose 1, 2, or X." ;;
+            *) printf '%b\n' "${Y}Choose 1, 2, 3, 4, or X.${X}" ;;
         esac
     done
 }
@@ -2863,6 +2911,8 @@ if [[ ${1:-} == -D || ${1:-} == --defense || ${1:-} == -D* ]]; then
             defense_tool=$1; shift ;;
         -Dl) defense_tool=--linux-audit ;;
         -Dw) defense_tool=--web-tls ;;
+        -Dp) defense_tool=--project ;;
+        -Dc) defense_tool=--web-check ;;
         *) echo "Invalid DEFENSE option." >&2; exit 2 ;;
     esac
     case "$defense_tool" in
@@ -2872,6 +2922,16 @@ if [[ ${1:-} == -D || ${1:-} == --defense || ${1:-} == -D* ]]; then
         w|-w|--web-tls)
             [[ $# == 1 ]] || { echo "Usage: cstk -Dw HTTP_OR_HTTPS_URL" >&2; exit 2; }
             web_tls_assessment "$1"; exit $? ;;
+        --project|p|-p)
+            [[ $# == 1 ]] || { echo 'Usage: cstk -Dp PROJECT_DIRECTORY' >&2; exit 2; }
+            project_security_assessment "$1"; exit $? ;;
+        --web-check|c|-c)
+            [[ $# -le 1 ]] || { echo 'Usage: cstk -Dc [start|stop|status]' >&2; exit 2; }
+            if [[ "${1:-start}" == start ]]; then
+                if [[ -z "${CSTK_ENGAGEMENT_ID:-}" && -t 0 ]]; then select_standalone_lab || exit 1; fi
+                engagement_dispatch_guard web_check || exit 1
+            fi
+            "$bin/cstk_containers" web-check "${1:-start}"; exit $? ;;
         *) echo "Unknown DEFENSE tool." >&2; exit 2 ;;
     esac
 fi

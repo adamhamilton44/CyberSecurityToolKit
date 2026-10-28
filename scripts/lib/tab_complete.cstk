@@ -1,119 +1,78 @@
-# CSTK command completion for Bash and Zsh
+# CSTK completion for Bash and Zsh; shared option tables keep both shells aligned.
 # shellcheck shell=bash disable=SC2154,SC2207
-
+_cstk_global_options() {
+    printf '%s\n' --osint --payload --postx --etc --defense --help --version --tty \
+        --check-updates --update --private-data --control --engagements --use \
+        --refresh-hashes -O -P -X -E -D -h -H -v -V -T -C -U -G
+}
+_cstk_tool_options() {
+    case "$1" in
+        -D) printf '%s\n' l w c p ;;
+        --defense) printf '%s\n' --linux-audit --web-tls --web-check --project ;;
+        -O) printf '%s\n' n s f e b g m p v u h w ;;
+        --osint) printf '%s\n' --nmap --sweep --findip --enum --breached --google --email --pass --vuln --username --ssh --waf ;;
+        -P) printf '%s\n' n v r p t b s m a c ;;
+        --payload) printf '%s\n' --netcat --revshell --ransom --revall --notouch --bomb --ssh --msf --apk --cnc ;;
+        -X) printf '%s\n' s i e v b c g f k ;;
+        --postx) printf '%s\n' --onstart --foi --inmemory --vm --browser --crypto --gtfo --force --kernel ;;
+        -E) printf '%s\n' u w x o l e a c h z g i ;;
+        --etc) printf '%s\n' --users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng --ai ;;
+        --control) printf '%s\n' engagements ;;
+        --web-check|-Dc|c|-c) printf '%s\n' start stop status ;;
+    esac
+}
 _cstk_bash_completion() {
-    local cur prev opts cmd_opts cls tail i
-
+    local cur prev start=1 cls tail options item
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--osint --payload --postx --etc --defense --help --version --tty --check-updates --update --private-data --control --engagements --use -O -P -X -E -V -H -T -C -U -D -G"
-
-    if [[ "$cur" == -[OPXED]?* ]]; then
-        cls="${cur:1:1}"
-        tail="${cur:2}"
-        case "-$cls" in
-            -D) cmd_opts="l w" ;;
-            -O) cmd_opts="n s f e b g m p v u h w" ;;
-            -P) cmd_opts="n v r p t b s m a c" ;;
-            -X) cmd_opts="s i e v b c g f k" ;;
-            -E) cmd_opts="u w x o l e a c h z g i" ;;
-            *) cmd_opts="" ;;
-        esac
-        COMPREPLY=( $(compgen -W "$cmd_opts" -- "$tail") )
-        for i in "${!COMPREPLY[@]}"; do
-            COMPREPLY[$i]="-$cls${COMPREPLY[$i]}"
-        done
-        return 0
+    if [[ "${COMP_WORDS[1]}" == --use ]]; then
+        (( COMP_CWORD == 2 )) && return 0 # Engagement IDs are operator supplied.
+        start=3
     fi
-
-    case "$prev" in
-        --defense|-D)
-            cmd_opts="--linux-audit --web-tls"
-            [[ "$prev" == "-D" ]] && cmd_opts="l w"
-            ;;
-        --osint|-O)
-            cmd_opts="--findip --sweep --nmap --enum --breached --google --email --pass --vuln --username --ssh --waf"
-            [[ "$prev" == "-O" ]] && cmd_opts="n s f e b g m p v u h w"
-            ;;
-        --payload|-P)
-            cmd_opts="--netcat --revshell --ransom --revall --notouch --bomb --ssh --msf --apk --cnc"
-            [[ "$prev" == "-P" ]] && cmd_opts="n v r p t b s m a c"
-            ;;
-        --postx|-X)
-            cmd_opts="--onstart --foi --inmemory --vm --browser --crypto --gtfo --force --kernel"
-            [[ "$prev" == "-X" ]] && cmd_opts="s i e v b c g f k"
-            ;;
-        --etc|-E)
-            cmd_opts="--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng --ai"
-            [[ "$prev" == "-E" ]] && cmd_opts="u w x o l e a c h z g i"
-            ;;
-        --control)
-            cmd_opts="engagements"
-            ;;
-        *)
-            cmd_opts=""
-            ;;
-    esac
-
-    if [[ "$COMP_CWORD" -eq 1 ]]; then
-        COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+    if (( COMP_CWORD == start )) && [[ "$cur" == -[OPXED]* ]]; then
+        cls="${cur:1:1}"; tail="${cur:2}"
+        options="$(_cstk_tool_options "-$cls")"
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && COMPREPLY+=("-$cls$item")
+        done < <(compgen -W "$options" -- "$tail")
+    elif (( COMP_CWORD == start )); then
+        options="$(_cstk_global_options)"
+        mapfile -t COMPREPLY < <(compgen -W "$options" -- "$cur")
+    elif [[ "$prev" == --project || "$prev" == -Dp || "$prev" == p || "$prev" == -p ]]; then
+        mapfile -t COMPREPLY < <(compgen -d -- "$cur")
     else
-        COMPREPLY=( $(compgen -W "$cmd_opts" -- "$cur") )
+        options="$(_cstk_tool_options "$prev")"
+        mapfile -t COMPREPLY < <(compgen -W "$options" -- "$cur")
     fi
 }
-
 _cstk_zsh_completion() {
-    local cur prev
+    local cur prev start=2 cls item
     local -a choices
-
-    cur="${words[CURRENT]}"
-    prev="${words[CURRENT-1]}"
-
-    if (( CURRENT == 2 )) && [[ "$cur" == -D?* ]]; then
-        choices=(-Dl -Dw)
-    elif (( CURRENT == 2 )); then
-        choices=(
-            --osint --payload --postx --etc --defense --help --version --tty
-            --check-updates --update --private-data --control --engagements --use
-            -O -P -X -E -V -H -T -C -U -D -G
-        )
-    else
-        case "$prev" in
-            --defense) choices=(--linux-audit --web-tls) ;;
-            -D) choices=(l w) ;;
-            --osint)
-                choices=(--findip --sweep --nmap --enum --breached --google --email --pass --vuln --username --ssh --waf)
-                ;;
-            -O) choices=(n s f e b g m p v u h w) ;;
-            --payload)
-                choices=(--netcat --revshell --ransom --revall --notouch --bomb --ssh --msf --apk --cnc)
-                ;;
-            -P) choices=(n v r p t b s m a c) ;;
-            --postx)
-                choices=(--onstart --foi --inmemory --vm --browser --crypto --gtfo --force --kernel)
-                ;;
-            -X) choices=(s i e v b c g f k) ;;
-            --etc)
-                choices=(--users --webserver --extract --openssl --lookalike --exe --array --clean --hashid --zip --ng --ai)
-                ;;
-            -E) choices=(u w x o l e a c h z g i) ;;
-            --control) choices=(engagements) ;;
-            *) choices=() ;;
-        esac
+    cur="${words[CURRENT]}"; prev="${words[CURRENT-1]}"
+    if [[ "${words[2]}" == --use ]]; then
+        (( CURRENT == 3 )) && return 0
+        start=4
     fi
-
+    if (( CURRENT == start )) && [[ "$cur" == -[OPXED]* ]]; then
+        cls="${cur[2]}"
+        while IFS= read -r item; do
+            [[ -n "$item" ]] && choices+=("-$cls$item")
+        done < <(_cstk_tool_options "-$cls")
+    elif (( CURRENT == start )); then
+        while IFS= read -r item; do choices+=("$item"); done < <(_cstk_global_options)
+    elif [[ "$prev" == --project || "$prev" == -Dp || "$prev" == p || "$prev" == -p ]]; then
+        _files -/
+        return
+    else
+        while IFS= read -r item; do choices+=("$item"); done < <(_cstk_tool_options "$prev")
+    fi
     compadd -- "${choices[@]}"
 }
-
 if [[ -n "${ZSH_VERSION:-}" ]]; then
     autoload -Uz compinit
-    if ! whence compdef >/dev/null 2>&1; then
-        compinit -C
-    fi
+    if ! whence compdef >/dev/null 2>&1; then compinit -C; fi
     compdef _cstk_zsh_completion cstk
 elif [[ -n "${BASH_VERSION:-}" ]]; then
     complete -F _cstk_bash_completion cstk
 fi
-
-# ex: filetype=sh

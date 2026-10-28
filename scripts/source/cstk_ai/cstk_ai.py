@@ -11,15 +11,40 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Footer, Input, Label, ListItem, ListView, RichLog, Static
+from textual.widgets import Button, Footer, Input, Label, ListItem, ListView, RichLog, Static
 from provider_client import ChatMessage, prepare_chat_request
 from provider_config import ProviderConfig, ProviderConfigError, load_provider, save_provider
 from provider_transport import ProviderTransportError, send_prepared_request
 from engagement_phase2 import BridgeError, Phase2Bridge
 
-COMMANDS={"/help":"commands and shortcuts","/provider":"NAME URL MODEL [KEY_ENV]","/credential":"KEY_ENV (hidden, session only)","/model":"select model","/connection":"safe connection summary","/engagement":"list|use ID|show|progress|next|answer TAG TEXT|candidate","/save-provider":"save non-secret profile","/load-provider":"load profile","/scope":"legacy session scope","/privacy":"transmission rules","/clear":"clear chat","/exit":"quit"}
+COMMANDS={"/setup":"guided provider setup (OpenAI-compatible API)","/help":"commands and shortcuts","/provider":"NAME URL MODEL [KEY_ENV]","/credential":"KEY_ENV (hidden, session only)","/model":"select model","/connection":"safe connection summary","/engagement":"list|use ID|show|progress|next|answer TAG TEXT|candidate","/save-provider":"save non-secret profile","/load-provider":"load profile","/scope":"legacy session scope","/privacy":"transmission rules","/clear":"clear chat","/exit":"quit"}
 CONTEXTS={"@engagement":"confirmed engagement summary","@scope":"authorization scope","@session":"safe provider metadata","@privacy":"transmission policy"}
-PALETTE=[("Help","/help"),("Configure provider","/provider "),("Enter session credential","/credential "),("Select model","/model "),("Connection details","/connection"),("Set scope","/scope "),("Privacy","/privacy"),("Clear","/clear")]
+PALETTE=[("Guided provider setup","/setup"),("Help","/help"),("Configure provider","/provider "),("Enter session credential","/credential "),("Select model","/model "),("Connection details","/connection"),("Set scope","/scope "),("Privacy","/privacy"),("Clear","/clear")]
+
+class ProviderSetupScreen(ModalScreen[ProviderConfig|None]):
+    CSS="""ProviderSetupScreen{align:center middle;background:#000000}#setup-box{width:72;max-width:100%;height:auto;max-height:100%;border:heavy #00d7ff;padding:1 2;background:#101010}#setup-box Input{height:3}#setup-error{height:auto;color:#ff8700}"""
+    BINDINGS=[Binding("escape","cancel","Cancel",priority=True)]
+    def __init__(self,provider=None): super().__init__(); self.provider=provider
+    def compose(self)->ComposeResult:
+        p=self.provider
+        with Vertical(id="setup-box"):
+            yield Label("AI PROVIDER SETUP — OpenAI-compatible chat API\nEnter your endpoint and model. API key is entered separately.")
+            yield Input(value=p.name if p else "",placeholder="Provider name (e.g. Local)",id="setup-name")
+            yield Input(value=p.base_url if p else "",placeholder="Base URL (e.g. http://127.0.0.1:11434/v1)",id="setup-url")
+            yield Input(value=p.model if p else "",placeholder="Model identifier from your provider",id="setup-model")
+            yield Input(value=p.api_key_env if p else "",placeholder="Key environment NAME, optional (e.g. CSTK_AI_KEY)",id="setup-key")
+            yield Static("",id="setup-error")
+            yield Button("Save profile and use provider",id="setup-save",variant="primary")
+    def on_mount(self): self.query_one("#setup-name",Input).focus()
+    def on_button_pressed(self,event:Button.Pressed):
+        if event.button.id != "setup-save": return
+        values=[self.query_one("#setup-"+field,Input).value.strip() for field in ("name","url","model","key")]
+        try:
+            provider=ProviderConfig(*values); provider.validate()
+        except ProviderConfigError as error:
+            self.query_one("#setup-error",Static).update(str(error)); return
+        self.dismiss(provider)
+    def action_cancel(self): self.dismiss(None)
 
 class CredentialScreen(ModalScreen[str|None]):
     CSS="""CredentialScreen{align:center middle;background:#000000}#credential-box{width:72;height:11;border:heavy #ff8700;background:#101010;padding:1 2}#secret{border:tall #00d7ff;margin-top:1}"""
@@ -85,6 +110,11 @@ class CSTKAnalystV2(App):
         yield Footer()
     def on_mount(self):
         self._panels(); self.set_interval(1,self._refresh_hud); self._say("[bold #ffaf00]CSTK AI V2 ready.[/] Type /help, @, or press Ctrl+K."); self.query_one("#prompt",Input).focus()
+        if self.profile.exists():
+            try: self._activate_provider(load_provider(self.profile),"loaded saved profile")
+            except (OSError,ValueError,TypeError) as error: self._say(f"[red]Saved profile could not be loaded: {error}[/] Use /setup.")
+        else:
+            self._say("Welcome. Type /setup for guided connection setup. Use a local or hosted OpenAI-compatible chat API; other API protocols need an adapter. No request is sent during setup.")
         selected = os.environ.get("CSTK_ENGAGEMENT_SLUG")
         if selected and self.engagements:
             self._engagement(["use", selected])
@@ -157,6 +187,7 @@ class CSTKAnalystV2(App):
         try: cmd,*args=shlex.split(value)
         except ValueError as e: self._say(f"[red]Command error: {e}[/]"); return
         if cmd=="/help": self._say("\n".join(f"[bold #00d7ff]{k}[/] — {v}" for k,v in COMMANDS.items())+"\n[bold]@scope @session @privacy[/] — explicit context")
+        elif cmd=="/setup": self.push_screen(ProviderSetupScreen(self.provider),self._setup_done)
         elif cmd=="/provider": self._set_provider(args)
         elif cmd=="/credential": self._credential(args)
         elif cmd=="/model" and self.provider and args: self._change_model(" ".join(args))
@@ -205,6 +236,15 @@ class CSTKAnalystV2(App):
             elif action=="candidate" and self.engagement_id: self._say("Ask the AI to return CSTK_ENGAGEMENT_CANDIDATE followed by a JSON object. It will be recorded for review and cannot alter authorization.")
             else: raise BridgeError("usage: /engagement list | use ID | show | progress | next | answer TAG TEXT | candidate")
         except (BridgeError,OSError,KeyError,ValueError) as e: self._say(f"[red]Engagement error: {e}[/]")
+    def _setup_done(self,provider):
+        if provider is None: return
+        try: save_provider(provider,self.profile)
+        except (OSError,ProviderConfigError) as error:
+            self._say(f"[red]Profile could not be saved: {error}[/]"); return
+        self._activate_provider(provider,"configured and saved")
+        if provider.api_key_env:
+            self._credential([provider.api_key_env])
+
     def _set_provider(self,args):
         if len(args)<3: self._say("Usage: /provider NAME URL MODEL [KEY_ENV]"); return
         p=ProviderConfig(args[0],args[1],args[2],args[3] if len(args)>3 else "")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Maintainer-only build: python3 tools/build_provisioner.py PRIVATE_KEY_FILE.
+"""Maintainer-only build: python3 scripts/tools/build_provisioner.py PRIVATE_KEY_FILE.
 
 The distributed binaries contain recoverable key material. Masking deters casual
 inspection; it does not provide confidentiality against the machine's owner.
@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(sys.executable if getattr(sys, "frozen", False) else __file__).resolve().parents[2]
 TEMPLATE = r'''
 #define _GNU_SOURCE
 #include <sys/stat.h>

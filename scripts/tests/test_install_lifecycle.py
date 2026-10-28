@@ -12,7 +12,7 @@ import tempfile
 import tarfile
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 MOCK = r'''#!/usr/bin/python3
 from pathlib import Path
 import json, os, sys
@@ -132,7 +132,7 @@ class LifecycleTests(unittest.TestCase):
         result=self.install(LC_ALL='en_US.utf8',FORCE_ALL_MISSING='1')
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
         packages=set(json.loads((self.mounts['/mnt/mock']/'packages.json').read_text()))
-        expected=set(json.loads((ROOT/'tools/dependency_policy.json').read_text())['default_system_packages'])
+        expected=set(json.loads((ROOT/'scripts/tools/dependency_policy.json').read_text())['default_system_packages'])
         self.assertEqual(packages,expected|{'python-helper'})
         self.assertTrue({'apache-users','apktool','arp-scan','aria2','arjun','pipx'} <= packages)
         for log in (self.checkout/'log/package_manager').glob('*.log'):

@@ -7,8 +7,8 @@ import unittest
 
 import test_install_lifecycle as lifecycle
 
-ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location('recovery', ROOT/'tools/recover_package_ledger.py')
+ROOT = Path(__file__).resolve().parents[2]
+spec = importlib.util.spec_from_file_location('recovery', ROOT/'scripts/tools/recover_package_ledger.py')
 recovery = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(recovery)
 
@@ -48,7 +48,7 @@ class RecoveryLifecycleTests(unittest.TestCase):
         baseline=self.base/'baseline.list'
         baseline.write_bytes((state/'packages.before.first').read_bytes())
         (self.mounts['/mnt/mock']/'packages.json').write_text('["fixture-tool", "pipx"]')
-        command='python3 tools/recover_package_ledger.py --baseline /mnt/baseline.list --baseline-sha256 '+hashlib.sha256(baseline.read_bytes()).hexdigest()+' --report /mnt/review.json --backup-parent /mnt'
+        command='python3 scripts/tools/recover_package_ledger.py --baseline /mnt/baseline.list --baseline-sha256 '+hashlib.sha256(baseline.read_bytes()).hexdigest()+' --report /mnt/review.json --backup-parent /mnt'
         return state, command
 
     def test_read_only_then_apply_preserves_originals_without_purging(self):
@@ -78,7 +78,7 @@ class RecoveryLifecycleTests(unittest.TestCase):
         (state/'packages.after.pending').write_text('base:amd64\npipx\npython-helper\npython3:amd64\n')
         with (state/'packages').open('a') as handle: handle.write('base:amd64\n')
         (self.base/'baseline.list').write_bytes(before)
-        for source in ['tools/recover_package_ledger.py','uninstall.sh','tools/run_uninstall_test.sh']:
+        for source in ['scripts/tools/recover_package_ledger.py','uninstall.sh','scripts/tools/run_uninstall_test.sh']:
             import shutil
             shutil.copyfile(ROOT/source,self.base/Path(source).name)
         (self.base/'check-uninstall.sh').write_text(

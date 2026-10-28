@@ -3,7 +3,7 @@
 set -o pipefail
 umask 077
 (( EUID == 0 )) || { echo 'Run this test with sudo.' >&2; exit 1; }
-here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P) || exit 1
+here=$(cd -- "$(dirname -- "$0")" && pwd -P) || exit 1
 checkout=$(cat /var/lib/cstk/checkout) || exit 1
 [[ "$checkout" == /* && "$checkout" != / && "$checkout" != /home && "$checkout" != /root &&
    -f "$checkout/cstk.sh" && -f "$checkout/uninstall.sh" &&

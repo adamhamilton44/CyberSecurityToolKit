@@ -1065,13 +1065,26 @@ etc_ai_frame() {
     '
 }
 
-# Read-only DEFENSE class frames.
+# DEFENSE class frames use the launcher's theme; remain plain without colors.
 defense_web_tls_frame() {
-    printf '%s\n' 'Class: DEFENSE | Tool: Web/TLS Security Assessment' \
-        'Short: cstk -Dw HTTP_OR_HTTPS_URL' \
-        'Long: cstk --defense --web-tls HTTP_OR_HTTPS_URL'
+    printf '%b\n' "${C}Class: DEFENSE ${X}| ${G}Tool: Web/TLS Security Assessment${X}" \
+        "${Y}Short:${X} cstk -Dw HTTP_OR_HTTPS_URL" \
+        "${Y}Long:${X} cstk --defense --web-tls HTTP_OR_HTTPS_URL"
 }
 defense_linux_audit_frame() {
-    printf '%s\n' 'Class: DEFENSE | Tool: Linux Security Audit' \
-        'Short: cstk -Dl | Long: cstk --defense --linux-audit'
+    printf '%b\n' "${C}Class: DEFENSE ${X}| ${G}Tool: Linux Security Audit${X}" \
+        "${Y}Short:${X} cstk -Dl | ${Y}Long:${X} cstk --defense --linux-audit" \
+        'Uses the supplied audit executable or installed Lynis; privileged checks may be incomplete.'
+}
+defense_web_check_frame() {
+    printf '%b\n' "${C}Class: DEFENSE ${X}| ${G}Tool: Web Check${X}" \
+        "${Y}Short:${X} cstk -Dc [start|stop|status]" \
+        "${Y}Long:${X} cstk --defense --web-check [start|stop|status]" \
+        'Local UI: http://127.0.0.1:3000; starting requires standalone LAB confirmation.'
+}
+defense_project_frame() {
+    printf '%b\n' "${C}Class: DEFENSE ${X}| ${G}Tool: Trivy Project Audit${X}" \
+        "${Y}Short:${X} cstk -Dp PROJECT_DIRECTORY" \
+        "${Y}Long:${X} cstk --defense --project PROJECT_DIRECTORY" \
+        'Dependencies, secrets, IaC, and licenses; project mounted read-only.'
 }

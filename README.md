@@ -18,7 +18,7 @@ primarily for Kali Linux and Kali under WSL2.
 | OSINT | Reconnaissance and vulnerability discovery | IP lookup, Nmap, host sweeps, web enumeration, account checks, SSH enumeration, and WAF detection |
 | Payloads | Controlled payload creation for authorized labs | Reverse-shell, encryption, DoS lab, SSH, Metasploit, APK, and command-and-control helpers |
 | Post Exploit | Assessment after authorized access | VM detection, browser-data collection, crypto searches, permission and kernel checks, and archive auditing |
-| DEFENSE | Read-only configuration assessment | Web/TLS assessment; Linux audit when its executable is available |
+| DEFENSE | Read-only configuration assessment | Web/TLS, Lynis Linux audit, Web Check, and Trivy project audit |
 | Etc | Supporting utilities | Users, web servers, archives, OpenSSL, hashes, Bash packaging, Zip2Go, and Arsenal help |
 
 ## Requirements
@@ -95,14 +95,14 @@ sudo cstk
 | `2` | Open the payload-development tools |
 | `3` | Open the post-exploitation tools |
 | `4` | Open the supporting utilities |
-| `G` | Create, select, validate, pause, and manage engagements; run guarded TCP/web operations |
-| `L` | Explicit standalone lab mode with no engagement enforcement (unavailable inside a selected engagement session) |
 | `5` | Turn CSTK launcher authentication on or off |
 | `6` | Turn animated headers on or off |
 | `7` | Manage private Loot/Malware/Logs storage, logging, and backups |
 | `8` | Open the DEFENSE tools |
-| `U` | Check for and install approved CSTK-managed updates |
+| `G` | Create, select, validate, pause, and manage engagements; run guarded TCP/web operations |
+| `L` | Explicit standalone lab mode with no engagement enforcement (unavailable inside a selected engagement session) |
 | `T` | Display the full TTY shell-upgrade guide |
+| `U` | Check for and install approved CSTK-managed updates |
 | `X` | Exit |
 
 Authentication and animated-header preferences are stored locally and are not
@@ -118,7 +118,7 @@ sudo cstk --tty              # TTY shell-upgrade guide
 sudo cstk --check-updates    # Report available managed updates
 sudo cstk --update           # Review and install approved managed updates
 sudo cstk --private-data     # Manage private output and backups
-sudo cstk --control engagements # List engagements through the local control API
+sudo cstk --control engagements # List local engagements (compatibility alias)
 man cstk                     # Installed manual page
 ```
 
@@ -149,10 +149,10 @@ always-visible safety display identifies the provider/model and selected
 engagement. Real scope context is withheld unless the phase-two engagement is
 active; questionnaire answers and AI proposals remain review-only candidates.
 
-The optional `--control` route requires the separately installed CSTK Local
-Control service and client. CSTK runs that client as the invoking user and
-uses the user's private loopback API token; it does not run the web service as
-root or provide an arbitrary command/adapter interface.
+`--control engagements` is a compatibility alias for listing the integrated
+local engagement records as the invoking user. It requires no separate API
+service. The retired `inventory` and `tcp-connect` control commands are not
+supported; use G for guarded TCP and web operations.
 
 ## Updates
 
@@ -185,8 +185,9 @@ The combined updater:
 After a CSTK self-update, the already-running trusted launcher privately
 requests maintenance authorization, refreshes installed interfaces, rebuilds
 and verifies the local checksum manifest, and only then starts the updated
-launcher. There is no public integrity-refresh command, and private keys should
-never be placed on a command line.
+launcher. After reviewed local maintenance, `sudo cstk --refresh-hashes` uses
+the same interactive private-key authorization to synchronize interfaces and
+rebuild the manifest. Never place private keys on a command line.
 
 Update logs are written beneath `log/updates/`.
 
@@ -208,7 +209,7 @@ not reinstall unrelated user applications to repair them.
 
 CSTK verifies protected program files before opening its menus or dispatching
 tools. The protected set includes the launcher, uninstaller, runtime binaries,
-library files, checksum verifier, and installed wrapper when present.
+library files and installed wrapper when present.
 
 The checksum manifest is generated locally at:
 
@@ -228,8 +229,8 @@ CSTK does **not** automatically delete itself.
 4. The integrity-screen deletion removes CSTK launchers and core program files
    while preserving local data, collected results, logs, wordlists, and
    installed system packages.
-5. Authorized maintenance has a private recovery path for rebuilding the
-   manifest; it is intentionally not exposed as a normal command-line option.
+5. Authorized maintenance can run `sudo cstk --refresh-hashes`; it requires
+   an interactive terminal and the private integrity refresh key.
 
 An unexpected integrity warning should be treated seriously. Quit, review the
 changed files, and restore them from a trusted signed commit unless the change
@@ -292,7 +293,7 @@ been checked and backed up. Other local paths excluded from Git include:
 | `data/` | Optional breached-account datasets |
 | `log/` | Installer, updater, and uninstaller maintenance logs |
 | `Other/Downloads/` | Third-party repositories installed at runtime |
-| `Other/SecurityChecks/` | Local authentication settings, installation records, and integrity state; only the verifier is committed |
+| `Other/SecurityChecks/` | Local authentication and integrity state; generated contents are excluded from Git |
 
 Back up any local material you need before manually removing the CSTK folder.
 Never place credentials, private keys, collected browser data, breached-account
@@ -340,9 +341,15 @@ bash scripts/bin/web_tls_security_assessment https://example.com/
 ```
 
 Menu 8 → DEFENSE → 2 asks for an explicit HTTP/HTTPS URL. DEFENSE 1 and
-`-Dl` / `--defense --linux-audit` retain the Linux audit entry; this checkout
-has no Linux audit executable and reports SKIP until the prior implementation
-is supplied. Private data management is long form only: `--private-data`.
+`-Dl` / `--defense --linux-audit` use the separate Linux audit executable when
+available, otherwise the installed Lynis dependency. Lynis runs as the invoking
+user with private log/report paths; privileged checks may be incomplete. Private data management is long form only: `--private-data`.
+
+Select L and confirm LAB before launching Web/TLS or Linux Audit from the menu;
+these tools have no engagement-safe adapter. Direct legacy assessment commands
+remain blocked without that session selection; use G for guarded web checks.
+Scratch files live in a private report subdirectory and are cleaned up at exit;
+an inherited root-only `TMPDIR` does not affect Web/TLS startup.
 
 The assessment uses curl and openssl, Bash and standard Unix tools. GNU
 `timeout` bounds TLS connections. Missing capabilities produce SKIP/INFO.
@@ -391,8 +398,8 @@ is required. Optional network actions are separate commands. Readable shell
 sources support more Linux environments; bundled shc launchers target Linux
 x86-64 and still require Bash and their documented dependencies. The archive
 includes a checksum manifest and generated launcher sources. Maintainers rebuild
-it with `python3 tools/build_zip2go.py` after changing sources. See
-[portable toolkit source guide](tools/zip2go/README.md) for scope and validation.
+it with `python3 scripts/tools/build_zip2go.py` after changing sources. See
+[portable toolkit source guide](scripts/tools/zip2go/README.md) for scope and validation.
 
 Zip2Go also includes explicit LinPEAS, LES and Unix Priv Check enumeration
 profiles. Use `enumeration.sh --tool linpeas`, `--tool les`, or `--tool upc` after
@@ -418,9 +425,9 @@ examples and duplicate requirements no longer trigger automatic installation.
 Remote database checks retain their client packages. The unused Vulscan clone and
 optional naminter/BloodHound collector pipx installs were also removed; the
 updater skips their legacy source/pipx records. Existing installations are not
-purged by this change. See [tools/dependency_policy.json](tools/dependency_policy.json) for dependency
+purged by this change. See [scripts/tools/dependency_policy.json](scripts/tools/dependency_policy.json) for dependency
 decisions and rationale. Regenerate local reports with
-`python3 tools/audit_dependencies.py`; output goes to ignored `log/development/`. Compiled/source equivalence and package command-name
+`python3 scripts/tools/audit_dependencies.py`; output goes to ignored `log/development/`. Compiled/source equivalence and package command-name
 mismatches are explicitly identified rather than treated as verified coverage.
 
 ## Engagement sessions and scope enforcement
@@ -488,3 +495,64 @@ The new manager is distributed as `scripts/bin/Etc_engagement`, packaged with
 PyInstaller. Its editable launcher/adapter source is maintained externally in
 `CSTK_bin_files/Engagements`; it imports the same policy source used by the AI.
 No existing opaque library resource is renamed or decrypted by this update.
+
+
+### Web Check and project auditing
+
+DEFENSE (8) now includes Web Check (3) and a Trivy project audit (4).
+The optional installer step installs Docker on APT systems and prefetches
+`lissy93/web-check:latest` and `aquasec/trivy:latest`; failed or declined prefetch
+leaves core installation usable. First use downloads a missing image.
+
+Web Check publishes **only 127.0.0.1:3000**, reuses `cstk-web-check`, waits for
+HTTP readiness, and opens the invoking desktop user's browser. With no desktop,
+open the printed URL yourself. Select L and confirm LAB before starting through
+the menu; Web Check's own UI cannot enforce an engagement's target restrictions.
+`sudo cstk -Dc start` asks for LAB in an interactive terminal. Stop and status
+need no lab selection: `sudo cstk -Dc stop` / `sudo cstk -Dc status`.
+Port conflicts and foreign containers are reported without deleting anything.
+The container is retained when stopped; remove manually with
+`sudo docker rm cstk-web-check` after stopping if no longer wanted.
+
+Run `sudo cstk -Dp /absolute/project/path` for dependencies, secrets, IaC
+misconfigurations, and licenses. The project is mounted read-only; no Docker
+socket is mounted. The scanner runs with the invoking user's UID/GID, ignores
+project-supplied config/ignore files, and prints findings to the terminal.
+Status 1 means findings; status 2 can mean launcher failure (Trivy itself may
+also return 1 for a scan error: consult stderr). Database downloads need network
+access. It scans the current directory contents, not historical Git secrets.
+Images are cached locally; updates are explicit via
+`sudo scripts/bin/cstk_containers prefetch`, then stop/remove the old Web Check
+container before recreating it to use the newly pulled image. Existing containers
+are never silently replaced. Images use the upstream latest tags; prefetch is
+not a reproducible image pin. Docker containers/images are retained on uninstall;
+remove them manually if desired. No automatic Docker group membership is added.
+
+Maintainer sources and regression tests now live under `scripts/tools` and
+`scripts/tests`. Maintenance executables live in `scripts/bin/maint_*`.
+Run `python3 -m unittest discover -s scripts/tests -v` for repository tests.
+Build with `python scripts/tools/build_release_tools.py` in a Python environment
+containing PyInstaller and Textual 8.2.8, with shc and UPX on PATH. The builder
+uses PyInstaller one-file packages, shc `-r -f` for the shell utility, and `upx -9`.
+Source is retained for maintenance; these packaging tools deter casual reading
+but do not encrypt code or protect secrets from the machine owner.
+
+### AI connection setup
+
+Open ETC → C (or `sudo cstk -Ei`) and type `/setup`. Enter a provider name,
+base API URL, model identifier, and optional credential environment-variable
+name. Setup saves only connection metadata and opens the hidden credential
+prompt if a key is needed. Saved profiles reload on the next launch; credentials
+must be supplied again. No model request occurs until you send a chat message.
+Local and hosted **OpenAI-compatible chat-completions APIs** are supported.
+Providers with other protocols or standalone AI commands require a transport
+adapter; arbitrary executable plugins are not supported by the current client.
+The interface includes `/help`, `/connection`, `/model`, `/credential`, and the
+Ctrl+K action palette. See `scripts/source/cstk_ai/README.md` for provider and
+engagement context details.
+
+The existing Linux Security Audit entry now falls back to the installer's Lynis
+dependency when its separately supplied executable is absent. It writes unique
+reports under the invoking user's private Logs and Loot directories, runs
+without root, and explicitly reports that privileged checks may be incomplete.
+Its existing standalone-lab restriction remains in place.

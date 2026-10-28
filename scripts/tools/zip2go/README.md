@@ -128,12 +128,12 @@ README, sources, and manifest can be reviewed before running anything.
 
 ## Maintainer rebuild
 
-In the CSTK repository, run `python3 tools/build_zip2go.py`. It packages these
+In the CSTK repository, run `python3 scripts/tools/build_zip2go.py`. It packages these
 sources, takes the current `scripts/bin/web_tls_security_assessment` source,
 builds optional launchers with shc/musl-gcc, writes checksums and build metadata,
 and atomically replaces `scripts/lib/CSTK_Zip2Go.zip`. Rebuild again after changing
 any source; do not edit generated archives manually. See the repository's
-`tests/test_zip2go.py` and the limitations in this guide for verification and known limits.
+`scripts/tests/test_zip2go.py` and the limitations in this guide for verification and known limits.
 
 ## Additional local utilities
 

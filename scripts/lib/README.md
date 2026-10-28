@@ -38,7 +38,7 @@ key-file (`CSTK_LIB_KEY_SOURCE`) and interactive entry options.
 The binaries contain masked, recoverable key material: this discourages casual
 inspection but does not keep the key confidential from the machine owner. Never
 commit the plaintext key or generated C sources. Maintainers rebuild both Linux
-helpers with `python3 tools/build_provisioner.py /private/path/to/key`, using
+helpers with `python3 scripts/tools/build_provisioner.py /private/path/to/key`, using
 `musl-gcc`, `aarch64-linux-gnu-gcc`, and OpenSSL. Generated sources are temporary;
 only the binaries belong in `scripts/provision/`. Deletion is ordinary file
 removal, not secure erasure; Git retains the distributed binaries.
@@ -59,8 +59,9 @@ trusted signed commit.
   program directory.
 - Validate shell sources with `bash -n` and ShellCheck before an authorized
   integrity refresh.
-- Use the private recovery flow for authorized checksum updates; there is no
-  public integrity-refresh command.
+- `sudo cstk --refresh-hashes` requires an interactive terminal and the private
+  integrity refresh key; it synchronizes installed interfaces and rebuilds the
+  manifest. It is not an unauthenticated integrity bypass.
 
 ## Portable assessment archive
 
@@ -68,5 +69,5 @@ trusted signed commit.
 runner, bounded metadata checks, an explicit selected-file HTTP service, the
 maintained Web/TLS checker, a permission/traffic guide, checksums, readable
 sources, and optional Linux x86-64 shc launchers. It does not require CSTK's
-wrapper or root. Rebuild with `python3 tools/build_zip2go.py`; generated launcher
-C sources are included. See `tools/zip2go/README.md` for maintained scope and verification guidance.
+wrapper or root. Rebuild with `python3 scripts/tools/build_zip2go.py`; generated launcher
+C sources are included. See `scripts/tools/zip2go/README.md` for maintained scope and verification guidance.

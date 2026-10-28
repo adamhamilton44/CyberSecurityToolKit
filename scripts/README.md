@@ -60,3 +60,20 @@ Authorized maintenance can rebuild the manifest through the private recovery
 path.
 
 For a detailed library inventory, see [lib/README.md](lib/README.md).
+
+## Container tools and maintenance
+
+`source/container_tools/cstk_containers.py` builds `bin/cstk_containers`, the
+Web Check lifecycle and read-only Trivy project-audit adapter. The AI's `/setup`
+form saves non-secret connection metadata; profiles reload on launch and keys
+remain session-only.
+
+`tools/` contains build and package-maintenance sources and the maintained
+Zip2Go source tree. `tests/` contains repository regression tests; run
+`python3 -m unittest discover -s scripts/tests -v` from the repository root.
+Compiled maintenance entry points are `bin/maint_*`. Build all release helpers
+with `python scripts/tools/build_release_tools.py` in a build environment with
+PyInstaller and Textual 8.2.8 plus shc and UPX on PATH.
+
+The Web/TLS shell helper uses private scratch space inside its per-user report
+directory, independent of inherited `TMPDIR`, and removes scratch files on exit.

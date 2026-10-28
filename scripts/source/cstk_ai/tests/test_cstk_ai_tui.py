@@ -107,3 +107,27 @@ class V2ContractTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("draft-one",strip); self.assertIn("STOP / REVIEW",strip)
 
 if __name__=="__main__": unittest.main()
+
+class ProviderSetupTests(unittest.IsolatedAsyncioTestCase):
+    async def test_guided_setup_saves_and_next_launch_loads_without_network(self):
+        from pathlib import Path
+        import tempfile
+        from textual.widgets import Input
+        from cstk_ai import ProviderSetupScreen
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            profile=Path(directory)/'provider.json'
+            app=CSTKAnalystV2(); app.profile=profile
+            async with app.run_test(size=(80,24)) as pilot:
+                app._command('/setup'); await pilot.pause()
+                self.assertIsInstance(app.screen,ProviderSetupScreen)
+                for name,value in [('name','Local'),('url','http://127.0.0.1:11434/v1'),('model','my-model')]:
+                    app.screen.query_one('#setup-'+name,Input).value=value
+                await pilot.click('#setup-save'); await pilot.pause()
+                self.assertEqual(app.provider.model,'my-model')
+                self.assertTrue(profile.is_file())
+                self.assertEqual(app.messages,[])
+            second=CSTKAnalystV2(); second.profile=profile
+            async with second.run_test(size=(80,24)):
+                self.assertEqual(second.provider.model,'my-model')
+                self.assertEqual(second.messages,[])

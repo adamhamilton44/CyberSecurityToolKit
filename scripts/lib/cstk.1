@@ -1,5 +1,5 @@
 .\" cstk.1 - Manual page for CyberSecurityToolKit
-.TH CSTK 1 "2026-10-06" "CSTK 3.0.5" "User Commands"
+.TH CSTK 1 "2026-10-28" "CSTK 3.0.5" "User Commands"
 .SH NAME
 cstk \- run the CyberSecurityToolKit launcher
 .SH SYNOPSIS
@@ -66,10 +66,21 @@ password-protected 7-Zip archive with encrypted filenames.
 .BR \-T ", " \-\-tty
 Display the guide for upgrading a basic Linux shell to a full TTY.
 .TP
-.B \-\-control {engagements|inventory|tcp-connect}
-Invoke the separately installed loopback-only CSTK Local Control client as the
-original invoking user. The client uses that user's private API token and
-supports only fixed command contracts; it is not an arbitrary command runner.
+.B \-\-control engagements
+List local records through the integrated engagement helper as the invoking
+user. This compatibility alias requires no separate API service. Inventory
+and tcp-connect control commands are unsupported; use G for guarded operations.
+.TP
+.BR \-G ", " \-\-engagements
+Open the integrated engagement manager.
+.TP
+.B \-\-use ID [class tool]
+Select an active engagement for this process, then open the menu or dispatch
+the specified class/tool under engagement restrictions.
+.TP
+.B \-\-refresh-hashes
+Require the private integrity refresh key in an interactive terminal, synchronize
+installed interfaces, and rebuild and verify the local checksum manifest.
 .PP
 CSTK never contacts update servers during ordinary launcher startup. Updates
 must be checked or installed explicitly with the options above or through the
@@ -85,13 +96,16 @@ Long options are supplied separately. The equivalent long command is:
 .B sudo cstk \-\-osint \-\-nmap
 .RE
 .PP
-Supplying a class without a tool displays the available tools for that class.
+Supplying a class without a tool displays its available tools. DEFENSE opens
+its interactive submenu when input is a terminal and prints its tool list otherwise.
 .SH DEFENSE CLASS
 Select with
 .BR \-D " or " \-\-defense .
 .TP
 .BR l ", " \-\-linux-audit
-Run the Linux Security Audit executable when available.
+Run the separate Linux Security Audit executable when available, otherwise
+use the installed Lynis dependency. The audit runs as the invoking user and
+writes private log/report files; privileged checks may be incomplete.
 .TP
 .BR w ", " \-\-web-tls " URL"
 Assess an explicitly supplied HTTP or HTTPS URL using curl and openssl.
@@ -119,6 +133,24 @@ CSP frame-ancestors alternatives, Report-Only policies and duplicate HSTS
 fields are included in the configuration review.
 The tool runs as the invoking user. Standalone execution does not need root.
 Private data management uses \-\-private-data; \-D selects DEFENSE.
+.TP
+.BR c ", " \-\-web-check " [start|stop|status]"
+Start/open, stop, or inspect the local Web Check Docker container. Start is the
+default and requires interactive standalone LAB confirmation; stop/status do not.
+Use \-Dc or \-\-defense \-\-web-check. The UI binds only 127.0.0.1:3000.
+.TP
+.BR p ", " \-\-project " PROJECT_DIRECTORY"
+Use Trivy to scan an explicit local project for dependency vulnerabilities,
+secrets, IaC misconfigurations, and licenses. The project is mounted read-only
+and scanned with the invoking UID/GID. No Docker socket is mounted.
+Use \-Dp or \-\-defense \-\-project. Current files, not Git history, are scanned.
+.PP
+Web/TLS and Linux Audit require main-menu L and LAB confirmation; direct legacy
+routes remain blocked without standalone selection. G provides guarded web/TCP
+operations. Web Check has no engagement-safe target adapter. Local project
+auditing is available independently of engagement selection.
+Web/TLS scratch files use a private subdirectory of the report folder,
+independent of inherited TMPDIR, and are removed on exit.
 .SH OSINT CLASS
 Select this class with
 .BR \-O " or " \-\-osint .
@@ -189,6 +221,9 @@ Open the msfvenom and Metasploit payload helper.
 .TP
 .BR a ", " \-\-apk
 Open the Android APK payload-embedding helper.
+.TP
+.BR c ", " \-\-cnc
+Open the command-and-control workflow for explicitly authorized lab use.
 .SH POST-EXPLOIT CLASS
 Select this class with
 .BR \-X " or " \-\-postx .
@@ -275,7 +310,7 @@ scope changes remain review-only.
 The installer creates
 .I Other/SecurityChecks/sha256.checksum
 after installing CSTK and its wrapper. The manifest covers the launcher,
-uninstaller, internal verifier, executable tools, library files, and the
+uninstaller, executable tools, library files, and the
 wrapper when it is present.
 .PP
 The checksum file is installation-specific and is intentionally excluded from
@@ -313,7 +348,7 @@ Manage private Loot, Malware, and runtime Logs folders, change the runtime
 logging preference, or create a backup.
 .TP
 .B sudo cstk \-\-control engagements
-List engagement records through the optional local control API.
+List integrated local engagement records; no API service is required.
 .SH FILES
 .TP
 .I /usr/local/bin/cstk
@@ -440,10 +475,13 @@ Exported by the launcher as the absolute CSTK installation directory.
 The requested action completed successfully.
 .TP
 .B 1
-A general, integrity, or tool execution error occurred.
+A general or tool execution error occurred.
 .TP
 .B 2
 Root privileges are missing or the command-line arguments are invalid.
+.TP
+.B 99
+Integrity verification failed and execution was refused.
 .PP
 Individual tools may return additional nonzero status codes.
 .SH INSTALLATION
@@ -480,3 +518,31 @@ Main menu L requires explicit LAB confirmation for unguarded standalone use;
 it is unavailable inside a selected engagement session.
 Every guarded destination and redirect is authorized before connection.
 This is an application-level guard, not a host firewall or network shaper.
+
+.SH OPTIONAL CONTAINER TOOLS
+DEFENSE menu options 3 and 4 launch Web Check and Trivy project auditing.
+.B sudo cstk -Dc start
+starts local Web Check after interactive LAB confirmation.
+.B sudo cstk -Dc stop
+and
+.B sudo cstk -Dc status
+manage it without starting new assessments.
+The UI is bound to 127.0.0.1:3000 and opens as the invoking desktop user.
+.B sudo cstk -Dp /absolute/project/path
+scans dependencies, secrets, IaC, and licenses with a read-only project mount.
+Installation offers optional Docker preparation and image prefetch. Declining
+or failing that optional step does not abort core installation. First use
+pulls a missing image; initial image/database downloads require network access.
+Images use upstream latest tags. Explicit prefetch updates cached images;
+stop and remove an existing Web Check container to recreate it with a new image.
+Containers and images remain after uninstall; remove them manually if desired.
+.PP
+Trivy exit 0 means no reported findings. Nonzero status can mean findings or
+scan failure; inspect stderr. Web Check launch errors use exit 2.
+.SH MAINTAINER FILES
+Repository regression tests live in scripts/tests, maintenance and Zip2Go
+sources in scripts/tools, and compiled maintenance entry points in scripts/bin/maint_*.
+.SH AI SETUP
+Within the AI analyst, /setup opens guided provider setup. Saved connection
+metadata reloads on launch; secret values are never saved. Providers must expose
+an OpenAI-compatible chat-completions API.

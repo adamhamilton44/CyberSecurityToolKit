@@ -2,10 +2,11 @@
 """Inventory installer dependencies against available sources, without running tools."""
 import argparse
 import json
+import sys
 from pathlib import Path
 import re
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(sys.executable if getattr(sys, "frozen", False) else __file__).resolve().parents[2]
 ALIASES = {
     '7zip': ['7z', '7zz'], 'p7zip-full': ['7z', '7zz'],
     'aria2': ['aria2c'], 'exploitdb': ['searchsploit'],
@@ -26,8 +27,8 @@ def collect(reference):
     sources = []
     for path in [ROOT/'cstk.sh', ROOT/'scripts/bin/web_tls_security_assessment',
                  *sorted((ROOT/'scripts/source').rglob('*.py')),
-                 *sorted((ROOT/'tools/zip2go').glob('*.sh')),
-                 *sorted((ROOT/'tools/zip2go/lib').glob('*'))]:
+                 *sorted((ROOT/'scripts/tools/zip2go').glob('*.sh')),
+                 *sorted((ROOT/'scripts/tools/zip2go/lib').glob('*'))]:
         if path.is_file() and 'tests' not in path.parts:
             sources.append((str(path.relative_to(ROOT)), path.read_text(errors='replace')))
     shipped = {p.name for p in (ROOT/'scripts/bin').iterdir() if p.is_file()}
@@ -46,7 +47,7 @@ def main():
                         default=Path('/home/adam/Documents/Github/CSTK_bin_files'))
     parser.add_argument('--output', type=Path, default=ROOT/'log/development/DEPENDENCY_AUDIT.md')
     args = parser.parse_args()
-    policy = json.loads((ROOT/'tools/dependency_policy.json').read_text())
+    policy = json.loads((ROOT/'scripts/tools/dependency_policy.json').read_text())
     installer = (ROOT/'install.sh').read_text()
     current = re.search(r'local required_commands=\(\s*(.*?)\s*\)', installer, re.S).group(1).split()
     if current != policy['default_system_packages']:
@@ -105,7 +106,7 @@ def main():
              '- Package aliases, versions and dependency resolution remain distribution-specific.', '',
              '## Compiled entries without an exact-name external source match', '',
              ', '.join(f'`{name}`' for name in unmatched), '',
-             'Reproduce with `python3 tools/audit_dependencies.py --reference /path/to/CSTK_bin_files`. '
+             'Reproduce with `python3 scripts/tools/audit_dependencies.py --reference /path/to/CSTK_bin_files`. '
              'Full reference locations and catalogue matches are in the companion JSON.']
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text('\n'.join(text)+'\n')
