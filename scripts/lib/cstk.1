@@ -546,3 +546,33 @@ sources in scripts/tools, and compiled maintenance entry points in scripts/bin/m
 Within the AI analyst, /setup opens guided provider setup. Saved connection
 metadata reloads on launch; secret values are never saved. Providers must expose
 an OpenAI-compatible chat-completions API.
+
+.SH ENCRYPTED ENGAGEMENT REPORTING
+.B sudo cstk \-\-report ENGAGEMENT_ID
+opens the selected engagement's encrypted notebook. The engagement manager G
+also provides B for reporting. No active testing authorization is required to
+review an existing closed engagement. Testing still requires an active,
+unchanged scope and all existing adapter checks.
+.PP
+Set up a separate notebook passphrase and complete the reporting questions.
+The passphrase is prompted privately, never stored in argv or environment.
+The notebook is owner-only AES-256-GCM encrypted with a scrypt-wrapped random key.
+There is no password recovery. Reporting questions do not revise authorization.
+.PP
+Use T or W inside the unlocked notebook for guarded TCP or HTTP(S) checks.
+The regular engagement N/W checks prompt to unlock the notebook each run.
+Writable capture is mandatory before supported checks; optional diagnostic
+logging does not disable it. Scope changes require explicit snapshot review.
+Observations are evidence notes, not automatically confirmed vulnerabilities.
+Unsupported legacy tools remain blocked in engagement mode.
+.PP
+Review findings and evidence, export a draft, then finalize the unchanged draft
+with the reviewer recorded. Deterministic Markdown, editable Word and PDF reports
+use recorded input without AI. LibreOffice (soffice) is required for PDF export;
+without it notes and review remain available. Exports are intentionally plaintext
+inside private directories. Diagnostic logs and existing raw run records are
+separate and are not encrypted by notebook encryption.
+.PP
+Notes remain encrypted after finalization. Explicit deletion requires a verified
+final report, retention eligibility and no legal hold; backups are not erased.
+Update and uninstall preserve notebooks in the user's Engagements directory.

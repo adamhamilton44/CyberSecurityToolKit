@@ -39,3 +39,6 @@ __pycache__/
 /build/
 /dist/
 *.x.c
+
+# Reporting dependency license notices are release inputs.
+!scripts/source/reporting/notices/**/*.txt

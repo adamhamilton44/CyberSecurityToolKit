@@ -1088,3 +1088,9 @@ defense_project_frame() {
         "${Y}Long:${X} cstk --defense --project PROJECT_DIRECTORY" \
         'Dependencies, secrets, IaC, and licenses; project mounted read-only.'
 }
+
+engagement_reporting_frame() {
+    printf '%s\n' 'Engagement reporting | cstk --report ENGAGEMENT_ID' \
+        'G → B: encrypted notebook and review | T/W: guarded checks with capture' \
+        'Reports export plaintext Word/PDF/Markdown after explicit review.'
+}

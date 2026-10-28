@@ -45,6 +45,8 @@
 #/                         list local engagement records (compatibility alias; no API service required)
 #/                 --refresh-hashes
 #/                         interactively authorize and rebuild the local integrity manifest
+#/                 --report ENGAGEMENT_ID
+#/                         encrypted notes, guarded capture, review and Word/PDF reports
 #/                 -G, --engagements
 #/                         manage engagements, scope, lifecycle and guarded operations
 #/                 --use ID [class tool]
@@ -127,6 +129,7 @@
 #//S  [ sudo cstk -Dp /absolute/project/path ] Trivy dependency, secret, IaC and license audit
 #//S  [ sudo cstk -Ei ] Open AI Analyst; type /setup to configure your provider
 #//S  [ sudo cstk -Dl ] OR [ sudo cstk --defense --linux-audit ] Linux audit
+#//S  [ sudo cstk --report ID ] Encrypted notes, guarded capture and reviewed reports
 #//S  [ sudo cstk --engagements ] Manage engagements and guarded operations
 #//S  [ sudo cstk --use ID ] Select an active engagement for the menu session
 #//S  [ sudo cstk -On ] OR  [ sudo cstk --osint --nmap      ]  Run OSINT nmap helper
@@ -630,6 +633,7 @@ engagement_manager_menu() {
         echo "P - Pause the selected engagement"
         echo "N - Guarded TCP port check (explicit IP/CIDR, max 256 addresses)"
         echo "W - Guarded HTTP(S) request (scope checked on every redirect)"
+        echo "B - Encrypted notebook, guarded capture and report review"
         echo "I - Inspect the current revision"
         echo "V - Validate activation requirements"
         echo "S - Change state (ready/active/paused/closed/archived)"
@@ -645,9 +649,17 @@ engagement_manager_menu() {
             [Pp])
                 [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" ]] && run_engagement_helper transition "$CSTK_ENGAGEMENT_SLUG" paused
                 ;;
+            [Bb])
+                read -r -p "Engagement slug or ID [${CSTK_ENGAGEMENT_SLUG:-}]: " identifier
+                identifier="${identifier:-${CSTK_ENGAGEMENT_SLUG:-}}"
+                open_engagement_reporting "$identifier"
+                ;;
             [Nn]) run_guarded_operation tcp ;;
             [Ww]) run_guarded_operation web ;;
-            [Cc]) run_engagement_helper create ;;
+            [Cc])
+                run_engagement_helper create
+                echo "Next: open B to set up encrypted notes and reporting questions for the new engagement."
+                ;;
             [Ii])
                 read -r -p "Engagement slug or ID: " identifier
                 run_engagement_helper show "$identifier"
@@ -667,11 +679,23 @@ engagement_manager_menu() {
                 run_engagement_helper revise "$identifier" --config "$config_path"
                 ;;
             [Xx]) return 0 ;;
-            *) echo -e "${Y}Choose C, I, V, S, R, or X.${X}" ;;
+            *) echo -e "${Y}Choose C, U, P, N, W, B, I, V, S, R, or X.${X}" ;;
         esac
         echo
         read -r -p "Press Enter to continue..."
     done
+}
+
+open_engagement_reporting() {
+    local identifier="$1" rc
+    [[ -n "$identifier" ]] || { echo 'An engagement ID is required.' >&2; return 2; }
+    stop_engagement_hud
+    tput csr 0 "$(( $(tput lines 2>/dev/null || echo 24) - 1 ))" 2>/dev/null || true
+    engagement_reporting_frame
+    run_engagement_helper report "$identifier"
+    rc=$?
+    start_engagement_hud
+    return "$rc"
 }
 
 stop_engagement_hud() {
@@ -2868,6 +2892,11 @@ if [[ "$1" == "--use" ]]; then
     [[ $# -ge 2 ]] || { echo "--use requires an engagement ID" >&2; exit 2; }
     apply_engagement_selection "$2" || exit 1
     shift 2
+fi
+if [[ "${1:-}" == --report ]]; then
+    [[ $# -eq 2 ]] || { echo "Usage: cstk --report ENGAGEMENT_ID" >&2; exit 2; }
+    open_engagement_reporting "$2"
+    exit $?
 fi
 if [[ $# -eq 1 && "$1" =~ ^(-G|--engagements)$ ]]; then
     engagement_manager_menu

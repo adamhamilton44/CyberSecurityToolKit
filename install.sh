@@ -1427,6 +1427,17 @@ breached_parser() {
     fi
 }
 
+# Report conversion is optional; notebooks and review do not need LibreOffice.
+install_reporting_converter() {
+    local answer
+    command -v soffice >/dev/null 2>&1 && return 0
+    [[ -t 0 ]] || { echo 'PDF reporting: install libreoffice-writer when required.'; return 0; }
+    read -r -p 'Install LibreOffice Writer for Word/PDF engagement reports? [y/N]: ' answer
+    [[ "$answer" =~ ^[Yy]([Ee][Ss])?$ ]] || return 0
+    command -v apt-get >/dev/null 2>&1 || { echo 'Install LibreOffice with your package manager.'; return 1; }
+    cstk_package_transaction apt-get apt-get install -y libreoffice-writer
+}
+
 # Optional Docker tools: cache images at install time; launch only on demand.
 install_container_tools() {
     local answer
@@ -1606,6 +1617,7 @@ install_dependencies || exit 1
 install_mongosh || exit 1
 
 # A failed optional image download must not prevent the core installation.
+install_reporting_converter || echo 'Optional report converter unavailable; notes/review remain usable.'
 install_container_tools || echo 'Optional Docker preparation failed; retry scripts/bin/cstk_containers prefetch later.'
 
 # Install Python tools through pipx.
