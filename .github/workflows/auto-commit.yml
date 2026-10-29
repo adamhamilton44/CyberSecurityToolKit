@@ -66,6 +66,9 @@ jobs:
       - name: Test engagement policy and release hygiene
         run: python3 -m unittest discover -s scripts/tests -p 'test_engagement_manager.py' -v
 
+      - name: Test recoverable engagement questionnaire and offline forms
+        run: python3 -m unittest discover -s scripts/tests -p 'test_engagement_usability.py' -v
+
       - name: Test generated-report hygiene
         run: python3 -m unittest discover -s scripts/tests -p 'test_release_hygiene.py' -v
 

@@ -576,3 +576,30 @@ separate and are not encrypted by notebook encryption.
 Notes remain encrypted after finalization. Explicit deletion requires a verified
 final report, retention eligibility and no legal hold; backups are not erased.
 Update and uninstall preserve notebooks in the user's Engagements directory.
+
+.SH BEGINNER ENGAGEMENT SETUP
+The G screen groups setup, then OSINT, Payloads, Post Exploit, ETC and Defense.
+Use 1 to create/resume, 3 to review/activate, 2 to select, and 4 for notes/reports.
+Choose engagements and questionnaire options by number; identifiers need not be
+typed. Creation prints the saved name, full ID, folder and scope JSON path.
+.PP
+The wizard checkpoints answers after each response. Type :save or press Ctrl+C
+to pause; resume from G, option 1. Completed questionnaires retain an editable
+JSON form if validation fails. No failed creation is reported as a success.
+.PP
+.B \-\-engagement-template
+exports a blank JSON form under the invoking user's private Engagements/.drafts
+folder and prints its path. Fill it out in a text editor outside CSTK.
+.PP
+.B \-\-engagement-import FILE.json
+copies and validates an edited form, creating a draft only. Existing records
+are not overwritten. The form's _help section is removed from the saved scope.
+.PP
+.B \-\-engagement-resume
+lists unfinished questionnaires for numbered selection. Checkpoints and offline
+forms are private plaintext metadata, not encrypted notebook evidence. Do not
+enter credentials, tokens or sensitive findings. Update/uninstall retain them.
+.PP
+Review and activation still require valid written permission and the existing
+policy checks. Technique conflicts resolve toward denial. Unsupported Payload
+and Post Exploit entries start no tool; all guarded adapter checks remain.

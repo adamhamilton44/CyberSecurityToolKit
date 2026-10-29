@@ -1,0 +1,264 @@
+{
+  "_help": {
+    "read_first": [
+      "Fill empty fields at your own pace. This file never authorizes testing by itself.",
+      "Use real written permission; never enter passwords, tokens, private keys or client secrets.",
+      "Use timestamps with offsets, such as 2026-10-29T09:00:00-05:00, replacing the example with approved dates.",
+      "Use matching time zones in authorization and each testing_windows entry.",
+      "All actions start denied. Move an explicitly approved action from deny to allow OR confirm_each_run, without duplicates.",
+      "Import: sudo cstk --engagement-import /absolute/path/to/form.json. This creates a draft only.",
+      "Then G -> 3 reviews/activates and G -> 2 selects from a numbered list.",
+      "Never edit saved scope/revisions in place; import a new revision through R."
+    ],
+    "engagement_types": [
+      "penetration_test",
+      "red_team",
+      "purple_team",
+      "vulnerability_assessment",
+      "retest",
+      "lab"
+    ],
+    "environment_types": [
+      "production",
+      "staging",
+      "development",
+      "uat",
+      "lab",
+      "other"
+    ],
+    "access_methods": [
+      "public_internet",
+      "vpn",
+      "internal_network",
+      "local_network_drop",
+      "internal_agent",
+      "mixed"
+    ],
+    "target_types": [
+      "ip",
+      "cidr",
+      "dns",
+      "wildcard_dns",
+      "url",
+      "api",
+      "cloud",
+      "mobile_app",
+      "wireless",
+      "identity",
+      "repository",
+      "physical_location"
+    ],
+    "target_examples": [
+      {
+        "type": "ip",
+        "value": "192.0.2.10",
+        "note": "Fictional example; replace with approved target"
+      },
+      {
+        "type": "dns",
+        "value": "app.example.test",
+        "note": "Hostname alone does not approve its resolved IPs"
+      }
+    ],
+    "actions": [
+      "recon.passive",
+      "network.discovery",
+      "vulnerability.scan",
+      "web.passive",
+      "web.active",
+      "credential.offline",
+      "credential.online",
+      "exploit.validation",
+      "payload.generate",
+      "payload.deliver",
+      "post_exploitation",
+      "persistence",
+      "credential.access",
+      "command_and_control",
+      "data.access",
+      "data.exfiltration",
+      "social_engineering",
+      "wireless",
+      "physical",
+      "availability.disruption",
+      "data.modification",
+      "log.tampering",
+      "destructive"
+    ],
+    "supported_guarded_actions": {
+      "network.discovery": "OSINT TCP connectivity",
+      "web.active": "DEFENSE HTTP request"
+    },
+    "source_ips": "Set approved tester source IPs/CIDRs, or document why not applicable in traffic_identification.source_ip_not_applicable_reason.",
+    "ports_example": [
+      {
+        "protocol": "tcp",
+        "ports": [
+          "80",
+          "443"
+        ]
+      }
+    ],
+    "hostname_checks": "Use both_required DNS policy and include resolved IPs as well as the hostname.",
+    "red_team": "For red_team/purple_team, replace null with objectives (list), assumed_breach (boolean), deconfliction_contact, notification_mode, cleanup_validation_required (boolean).",
+    "privacy": "This form is private plaintext metadata; copies and backups remain your responsibility. Encrypted engagement notes are separate."
+  },
+  "schema_version": 1,
+  "slug": "",
+  "name": "",
+  "client": "",
+  "engagement_type": "penetration_test",
+  "status": "draft",
+  "revision": {
+    "created_by": "",
+    "change_reason": "Initial draft"
+  },
+  "authorization": {
+    "reference": "",
+    "system_owner": "",
+    "authorized_by": "",
+    "valid_from": "",
+    "valid_until": "",
+    "timezone": "UTC",
+    "third_party_consent": "not_applicable",
+    "evidence": {
+      "location": null,
+      "sha256": null
+    }
+  },
+  "environment": {
+    "types": [],
+    "access_method": "public_internet",
+    "access_notes": null,
+    "third_party_infrastructure": []
+  },
+  "testers": [
+    {
+      "name": "",
+      "role": "lead tester"
+    }
+  ],
+  "contacts": [
+    {
+      "name": "",
+      "role": "primary",
+      "method": ""
+    },
+    {
+      "name": "",
+      "role": "technical",
+      "method": ""
+    },
+    {
+      "name": "",
+      "role": "emergency",
+      "method": ""
+    },
+    {
+      "name": "",
+      "role": "breach_escalation",
+      "method": ""
+    }
+  ],
+  "scope": {
+    "include": [],
+    "exclude": []
+  },
+  "actions": {
+    "allow": [],
+    "confirm_each_run": [],
+    "deny": [
+      "recon.passive",
+      "network.discovery",
+      "vulnerability.scan",
+      "web.passive",
+      "web.active",
+      "credential.offline",
+      "credential.online",
+      "exploit.validation",
+      "payload.generate",
+      "payload.deliver",
+      "post_exploitation",
+      "persistence",
+      "credential.access",
+      "command_and_control",
+      "data.access",
+      "data.exfiltration",
+      "social_engineering",
+      "wireless",
+      "physical",
+      "availability.disruption",
+      "data.modification",
+      "log.tampering",
+      "destructive"
+    ]
+  },
+  "technical_policy": {
+    "scan_intensity": "passive_low_impact_only",
+    "credentialed_testing": false,
+    "credential_references": [],
+    "automatic_exploitation": "denied_stop_on_flag",
+    "denial_of_service": "strictly_forbidden"
+  },
+  "constraints": {
+    "testing_windows": [
+      {
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri"
+        ],
+        "start": "08:00",
+        "end": "18:00",
+        "timezone": "UTC"
+      }
+    ],
+    "allowed_source_ips": [],
+    "ports": [],
+    "max_requests_per_second": 5,
+    "max_bandwidth_mbps": 10,
+    "max_concurrency": 4,
+    "redirect_policy": "validate_every_hop",
+    "dns_policy": "both_required",
+    "stop_conditions": [
+      "Unexpected availability impact",
+      "The system owner requests a stop"
+    ]
+  },
+  "traffic_identification": {
+    "source_ip_not_applicable_reason": null,
+    "custom_header": {
+      "enabled": false,
+      "name": null,
+      "value_template": null
+    },
+    "defense_coordination": "monitor_only"
+  },
+  "incident_coordination": {
+    "soc_notification": "not_applicable",
+    "breach_escalation_procedure": ""
+  },
+  "data_handling": {
+    "classification": "confidential",
+    "retention_days": 30,
+    "out_of_scope_storage": "minimal_fingerprint",
+    "secret_storage": "redact",
+    "sensitive_data_policy": {
+      "pii": "stop_and_notify",
+      "pci": "stop_and_notify",
+      "phi": "stop_and_notify"
+    },
+    "encryption_required": true,
+    "encryption_standard": "",
+    "cleanup_required": true
+  },
+  "reporting": {
+    "format": "PDF and editable Word",
+    "delivery_method": "",
+    "critical_finding_deadline_minutes": 60
+  },
+  "red_team": null,
+  "notes": ""
+}

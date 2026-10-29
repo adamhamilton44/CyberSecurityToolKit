@@ -10,6 +10,7 @@ a = Analysis(
     datas=[
         (str(source / "cstk_engagement.py"), "."),
         (str(source / "engagement_scoping_cheat_sheet.md"), "."),
+        (str(source / "engagement_form_template.json"), "."),
     ],
     hiddenimports=[],
     hookspath=[],
