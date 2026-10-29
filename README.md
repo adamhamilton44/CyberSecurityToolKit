@@ -599,3 +599,30 @@ source/binary manifest supplements the locally generated runtime integrity
 manifest; installation or runtime synchronization must generate the latter for
 the checkout being deployed. Keep the main installation separate while testing
 a feature branch.
+
+### Beginner engagement setup and offline forms
+
+Open **G** and use **1 Create → 3 Review/activate → 2 Select → 4 Notes**.
+Choices use readable numbered options. Saved engagements are selected from a
+numbered list; remembering a slug or ID is unnecessary. After a successful save,
+CSTK displays the name, full ID, folder and saved scope path. Failed creation is
+reported as a failure and never followed by a success instruction.
+
+The questionnaire saves each answer under the invoking user's private
+`~/.local/share/cstk/Engagements/.drafts/`. Type `:save` or press Ctrl+C to pause;
+**G → 1 → Resume** restores earlier answers. Completed or invalid questionnaires
+retain an editable JSON form so validation errors do not require starting over.
+These forms/checkpoints are private plaintext permission metadata; never put
+credentials or sensitive findings in them. Encrypted notebook notes are separate.
+
+```bash
+sudo cstk --engagement-template             # Save a blank JSON form; print its path
+sudo cstk --engagement-resume               # Choose an unfinished questionnaire
+sudo cstk --engagement-import /path/form.json # Import as a draft, never activate
+```
+
+Edit the form outside CSTK at your own pace, then import it. Its `_help` section
+explains fields and lists available values. All actions start denied. Review,
+validation and explicit activation remain separate. Existing immutable scope
+revisions, notebooks and authorization checks are preserved. See the
+[step-by-step engagement guide](scripts/source/cstk_ai/ENGAGEMENT_GUIDE.md).

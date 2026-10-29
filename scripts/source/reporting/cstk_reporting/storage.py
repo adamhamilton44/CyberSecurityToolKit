@@ -85,8 +85,11 @@ def private_dir(path, create=False):
                     os.mkdir(part, 0o700, dir_fd=fd)
                 except FileExistsError:
                     pass
+            # Ancestors need traversal permission, not directory listing.
+            # Keep O_NOFOLLOW and require a readable, owner-private leaf.
+            access = os.O_RDONLY if last else getattr(os, "O_PATH", os.O_RDONLY)
             next_fd = os.open(
-                part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd
+                part, access | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd
             )
             os.close(fd)
             fd = next_fd

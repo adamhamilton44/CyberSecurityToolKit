@@ -62,3 +62,11 @@ and the user's end-to-end terminal acceptance remain separate from this isolated
 validation. Notes are retained across update/uninstall and report finalization.
 
 These checks are regression evidence, not independent security certification.
+
+## 29 October engagement usability update
+
+The engagement helper now has recoverable questionnaires and offline JSON forms.
+Reporting storage also supports non-listable traversable ancestors while retaining
+O_NOFOLLOW, owner-private leaf and file checks. The added regression brings the
+notebook/storage suite to 30 tests. See the shared engagement component
+`../cstk_ai/ENGAGEMENT_VALIDATION.md` for the current integration checks.

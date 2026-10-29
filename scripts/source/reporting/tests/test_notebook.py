@@ -194,6 +194,20 @@ class NotebookTests(unittest.TestCase):
         with self.assertRaises(NotebookError):
             self.book.snapshot()
 
+    def test_traverse_only_parent_allows_private_notebook_without_following_links(self):
+        with tempfile.TemporaryDirectory(dir="/tmp") as directory:
+            parent = Path(directory) / "traversable"
+            parent.mkdir(mode=0o700)
+            (parent / "vault").mkdir(mode=0o700)
+            os.chmod(parent, 0o111)
+            try:
+                with Notebook.create(parent / "vault", PASSWORD, scope(), 1, "a" * 64) as book:
+                    book.add_note("Saved", "Private notebook below a non-listable parent")
+                    self.assertEqual(len(book.snapshot()["notes"]), 1)
+                self.assertEqual((parent / "vault").stat().st_mode & 0o777, 0o700)
+            finally:
+                os.chmod(parent, 0o700)
+
     def test_directory_permissions_rechecked(self):
         os.chmod(self.path, 0o755)
         with self.assertRaises(NotebookError):

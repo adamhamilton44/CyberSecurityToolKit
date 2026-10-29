@@ -81,3 +81,9 @@ PYTHONPATH=/usr/lib/python3/dist-packages \
 
 The spec bundles the policy engine and mandatory questionnaire. PyInstaller and
 UPX packaging are not encryption; this source remains authoritative.
+
+The shared engagement manager now provides numbered choices, checkpointed
+questionnaires, numbered engagement selection and offline JSON forms. See
+[ENGAGEMENT_GUIDE.md](ENGAGEMENT_GUIDE.md). Reporting and setup metadata never
+change authorization without explicit reviewed activation. The unchanged
+questionnaire fingerprint continues to bind existing revisions.
