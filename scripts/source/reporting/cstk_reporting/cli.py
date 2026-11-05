@@ -7,6 +7,7 @@ import getpass
 import hashlib
 import json
 import resource
+import sys
 import warnings
 from pathlib import Path
 
@@ -26,6 +27,17 @@ console = Console(highlight=False)
 
 def say(value, style=None):
     console.print(str(value), style=style, markup=False)
+
+
+def screen(title, detail=""):
+    """A fresh terminal page; redirected output remains plain and complete."""
+    if console.is_terminal and sys.stdin.isatty():
+        # Reset the parent's reserved scroll region before moving the cursor.
+        console.file.write("\033[r\033[2J\033[H")
+        console.file.flush()
+    say("CSTK | " + title, style="bold cyan")
+    if detail:
+        say(detail)
 
 
 def multiline(label):
@@ -50,6 +62,8 @@ def read_json(path):
 
 
 def passphrase(new=False):
+    screen("Create encrypted notebook" if new else "Unlock encrypted notebook",
+           "Input is hidden. Keep this passphrase safe; it cannot be recovered.")
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("error", getpass.GetPassWarning)
@@ -69,7 +83,9 @@ def ask_profile(notebook):
     profile = notebook.snapshot()["profile"]
     answers = {}
     say("Reporting questions do not change testing authorization.", style="yellow")
-    for key, label, requirement in QUESTIONS:
+    for index, (key, label, requirement) in enumerate(QUESTIONS, 1):
+        screen(f"Reporting questions | {index}/{len(QUESTIONS)}",
+               "Saved encrypted when this questionnaire is completed. Testing permissions are unchanged.")
         value = Prompt.ask(
             label + " [" + requirement + "]", default=str(profile.get(key, ""))
         )
@@ -179,6 +195,8 @@ def shell(notebook, soffice, guarded_operation=None):
             )
         action = Prompt.ask("Select").upper()
         try:
+            if action != "X":
+                screen("Reporting | option " + action)
             if action in ("T", "W") and guarded_operation is not None:
                 guarded_operation(action, notebook)
             elif action == "X":

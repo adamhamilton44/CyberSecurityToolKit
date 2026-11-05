@@ -6,11 +6,14 @@ build_python=${1:?Usage: build_engagement_reporting.sh /absolute/build-venv/bin/
 root=$(cd -- "$(dirname -- "$0")/../.." && pwd -P)
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
+# Concurrent builds must not clean each other's binary cache.
+export PYINSTALLER_CONFIG_DIR="$stage/pyinstaller-cache"
 : > "$stage/docx-parts-directory.marker"
 "$build_python" -m PyInstaller --clean --noconfirm --onefile --strip \
     --name Etc_engagement --paths "$root/scripts/source/cstk_ai" \
     --paths "$root/scripts/source/reporting" --collect-data docx \
     --add-data "$root/scripts/source/cstk_ai/engagement_scoping_cheat_sheet.md:." \
+    --add-data "$root/scripts/source/cstk_ai/engagement_form_template.json:." \
     --add-data "$stage/docx-parts-directory.marker:docx/parts" \
     --distpath "$stage/dist" --workpath "$stage/build" --specpath "$stage/spec" \
     "$root/scripts/source/cstk_ai/engagement_runtime.py"

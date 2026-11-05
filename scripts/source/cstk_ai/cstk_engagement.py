@@ -25,7 +25,6 @@ from pathlib import Path
 from typing import Any, Iterable
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-
 SCHEMA_VERSION = 1
 DIR_MODE = 0o700
 FILE_MODE = 0o600
@@ -71,7 +70,10 @@ ACTIONS = (
     "destructive",
 )
 SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
-DNS_RE = re.compile(r"^(?=.{1,253}\.?$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.?$", re.I)
+DNS_RE = re.compile(
+    r"^(?=.{1,253}\.?$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.?$",
+    re.I,
+)
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 TIME_RE = re.compile(r"^(?:[01][0-9]|2[0-3]):[0-5][0-9]$")
 WEEKDAYS = {"mon", "tue", "wed", "thu", "fri", "sat", "sun"}
@@ -824,7 +826,10 @@ def refresh_summary(engagement_dir: Path) -> dict[str, Any]:
 
 
 def prepare_new_config(source: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(source, dict):
+        raise EngagementError("An engagement form must be a JSON object.")
     config = copy.deepcopy(source)
+    config.pop("_help", None)
     engagement_id = str(uuid.uuid4())
     slug = normalize_slug(str(config.get("slug") or config.get("name") or ""))
     config["schema_version"] = SCHEMA_VERSION
@@ -835,7 +840,11 @@ def prepare_new_config(source: dict[str, Any]) -> dict[str, Any]:
     config["revision"] = {
         "number": 1,
         "created_at": utc_now(),
-        "created_by": str(config.get("revision", {}).get("created_by") or os.environ.get("USER") or "unknown"),
+        "created_by": str(
+            config.get("revision", {}).get("created_by")
+            or os.environ.get("USER")
+            or "unknown"
+        ),
         "change_reason": "Initial draft",
         "previous_sha256": None,
     }
@@ -1280,36 +1289,197 @@ def authorize_action(
     return decision
 
 
+class WizardPaused(Exception):
+    """Operator intentionally saved the questionnaire for later."""
+
+
+_WIZARD = None
+
+
+def ui(message, color="cyan", *, stream=None):
+    stream = stream or sys.stdout
+    codes = {"cyan": "36", "green": "32", "yellow": "33", "red": "31"}
+    if stream.isatty() and not os.environ.get("NO_COLOR"):
+        print("\033[1;" + codes[color] + "m" + str(message) + "\033[0m", file=stream)
+    else:
+        print(message, file=stream)
+
+
+def friendly(value):
+    labels = {
+        "ip": "Single IP address",
+        "cidr": "IP range / subnet (CIDR)",
+        "dns": "Hostname",
+        "wildcard_dns": "Wildcard hostname (*.example.com)",
+        "url": "Web address (URL)",
+        "api": "API endpoint",
+        "cloud": "Cloud resource",
+        "mobile_app": "Mobile application",
+        "wireless": "Wireless network",
+        "identity": "Identity / account",
+        "repository": "Source code repository",
+        "physical_location": "Physical location",
+        "penetration_test": "Penetration test",
+        "red_team": "Red team exercise",
+        "purple_team": "Purple team exercise",
+        "vulnerability_assessment": "Vulnerability assessment",
+        "retest": "Retest previous findings",
+        "lab": "Practice lab",
+        "public_internet": "Over the public internet",
+        "vpn": "Through a VPN",
+        "pii": "Personal information",
+        "pci": "Payment card information",
+        "phi": "Health information",
+        "both_required": "Both hostname AND resolved IP must be in scope (recommended)",
+        "manual_review_on_change": "Manual DNS review (guarded hostname checks unavailable)",
+        "hostname_authorized": "Hostname scope only (guarded hostname checks unavailable)",
+        "ip_authorized": "IP scope only (guarded hostname checks unavailable)",
+        "deny": "Do not follow redirects",
+        "same_host_only": "Follow redirects only on the same host",
+        "validate_every_hop": "Check scope again at every redirect",
+        "denied_stop_on_flag": "Not authorized: stop before exploitation",
+        "manual_approval_each": "Separate approval required for every validation",
+        "explicitly_allowed": "Explicitly authorized in written permission",
+        "strictly_forbidden": "Strictly forbidden",
+        "lab_only_explicit": "Only in an explicitly authorized lab",
+        "not_applicable": "Not applicable",
+        "required_pending": "Required but not yet obtained",
+        "confirmed": "Written consent confirmed",
+        "standard_non_destructive": "Standard, non-destructive testing",
+        "passive_low_impact_only": "Passive / low-impact checks only",
+        "intrusive_explicit": "Intrusive testing explicitly authorized",
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday",
+    }
+    return labels.get(value, value.replace("_", " ").replace(".", " / ").capitalize())
+
+
+class WizardSession:
+    def __init__(self, root, path=None):
+        self.directory = ensure_plain_directory(root / ".drafts", create=True)
+        self.path = path or self.directory / (
+            "questionnaire-" + uuid.uuid4().hex[:12] + ".answers.json"
+        )
+        if self.path.parent != self.directory or self.path.is_symlink():
+            raise EngagementError(
+                "Resume only questionnaires from the private .drafts directory."
+            )
+        if self.path.exists():
+            self.data = read_json(self.path)
+            if self.data.get("wizard_version") != 1 or not isinstance(
+                self.data.get("answers"), list
+            ):
+                raise EngagementError(
+                    "Unsupported questionnaire checkpoint; use its completed JSON form if available."
+                )
+            if self.data.get("saved_engagement"):
+                raise EngagementError(
+                    "This questionnaire was already saved. Engagement ID: "
+                    + str(self.data["saved_engagement"])
+                )
+        else:
+            self.data = {"wizard_version": 1, "answers": [], "created_at": utc_now()}
+            self.save()
+        self.cursor = 0
+
+    def save(self):
+        self.data["updated_at"] = utc_now()
+        payload = canonical_json_bytes(self.data)
+        if len(payload) > 2 * 1024 * 1024:
+            raise EngagementError(
+                "Questionnaire checkpoint is full; earlier saved answers remain available."
+            )
+        atomic_write(self.path, payload)
+
+    def answer(self, label, suffix):
+        if self.cursor < len(self.data["answers"]):
+            record = self.data["answers"][self.cursor]
+            if record.get("label") != label or not isinstance(record.get("value"), str):
+                raise EngagementError(
+                    "Questionnaire layout changed; retained answers are at "
+                    + str(self.path)
+                )
+            self.cursor += 1
+            print(label + ": restored saved answer")
+            return record["value"]
+        value = input(label + suffix + ": ").strip()
+        if value.lower() in (":save", ":quit"):
+            raise WizardPaused()
+        if len(value) > 24000 or has_control_characters(value):
+            raise EngagementError(
+                "Answer is too long or contains control characters; earlier answers remain saved."
+            )
+        self.data["answers"].append({"label": label, "value": value})
+        self.save()  # Stop immediately if persistence fails; never claim an unsaved answer.
+        self.cursor += 1
+        return value
+
+
 def prompt(label: str, *, required: bool = True, default: str | None = None) -> str:
     while True:
         suffix = f" [{default}]" if default is not None else ""
-        value = input(f"{label}{suffix}: ").strip()
+        value = (
+            _WIZARD.answer(label, suffix)
+            if _WIZARD
+            else input(label + suffix + ": ").strip()
+        )
+        if value.lower() in (":save", ":quit"):
+            raise WizardPaused()
         if not value and default is not None:
-            return default
-        if value or not required:
-            return value
-        print("A value is required.")
+            value = default
+        if not value and required:
+            ui("Please enter an answer, or type :save to finish later.", "yellow")
+            continue
+        try:
+            if value and label.startswith(
+                ("Authorization starts", "Authorization ends")
+            ):
+                parse_datetime(value)
+            if value and label == "Engagement time zone":
+                ZoneInfo(value)
+            if value and label in (
+                "Daily start time (HH:MM)",
+                "Daily end time (HH:MM)",
+            ):
+                if not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", value):
+                    raise ValueError("Use a 24-hour time such as 08:00 or 18:30.")
+            if (
+                value
+                and label == "Authorization evidence SHA-256"
+                and not SHA256_RE.fullmatch(value.lower())
+            ):
+                raise ValueError("Use a 64-character SHA-256, or leave blank.")
+        except (ValueError, ZoneInfoNotFoundError) as exc:
+            ui("Please check this answer: " + str(exc), "yellow")
+            continue
+        return value
 
 
 def choice(label: str, values: tuple[str, ...], default: str | None = None) -> str:
-    rendered = "/".join(values)
+    ui(label)
+    for index, value in enumerate(values, 1):
+        print(
+            f"  {index}. {friendly(value)}" + (" (default)" if value == default else "")
+        )
+    default_index = str(values.index(default) + 1) if default in values else None
     while True:
-        value = prompt(f"{label} ({rendered})", default=default).lower()
-        if value in values:
+        value = prompt(label + " - choose a number", default=default_index).lower()
+        if value.isdigit() and 1 <= int(value) <= len(values):
+            return values[int(value) - 1]
+        if (
+            value in values
+        ):  # Existing machine values remain accepted for compatibility.
             return value
-        print("Choose one of the displayed values.")
+        ui("Enter one of the displayed numbers.", "yellow")
 
 
 def yes_no(label: str, default: bool = True) -> bool:
-    rendered = "Y/n" if default else "y/N"
-    while True:
-        value = input(f"{label} [{rendered}]: ").strip().lower()
-        if not value:
-            return default
-        if value in ("y", "yes"):
-            return True
-        if value in ("n", "no"):
-            return False
+    return choice(label, ("yes", "no"), "yes" if default else "no") == "yes"
 
 
 def comma_values(label: str) -> list[str]:
@@ -1317,16 +1487,57 @@ def comma_values(label: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def multi_choice(label, values, defaults=(), required=False):
+    ui(label + " - choose one or more numbers separated by commas")
+    for index, value in enumerate(values, 1):
+        print(f"  {index}. {friendly(value)}")
+    default = ",".join(str(values.index(v) + 1) for v in defaults)
+    while True:
+        raw = prompt(label + " - numbers", required=required, default=default)
+        parts = [v.strip().lower() for v in raw.split(",") if v.strip()]
+        selected = [
+            values[int(v) - 1] if v.isdigit() and 1 <= int(v) <= len(values) else v
+            for v in parts
+        ]
+        if set(selected) <= set(values) and (selected or not required):
+            return list(dict.fromkeys(selected))
+        ui("Use only the displayed numbers, for example 1,2.", "yellow")
+
+
+def numeric_prompt(label, default=None, *, integer=False, minimum=0, required=True):
+    while True:
+        raw = prompt(label, default=default, required=required)
+        if not raw and not required:
+            return None
+        try:
+            value = int(raw) if integer else float(raw)
+            if not math.isfinite(value) or value < minimum:
+                raise ValueError()
+            return value
+        except (ValueError, OverflowError):
+            ui(
+                f"Enter a {'whole number' if integer else 'number'} of at least {minimum}.",
+                "yellow",
+            )
+
+
 def collect_targets(label: str, *, require_one: bool) -> list[dict[str, Any]]:
     print(f"\n{label}")
-    print("Types: " + ", ".join(TARGET_TYPES))
+    ui("Choose a target type by number. Choose 0 when finished.")
     targets: list[dict[str, Any]] = []
     while True:
-        target_type = prompt("Target type (blank to finish)", required=False).lower()
-        if not target_type:
+        for index, kind in enumerate(TARGET_TYPES, 1):
+            print(f"  {index}. {friendly(kind)}")
+        print("  0. Done adding targets")
+        target_type = prompt("Target type number", required=False).lower()
+        if target_type.isdigit() and 1 <= int(target_type) <= len(TARGET_TYPES):
+            target_type = TARGET_TYPES[int(target_type) - 1]
+        if not target_type or target_type == "0":
             if targets or not require_one:
                 return targets
-            print("At least one in-scope target is required for an activation-ready draft.")
+            print(
+                "At least one in-scope target is required for an activation-ready draft."
+            )
             if not yes_no("Add one now", True):
                 return targets
             continue
@@ -1346,7 +1557,7 @@ def collect_targets(label: str, *, require_one: bool) -> list[dict[str, Any]]:
 def collect_actions() -> dict[str, list[str]]:
     print("\nAction policy")
     for index, action in enumerate(ACTIONS, start=1):
-        print(f"{index:2d} - {action}")
+        print(f"{index:2d}. {friendly(action)}")
 
     def select_numbers(label: str) -> set[str]:
         while True:
@@ -1354,7 +1565,9 @@ def collect_actions() -> dict[str, list[str]]:
             if not raw:
                 return set()
             try:
-                indexes = {int(value.strip()) for value in raw.split(",") if value.strip()}
+                indexes = {
+                    int(value.strip()) for value in raw.split(",") if value.strip()
+                }
             except ValueError:
                 print("Use comma-separated numbers.")
                 continue
@@ -1364,10 +1577,14 @@ def collect_actions() -> dict[str, list[str]]:
             return {ACTIONS[index - 1] for index in indexes}
 
     allowed = select_numbers("Allowed action numbers")
-    confirmed = select_numbers("Confirm-each-run action numbers")
-    overlap = allowed & confirmed
-    if overlap:
-        raise EngagementError("actions selected in both allow and confirm: " + ", ".join(sorted(overlap)))
+    while True:
+        confirmed = select_numbers("Action numbers requiring approval every run")
+        if not allowed & confirmed:
+            break
+        ui(
+            "An action cannot be both always allowed and approval-only. Choose the second list again.",
+            "yellow",
+        )
     denied = set(ACTIONS) - allowed - confirmed
     return {
         "allow": sorted(allowed),
@@ -1377,19 +1594,34 @@ def collect_actions() -> dict[str, list[str]]:
 
 
 def interactive_config() -> dict[str, Any]:
-    print("CSTK engagement creation wizard")
+    ui("CSTK engagement setup - no testing starts here")
     print(f"Every mandatory question in {QUESTIONNAIRE_NAME} is asked below.")
-    print("The engagement is saved as a draft. Activation is a separate reviewed step.\n")
+    print(
+        "Answers are private plaintext metadata: never enter passwords, API keys or client secrets."
+    )
+    print(
+        "Every answer is saved when this wizard is started through Create. Type :save or press Ctrl+C to resume later."
+    )
+    ui("1. Engagement details")
     name = prompt("Engagement name")
     client = prompt("Client/system owner name", required=False)
     engagement_type = choice(
         "Engagement type",
-        ("penetration_test", "red_team", "purple_team", "vulnerability_assessment", "retest", "lab"),
+        (
+            "penetration_test",
+            "red_team",
+            "purple_team",
+            "vulnerability_assessment",
+            "retest",
+            "lab",
+        ),
         "penetration_test",
     )
     tester_name = prompt("Lead tester name")
     tester_role = prompt("Lead tester role", default="lead tester")
-    authorization_reference = prompt("Authorization/SOW/ROE reference")
+    ui("2. Written permission and authorization dates")
+    print("Example timestamp: 2026-10-29T09:00:00-05:00 (date, time and UTC offset).")
+    authorization_reference = prompt("Written permission / contract reference")
     system_owner = prompt("System owner")
     authorized_by = prompt("Authorizing person and role")
     valid_from = prompt("Authorization starts (ISO 8601 with offset)")
@@ -1400,34 +1632,48 @@ def interactive_config() -> dict[str, Any]:
         ("not_applicable", "required_pending", "confirmed"),
         "not_applicable",
     )
-    environment_types: list[str] = []
-    valid_environment_types = ("production", "staging", "development", "uat", "lab", "other")
-    while not environment_types:
-        environment_types = comma_values("Environment types (production,staging,development,uat,lab,other)")
-        if not environment_types or set(environment_types) - set(valid_environment_types):
-            print("Enter one or more displayed environment types.")
-            environment_types = []
+    environment_types = multi_choice(
+        "Environment",
+        ("production", "staging", "development", "uat", "lab", "other"),
+        required=True,
+    )
     access_method = choice(
         "Tester access/hosting location",
-        ("public_internet", "vpn", "internal_network", "local_network_drop", "internal_agent", "mixed"),
+        (
+            "public_internet",
+            "vpn",
+            "internal_network",
+            "local_network_drop",
+            "internal_agent",
+            "mixed",
+        ),
         "public_internet",
     )
     access_notes = prompt("Access/hosting location details", required=False)
     third_party_infrastructure: list[dict[str, str]] = []
     if yes_no("Does scope include third-party hosted infrastructure", False):
-        print("Record only providers covered by written authorization. Never paste credentials or secrets.")
+        print(
+            "Record only providers covered by written authorization. Never paste credentials or secrets."
+        )
         while True:
             third_party_infrastructure.append(
                 {
                     "provider": prompt("Third-party provider"),
                     "service": prompt("Third-party service/account/tenant"),
-                    "written_authorization_reference": prompt("Written provider authorization reference"),
+                    "written_authorization_reference": prompt(
+                        "Written provider authorization reference"
+                    ),
                 }
             )
             if not yes_no("Add another third-party provider", False):
                 break
-    evidence_location = prompt("Authorization evidence location/reference", required=False)
-    evidence_sha256 = prompt("Authorization evidence SHA-256", required=False).lower() or None
+    evidence_location = prompt(
+        "Authorization evidence location/reference", required=False
+    )
+    evidence_sha256 = (
+        prompt("Authorization evidence SHA-256", required=False).lower() or None
+    )
+    ui("3. Contacts and stop-testing arrangements")
     primary_name = prompt("Primary point-of-contact name and title")
     primary_method = prompt("Primary point-of-contact method")
     technical_name = prompt("Technical contact name")
@@ -1437,28 +1683,44 @@ def interactive_config() -> dict[str, Any]:
     breach_name = prompt("Breach-escalation contact name and title")
     breach_method = prompt("Breach-escalation contact method")
     soc_notification = choice(
-        "SOC/incident-response notification",
-        ("notified", "limited_notice", "not_notified_with_authorization", "not_applicable"),
+        "Security monitoring / incident-response team notification",
+        (
+            "notified",
+            "limited_notice",
+            "not_notified_with_authorization",
+            "not_applicable",
+        ),
         "notified",
     )
     breach_procedure = prompt("Breach discovery escalation procedure")
+    ui("4. Scope - what may and may not be tested")
     include = collect_targets("In-scope targets", require_one=True)
     exclude = collect_targets("Explicit exclusions", require_one=False)
+    ui("5. Approved techniques - anything not selected stays denied")
     scan_intensity = choice(
         "Scan intensity",
-        ("passive_low_impact_only", "standard_non_destructive", "intrusive_explicit", "custom"),
+        (
+            "passive_low_impact_only",
+            "standard_non_destructive",
+            "intrusive_explicit",
+            "custom",
+        ),
         "standard_non_destructive",
     )
     credentialed_testing = yes_no("Is credentialed testing authorized", False)
     credential_references: list[dict[str, str]] = []
     if credentialed_testing:
-        print("Enter account identifiers and an approved secret source reference only. Never enter a password, token, or key.")
+        print(
+            "Enter account identifiers and an approved secret source reference only. Never enter a password, token, or key."
+        )
         while True:
             credential_references.append(
                 {
                     "account_identifier": prompt("Test account identifier"),
                     "role": prompt("Test account role"),
-                    "secret_source": prompt("Approved secret source/reference (not the secret)"),
+                    "secret_source": prompt(
+                        "Approved secret source/reference (not the secret)"
+                    ),
                 }
             )
             if not yes_no("Add another credentialed test account", False):
@@ -1474,45 +1736,107 @@ def interactive_config() -> dict[str, Any]:
         "strictly_forbidden",
     )
     actions = collect_actions()
-    for policy in actions.values():
-        while automatic_exploitation == "denied_stop_on_flag" and "exploit.validation" in policy:
-            policy.remove("exploit.validation")
-        while denial_of_service == "strictly_forbidden" and "availability.disruption" in policy:
-            policy.remove("availability.disruption")
+
+    # Restrictive technical policies override action selections without granting
+    # a previously denied action or creating overlapping allow/confirm lists.
+    def move_action(action, destination):
+        for bucket in actions.values():
+            while action in bucket:
+                bucket.remove(action)
+        actions[destination].append(action)
+
+    if (
+        "exploit.validation" in actions["deny"]
+        and automatic_exploitation != "denied_stop_on_flag"
+    ):
+        automatic_exploitation = "denied_stop_on_flag"
+        ui(
+            "Exploitation was not selected in permitted actions, so it remains denied.",
+            "yellow",
+        )
+    if denial_of_service != "strictly_forbidden" and (
+        "availability.disruption" in actions["deny"]
+        or (denial_of_service == "lab_only_explicit" and engagement_type != "lab")
+    ):
+        denial_of_service = "strictly_forbidden"
+        ui(
+            "Availability disruption is not permitted by these selections; it remains forbidden.",
+            "yellow",
+        )
     if automatic_exploitation == "denied_stop_on_flag":
-        actions["deny"].append("exploit.validation")
-    elif automatic_exploitation == "manual_approval_each":
-        actions["confirm_each_run"].append("exploit.validation")
+        move_action("exploit.validation", "deny")
+    elif (
+        automatic_exploitation == "manual_approval_each"
+        and "exploit.validation" in actions["allow"]
+    ):
+        move_action("exploit.validation", "confirm_each_run")
     if denial_of_service == "strictly_forbidden":
-        actions["deny"].append("availability.disruption")
+        move_action("availability.disruption", "deny")
+    elif denial_of_service == "lab_only_explicit":
+        move_action("availability.disruption", "confirm_each_run")
     for policy in actions.values():
         policy.sort()
-    days = comma_values("Testing days (mon,tue,wed,thu,fri,sat,sun)") or ["mon", "tue", "wed", "thu", "fri"]
+    ui("6. Approved testing times, source IPs and traffic limits")
+    days = multi_choice(
+        "Testing days",
+        ("mon", "tue", "wed", "thu", "fri", "sat", "sun"),
+        ("mon", "tue", "wed", "thu", "fri"),
+        required=True,
+    )
     window_start = prompt("Daily start time (HH:MM)", default="08:00")
     window_end = prompt("Daily end time (HH:MM)", default="18:00")
-    source_ips = comma_values("Approved source IPs/CIDRs (comma separated; blank if none specified)")
-    source_ip_reason = None if source_ips else prompt("Why source IP identification is not applicable")
-    use_custom_header = yes_no("Use a custom HTTP header to identify testing traffic", False)
+    source_ips = comma_values(
+        "Approved source IPs/CIDRs (comma separated; blank if none specified)"
+    )
+    source_ip_reason = (
+        None if source_ips else prompt("Why source IP identification is not applicable")
+    )
+    use_custom_header = yes_no(
+        "Use a custom HTTP header to identify testing traffic", False
+    )
     custom_header = {
         "enabled": use_custom_header,
         "name": prompt("Custom header name") if use_custom_header else None,
-        "value_template": prompt("Custom header value template") if use_custom_header else None,
+        "value_template": prompt("Custom header value template")
+        if use_custom_header
+        else None,
     }
-    print("Defense coordination records the approved client arrangement; CSTK does not automate bypass or evasion.")
+    print(
+        "Defense coordination records the approved client arrangement; CSTK does not automate bypass or evasion."
+    )
     defense_coordination = choice(
         "Firewall/WAF/IDS/IPS coordination",
-        ("client_whitelist", "monitor_only", "unchanged", "covert_authorized_no_evasion_automation"),
+        (
+            "client_whitelist",
+            "monitor_only",
+            "unchanged",
+            "covert_authorized_no_evasion_automation",
+        ),
         "monitor_only",
     )
-    port_values = comma_values("TCP ports/ranges (comma separated; blank if all contract-approved ports)")
-    max_rate = float(prompt("Maximum requests per second", default="5"))
-    bandwidth_text = prompt("Maximum bandwidth in Mbps (blank if not specified)", required=False)
-    max_bandwidth = float(bandwidth_text) if bandwidth_text else None
-    max_concurrency = int(prompt("Maximum concurrency", default="4"))
-    redirect_policy = choice("Redirect policy", ("deny", "same_host_only", "validate_every_hop"), "deny")
+    port_values = comma_values(
+        "TCP ports/ranges (comma separated; blank if all contract-approved ports)"
+    )
+    max_rate = numeric_prompt("Maximum requests per second", "5", minimum=0.001)
+    max_bandwidth = numeric_prompt(
+        "Maximum bandwidth in Mbps (blank if not specified)",
+        minimum=0.001,
+        required=False,
+    )
+    max_concurrency = numeric_prompt(
+        "Maximum concurrency", "4", integer=True, minimum=1
+    )
+    redirect_policy = choice(
+        "Redirect policy", ("deny", "same_host_only", "validate_every_hop"), "deny"
+    )
     dns_policy = choice(
         "DNS policy",
-        ("hostname_authorized", "ip_authorized", "both_required", "manual_review_on_change"),
+        (
+            "hostname_authorized",
+            "ip_authorized",
+            "both_required",
+            "manual_review_on_change",
+        ),
         "both_required",
     )
     stop_conditions = comma_values("Stop conditions (comma separated)")
@@ -1522,33 +1846,60 @@ def interactive_config() -> dict[str, Any]:
             "A target cannot be positively matched to approved scope",
             "The system owner or emergency contact requests a stop",
         ]
-    classification = choice("Data classification", ("public", "internal", "confidential", "restricted"), "confidential")
-    retention_days = int(prompt("Retention days", default="30"))
+    ui("7. Evidence handling, retention and reporting")
+    classification = choice(
+        "Data classification",
+        ("public", "internal", "confidential", "restricted"),
+        "confidential",
+    )
+    retention_days = numeric_prompt("Retention days", "30", integer=True)
     out_of_scope_storage = choice(
         "Out-of-scope storage",
         ("none", "minimal_fingerprint", "approved_quarantine"),
         "minimal_fingerprint",
     )
-    secret_storage = choice("Secret storage", ("redact", "encrypted_only", "prohibited"), "redact")
-    sensitive_actions = ("mask_and_continue", "stop_and_notify", "encrypted_capture_authorized", "prohibited")
+    secret_storage = choice(
+        "Secret storage", ("redact", "encrypted_only", "prohibited"), "redact"
+    )
+    sensitive_actions = (
+        "mask_and_continue",
+        "stop_and_notify",
+        "encrypted_capture_authorized",
+        "prohibited",
+    )
     sensitive_data_policy = {
-        "pii": choice("PII handling", sensitive_actions, "stop_and_notify"),
-        "pci": choice("PCI/card-data handling", sensitive_actions, "stop_and_notify"),
-        "phi": choice("PHI/health-data handling", sensitive_actions, "stop_and_notify"),
+        "pii": choice(
+            "Personal information handling", sensitive_actions, "stop_and_notify"
+        ),
+        "pci": choice(
+            "Payment card information handling", sensitive_actions, "stop_and_notify"
+        ),
+        "phi": choice(
+            "Health information handling", sensitive_actions, "stop_and_notify"
+        ),
     }
-    encryption_required = yes_no("Require encryption for stored/exported engagement data", True)
+    encryption_required = yes_no(
+        "Require encryption for stored/exported engagement data", True
+    )
     encryption_standard = prompt("Approved output encryption standard/method")
-    report_format = prompt("Report format", default="PDF plus encrypted evidence archive")
+    report_format = prompt(
+        "Report format", default="PDF plus encrypted evidence archive"
+    )
     delivery_method = prompt("Approved report delivery method")
-    critical_deadline = int(prompt("Critical-finding notification deadline in minutes", default="60"))
+    critical_deadline = numeric_prompt(
+        "Critical-finding notification deadline in minutes", "60", integer=True
+    )
     red_team: dict[str, Any] | None = None
     if engagement_type in ("red_team", "purple_team"):
+        ui("8. Exercise-specific coordination")
         red_team = {
             "objectives": comma_values("Red-team objectives (comma separated)"),
             "assumed_breach": yes_no("Assumed-breach start", False),
             "deconfliction_contact": prompt("White-cell/deconfliction contact"),
             "notification_mode": choice(
-                "Notification mode", ("announced", "limited_notice", "unannounced_with_white_cell"), "limited_notice"
+                "Notification mode",
+                ("announced", "limited_notice", "unannounced_with_white_cell"),
+                "limited_notice",
             ),
             "cleanup_validation_required": yes_no("Require cleanup validation", True),
         }
@@ -1568,7 +1919,10 @@ def interactive_config() -> dict[str, Any]:
             "valid_until": valid_until,
             "timezone": timezone,
             "third_party_consent": third_party,
-            "evidence": {"location": evidence_location or None, "sha256": evidence_sha256},
+            "evidence": {
+                "location": evidence_location or None,
+                "sha256": evidence_sha256,
+            },
         },
         "environment": {
             "types": environment_types,
@@ -1593,7 +1947,14 @@ def interactive_config() -> dict[str, Any]:
             "denial_of_service": denial_of_service,
         },
         "constraints": {
-            "testing_windows": [{"days": days, "start": window_start, "end": window_end, "timezone": timezone}],
+            "testing_windows": [
+                {
+                    "days": days,
+                    "start": window_start,
+                    "end": window_end,
+                    "timezone": timezone,
+                }
+            ],
             "allowed_source_ips": source_ips,
             "ports": [{"protocol": "tcp", "ports": port_values}] if port_values else [],
             "max_requests_per_second": max_rate,
@@ -1651,27 +2012,421 @@ def print_summary_table(root: Path) -> None:
         )
 
 
+def private_forms_dir(root):
+    ensure_plain_directory(root, create=True)
+    return ensure_plain_directory(root / ".drafts", create=True)
+
+
+def load_form(path):
+    import stat
+
+    flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+    fd = os.open(path, flags)
+    try:
+        info = os.fstat(fd)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.geteuid()
+            or info.st_size > 2 * 1024 * 1024
+        ):
+            raise EngagementError(
+                "Choose your own regular JSON form, smaller than 2 MiB."
+            )
+        with os.fdopen(fd, "rb", closefd=False) as stream:
+            raw = stream.read(2 * 1024 * 1024 + 1)
+        if len(raw) > 2 * 1024 * 1024:
+            raise EngagementError("JSON form exceeds 2 MiB.")
+    finally:
+        os.close(fd)
+
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise EngagementError("Duplicate JSON field: " + terminal_safe(key))
+            result[key] = value
+        return result
+
+    try:
+        value = json.loads(raw, object_pairs_hook=unique)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise EngagementError(
+            "The form is not valid UTF-8 JSON. Check commas, quotes and braces; no answers were imported."
+        ) from exc
+    if not isinstance(value, dict):
+        raise EngagementError(
+            "A JSON form must contain one object, not a list or text."
+        )
+    return value
+
+
+def show_created(directory):
+    config, revision, _ = load_current_config(directory)
+    ui("SAVED: engagement draft created", "green")
+    print("Name: " + terminal_safe(config["name"]))
+    print("Short name (slug): " + config["slug"])
+    print("Engagement ID: " + config["engagement_id"])
+    print("Folder: " + str(directory))
+    print("Saved scope JSON: " + str(revision_path(directory, revision)))
+    print("State: draft - no testing is authorized yet.")
+    print(
+        "Next: choose 3 to review/activate, then 2 to select it. Choose 4 for notes/reporting."
+    )
+
+
+def import_form(root, path):
+    source = load_form(path)
+    # Keep a private editable copy before validation, even if structure is wrong.
+    copy_path = private_forms_dir(root) / ("import-" + uuid.uuid4().hex[:12] + ".json")
+    atomic_write(copy_path, canonical_json_bytes(source))
+    print("Private editable form saved: " + str(copy_path))
+    try:
+        created = create_engagement(root, source)
+    except (EngagementError, TypeError, AttributeError, KeyError, ValueError) as exc:
+        ui("NOT IMPORTED:", "red")
+        for line in str(exc).splitlines():
+            print(terminal_safe(line))
+        print(
+            "Your answers remain in the editable form above. Correct it and use Import JSON again."
+        )
+        return 2
+    show_created(created)
+    return 0
+
+
+def export_form(root, output=None):
+    directory = private_forms_dir(root)
+    path = output or directory / ("engagement-form-" + uuid.uuid4().hex[:8] + ".json")
+    ensure_plain_directory(path.parent)
+    if path.exists() or path.is_symlink():
+        raise EngagementError(
+            "Choose a new filename; existing forms are never overwritten."
+        )
+    source = Path(__file__).with_name("engagement_form_template.json")
+    # O_EXCL prevents overwriting a form created by another process.
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, FILE_MODE)
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(safe_read(source))
+            stream.flush()
+            os.fsync(stream.fileno())
+    except Exception:
+        path.unlink(missing_ok=True)
+        raise
+    ui("Offline JSON form saved", "green")
+    print(path)
+    print("Edit this file in a text editor at your own pace. Follow its _help section.")
+    print(
+        "It is private plaintext metadata, not encrypted notes: never enter credentials or secrets."
+    )
+    print(
+        "Use G -> 5 -> Import JSON, or cstk --engagement-import /absolute/path/to/form.json."
+    )
+    print(
+        "Import creates a draft only. Validation and explicit activation are still required."
+    )
+    return path
+
+
+def wizard_create(root, resume=None):
+    global _WIZARD
+    ensure_plain_directory(root, create=True)
+    session = WizardSession(root, resume)
+    # A crash between engagement commit and checkpoint completion must not
+    # create a second engagement when the questionnaire is resumed.
+    for candidate in engagement_candidates(root):
+        config, _, _ = load_current_config(candidate)
+        if config.get("_wizard_checkpoint") == session.path.name:
+            show_created(candidate)
+            return 0
+    _WIZARD = session
+    ui("Answers save automatically after every response.")
+    print("Resume file: " + str(session.path))
+    try:
+        source = interactive_config()
+        source["_wizard_checkpoint"] = session.path.name
+        form = session.path.with_name(
+            session.path.name.replace(".answers.json", ".form.json")
+        )
+        atomic_write(form, canonical_json_bytes(source))
+        session.data["editable_form"] = str(form)
+        session.save()
+        print("Completed editable form saved: " + str(form))
+        try:
+            created = create_engagement(root, source)
+        except (
+            EngagementError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            KeyError,
+        ) as exc:
+            ui("Answers saved, but the engagement was NOT created:", "red")
+            for line in str(exc).splitlines():
+                print(terminal_safe(line))
+            print(
+                "Correct the editable JSON above and import it through option 5. No need to repeat the questionnaire."
+            )
+            return 2
+        show_created(created)
+        session.data["saved_engagement"] = load_current_config(created)[0][
+            "engagement_id"
+        ]
+        try:
+            session.save()
+        except OSError:
+            ui(
+                "Engagement saved successfully, but the resume marker could not be updated. Select the saved engagement from the list.",
+                "yellow",
+            )
+        return 0
+    except (WizardPaused, KeyboardInterrupt, EOFError):
+        ui("Questionnaire paused. Your completed answers are saved.", "yellow")
+        print("Resume through G -> 1 -> Resume, or cstk --engagement-resume.")
+        print("Checkpoint: " + str(session.path))
+        return 0
+    finally:
+        _WIZARD = None
+
+
+def pick_saved_file(root, suffix):
+    paths = []
+    for path in sorted(private_forms_dir(root).glob("*" + suffix)):
+        if path.is_symlink() or not path.is_file():
+            continue
+        if suffix == ".answers.json":
+            try:
+                if load_form(path).get("saved_engagement"):
+                    continue
+            except (EngagementError, OSError):
+                continue
+        paths.append(path)
+    if not paths:
+        ui(
+            "No saved questionnaires found."
+            if suffix == ".answers.json"
+            else "No saved JSON forms found.",
+            "yellow",
+        )
+        return None
+    for index, path in enumerate(paths, 1):
+        print(f"{index}. {path.name}")
+    while True:
+        raw = input("Choose a file number (0 returns): ").strip()
+        if raw == "0":
+            return None
+        if raw.isdigit() and 1 <= int(raw) <= len(paths):
+            return paths[int(raw) - 1]
+        print("Choose a displayed number.")
+
+
+def create_menu(root):
+    selected = choice(
+        "Create or continue",
+        ("start_new_questionnaire", "resume_saved_questionnaire", "return"),
+        "start_new_questionnaire",
+    )
+    if selected == "start_new_questionnaire":
+        return wizard_create(root)
+    if selected == "resume_saved_questionnaire":
+        path = pick_saved_file(root, ".answers.json")
+        return wizard_create(root, path) if path else 0
+    return 0
+
+
+def offline_menu(root):
+    selected = choice(
+        "Offline engagement forms",
+        (
+            "save_blank_json_form",
+            "import_json_from_file",
+            "choose_saved_json_form",
+            "return",
+        ),
+    )
+    if selected == "save_blank_json_form":
+        export_form(root)
+    elif selected == "import_json_from_file":
+        path = Path(prompt("Absolute path to your edited JSON form")).expanduser()
+        return import_form(root, path)
+    elif selected == "choose_saved_json_form":
+        # Answers journals are not engagement configuration forms.
+        paths = sorted(
+            p
+            for p in private_forms_dir(root).glob("*.json")
+            if not p.name.endswith(".answers.json") and not p.is_symlink()
+        )
+        if not paths:
+            ui("No JSON forms found. Save a blank form first.", "yellow")
+            return 0
+        for index, path in enumerate(paths, 1):
+            print(f"{index}. {path.name}")
+        index = numeric_prompt("File number (0 returns)", integer=True)
+        if index and index <= len(paths):
+            return import_form(root, paths[index - 1])
+    return 0
+
+
+def pick_engagement(root, *, active_only=False):
+    rows = []
+    for path in engagement_candidates(root):
+        try:
+            config, _, _ = load_current_config(path)
+            state = load_state(path)
+            if not active_only or state == "active":
+                rows.append((config, state))
+        except (EngagementError, OSError):
+            continue
+    if not rows:
+        print(
+            "No active engagements. Use 3 to review/activate a saved draft first."
+            if active_only
+            else "No saved engagements. Use 1 to create one or 5 to import a JSON form.",
+            file=sys.stderr,
+        )
+        return None
+    ui("Choose an engagement - no ID typing needed", stream=sys.stderr)
+    for index, (config, state) in enumerate(rows, 1):
+        print(
+            f"{index}. {terminal_safe(config['name'])} [{state}] - {config['slug']}",
+            file=sys.stderr,
+        )
+    while True:
+        print("Number (0 returns): ", end="", file=sys.stderr, flush=True)
+        raw = input().strip()
+        if raw == "0":
+            return None
+        if raw.isdigit() and 1 <= int(raw) <= len(rows):
+            return rows[int(raw) - 1][0]["engagement_id"]
+        print("Choose a displayed number.", file=sys.stderr)
+
+
+def review_activate(root, identifier):
+    directory = resolve_engagement(root, identifier)
+    assert_private_engagement_tree(directory)
+    config, revision, digest = load_current_config(directory)
+    state = load_state(directory)
+    ui("Review before activation: " + terminal_safe(config["name"]))
+    print("State: " + state + " | Scope revision " + str(revision))
+    print(
+        "Authorization: "
+        + terminal_safe(config["authorization"]["valid_from"])
+        + " to "
+        + terminal_safe(config["authorization"]["valid_until"])
+    )
+    for label, key in (("IN SCOPE", "include"), ("OUT OF SCOPE", "exclude")):
+        ui(label)
+        for target in config["scope"][key]:
+            print(
+                "- " + friendly(target["type"]) + ": " + terminal_safe(target["value"])
+            )
+        if not config["scope"][key]:
+            print("- None recorded")
+    print(
+        "Allowed techniques: "
+        + ", ".join(friendly(v) for v in config["actions"]["allow"])
+    )
+    print(
+        "Each-run approval: "
+        + ", ".join(friendly(v) for v in config["actions"]["confirm_each_run"])
+    )
+    errors = validation_errors(config, activation=True)
+    if errors:
+        ui("Not ready - correct these items in a new revision:", "yellow")
+        for error in errors:
+            print("- " + error)
+        print(
+            "Use R to revise this engagement; approval is never inferred from this form."
+        )
+        return 2
+    if state == "active":
+        ui("Already active. Use 2 to select it, then 4 to set up notes.", "green")
+        return 0
+    if state not in ("draft", "ready", "paused"):
+        raise EngagementError(
+            "Closed/archived engagements cannot be activated from this workflow."
+        )
+    if (
+        prompt(
+            "Type REVIEW after checking written permission and this scope",
+            required=False,
+        )
+        != "REVIEW"
+    ):
+        print("No activation requested.")
+        return 0
+    if state == "draft":
+        transition(root, identifier, "ready")
+    if (
+        prompt(
+            "Type ACTIVATE to enable only the recorded authorized checks",
+            required=False,
+        )
+        != "ACTIVATE"
+    ):
+        print("Not activated. Saved review state retained.")
+        return 0
+    # Recheck the same immutable revision after both prompts; changed scope must
+    # never inherit approval of an earlier screen.
+    fresh, fresh_revision, fresh_digest = load_current_config(directory)
+    if fresh_revision != revision or fresh_digest != digest:
+        raise EngagementError("Scope changed during review. Start review again.")
+    transition(root, identifier, "active")
+    ui(
+        "Active: " + terminal_safe(fresh["name"]) + ". Next choose 2 to select it.",
+        "green",
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", required=True, type=Path, help="absolute engagements directory")
+    parser.add_argument(
+        "--root", required=True, type=Path, help="absolute engagements directory"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
     create = subparsers.add_parser("create", help="create a draft engagement")
-    create.add_argument("--config", type=Path, help="JSON draft; omit for the interactive wizard")
+    create.add_argument(
+        "--config", type=Path, help="JSON draft; omit for the interactive wizard"
+    )
+    subparsers.add_parser("create-menu", help="start or resume a saved questionnaire")
+    subparsers.add_parser("offline", help="save or import a private offline JSON form")
+    subparsers.add_parser("resume", help="choose an unfinished questionnaire")
+    template = subparsers.add_parser(
+        "form-template", help="save a blank offline JSON form"
+    )
+    template.add_argument("--output", type=Path)
+    picker = subparsers.add_parser("pick", help="select an engagement by number")
+    picker.add_argument("--active-only", action="store_true")
+    prepare = subparsers.add_parser(
+        "prepare", help="review scope and explicitly activate"
+    )
+    prepare.add_argument("identifier")
     revise = subparsers.add_parser("revise", help="create the next immutable revision")
     revise.add_argument("identifier")
     revise.add_argument("--config", required=True, type=Path)
-    subparsers.add_parser("list", help="list engagements").add_argument("--format", choices=("table", "json"), default="table")
+    subparsers.add_parser("list", help="list engagements").add_argument(
+        "--format", choices=("table", "json"), default="table"
+    )
     show = subparsers.add_parser("show", help="show current engagement configuration")
     show.add_argument("identifier")
-    validate = subparsers.add_parser("validate", help="validate activation requirements")
+    validate = subparsers.add_parser(
+        "validate", help="validate activation requirements"
+    )
     validate.add_argument("identifier")
-    transition_parser = subparsers.add_parser("transition", help="change engagement state")
+    transition_parser = subparsers.add_parser(
+        "transition", help="change engagement state"
+    )
     transition_parser.add_argument("identifier")
     transition_parser.add_argument("state", choices=STATES)
-    select = subparsers.add_parser("select", help="select an active engagement for one CSTK process")
+    select = subparsers.add_parser(
+        "select", help="select an active engagement for one CSTK process"
+    )
     select.add_argument("identifier")
     select.add_argument("--format", choices=("tsv", "json"), default="tsv")
-    authorize = subparsers.add_parser("authorize", help="evaluate one target/action before tool dispatch")
+    authorize = subparsers.add_parser(
+        "authorize", help="evaluate one target/action before tool dispatch"
+    )
     authorize.add_argument("identifier")
     authorize.add_argument("--action", required=True, choices=ACTIONS)
     authorize.add_argument("--target", required=True)
@@ -1689,9 +2444,25 @@ def main(argv: list[str] | None = None) -> int:
     root = args.root
     try:
         if args.command == "create":
-            config = read_json(args.config) if args.config else interactive_config()
-            created = create_engagement(root, config)
-            print(created.name)
+            return (
+                import_form(root, args.config) if args.config else wizard_create(root)
+            )
+        elif args.command == "create-menu":
+            return create_menu(root)
+        elif args.command == "offline":
+            return offline_menu(root)
+        elif args.command == "form-template":
+            export_form(root, args.output)
+        elif args.command == "resume":
+            path = pick_saved_file(root, ".answers.json")
+            return wizard_create(root, path) if path else 0
+        elif args.command == "pick":
+            selected = pick_engagement(root, active_only=args.active_only)
+            if not selected:
+                return 2
+            print(selected)
+        elif args.command == "prepare":
+            return review_activate(root, args.identifier)
         elif args.command == "revise":
             revised = revise_engagement(root, args.identifier, read_json(args.config))
             print(revised)
@@ -1699,7 +2470,9 @@ def main(argv: list[str] | None = None) -> int:
             if args.format == "table":
                 print_summary_table(root)
             else:
-                summaries = [refresh_summary(path) for path in engagement_candidates(root)]
+                summaries = [
+                    refresh_summary(path) for path in engagement_candidates(root)
+                ]
                 print(json.dumps(summaries, indent=2, sort_keys=True))
         elif args.command == "show":
             engagement_dir = resolve_engagement(root, args.identifier)
@@ -1749,13 +2522,25 @@ def main(argv: list[str] | None = None) -> int:
                 print(json.dumps(decision, indent=2, sort_keys=True))
             else:
                 status = "ALLOW" if decision["allowed"] else "DENY"
-                print(f"{status}: {terminal_safe(args.action)} -> {terminal_safe(args.target)}")
+                print(
+                    f"{status}: {terminal_safe(args.action)} -> {terminal_safe(args.target)}"
+                )
                 for reason in decision["reasons"]:
                     print(f"- {terminal_safe(reason)}")
             return 0 if decision["allowed"] else 3
         else:
             raise EngagementError("unsupported command")
-    except (EngagementError, OSError, ValueError) as exc:
+    except (WizardPaused, KeyboardInterrupt, EOFError):
+        print("Stopped. Existing engagement records were not deleted.", file=sys.stderr)
+        return 2
+    except (
+        EngagementError,
+        OSError,
+        ValueError,
+        TypeError,
+        AttributeError,
+        KeyError,
+    ) as exc:
         print(f"cstk-engagement: {exc}", file=sys.stderr)
         return 1
     return 0

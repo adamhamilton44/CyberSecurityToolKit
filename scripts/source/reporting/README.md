@@ -4,9 +4,9 @@ This component provides encrypted engagement notes and editable deterministic
 reports. CSTK integrates it with its existing guarded TCP/HTTP runtime; all
 examples use fictional organizations and endpoints. No AI service is contacted.
 
-Open `sudo cstk --report ENGAGEMENT_ID`, or G → B. The root launcher switches to
+Open `sudo cstk --report ENGAGEMENT_ID`, or G → 4 (B). The root launcher switches to
 the engagement owner. T/W run guarded operations in the unlocked process; normal
-G → N/W unlock the notebook per run. Capture is mandatory on those routes.
+G → 6/10 (N/W) unlock the notebook per run. Capture is mandatory on those routes.
 The notebook lives at `Engagements/SLUG/reporting-notebook/notebook.enc`.
 Current scope must be explicitly imported after revisions. Closed engagements
 can still be reviewed and reported; guarded testing remains scope/state gated.
