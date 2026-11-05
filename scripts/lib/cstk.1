@@ -510,6 +510,13 @@ private keys, breached-account records, or generated payloads in a report.
 
 .SH ENGAGEMENTS
 Use -G or --engagements to create, select, validate, and manage engagements.
+Choose C to start the guided setup, or F to finish only missing answers in an
+existing draft. Enter its saved name or ID (for example testing-test).
+Completed answers are kept in immutable draft revisions; type :later to stop
+and continue later. Written approval requires a document reference and SHA-256
+fingerprint. A local regular document up to 64 MiB can be fingerprinted on this
+computer without uploading it. Completing answers does not activate testing.
+R remains available for advanced changes from a reviewed JSON file.
 Use --use ID to select an active engagement for this process.
 Main menu G provides guarded TCP checks and bounded HTTP(S) requests.
 The live status area displays scope, authorization, operational status, and

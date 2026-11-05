@@ -49,6 +49,7 @@
 #/                         encrypted notes, guarded capture, review and Word/PDF reports
 #/                 -G, --engagements
 #/                         manage engagements, scope, lifecycle and guarded operations
+#/                         choose C for a new draft, or F to finish only missing answers
 #/                 --use ID [class tool]
 #/                         select an active engagement for this process
 #/    EXECUTION MODES:
@@ -130,7 +131,7 @@
 #//S  [ sudo cstk -Ei ] Open AI Analyst; type /setup to configure your provider
 #//S  [ sudo cstk -Dl ] OR [ sudo cstk --defense --linux-audit ] Linux audit
 #//S  [ sudo cstk --report ID ] Encrypted notes, guarded capture and reviewed reports
-#//S  [ sudo cstk --engagements ] Manage engagements and guarded operations
+#//S  [ sudo cstk --engagements ] Manage engagements; C starts a draft, F finishes missing answers
 #//S  [ sudo cstk --use ID ] Select an active engagement for the menu session
 #//S  [ sudo cstk -On ] OR  [ sudo cstk --osint --nmap      ]  Run OSINT nmap helper
 #//S  [ sudo cstk -Pn ] OR  [ sudo cstk --payload --netcat  ]  Run payload netcat helper
@@ -628,16 +629,17 @@ engagement_manager_menu() {
         run_engagement_helper list --format table || return 1
         echo
         show_engagement_status || true
-        echo "C - Create a draft with the guided questionnaire"
+        echo "C - Start a new engagement (guided questions)"
+        echo "F - Finish missing answers in a saved engagement"
         echo "U - Use an active engagement for this session"
         echo "P - Pause the selected engagement"
         echo "N - Guarded TCP port check (explicit IP/CIDR, max 256 addresses)"
         echo "W - Guarded HTTP(S) request (scope checked on every redirect)"
         echo "B - Encrypted notebook, guarded capture and report review"
         echo "I - Inspect the current revision"
-        echo "V - Validate activation requirements"
+        echo "V - Check what is still needed before testing"
         echo "S - Change state (ready/active/paused/closed/archived)"
-        echo "R - Create a new revision from a reviewed JSON file"
+        echo "R - Import reviewed JSON changes (advanced)"
         echo "X - Return"
         echo
         read -r -p "Engagement Manager ==> " choice
@@ -658,7 +660,13 @@ engagement_manager_menu() {
             [Ww]) run_guarded_operation web ;;
             [Cc])
                 run_engagement_helper create
-                echo "Next: open B to set up encrypted notes and reporting questions for the new engagement."
+                echo "To finish unanswered setup questions later, choose F and enter the engagement name."
+                echo "B opens encrypted notes and reporting; it does not complete these setup answers."
+                ;;
+            [Ff])
+                read -r -p "Which engagement? Enter its saved name or ID [${CSTK_ENGAGEMENT_SLUG:-}]: " identifier
+                identifier="${identifier:-${CSTK_ENGAGEMENT_SLUG:-}}"
+                [[ -n "$identifier" ]] && run_engagement_helper resume "$identifier"
                 ;;
             [Ii])
                 read -r -p "Engagement slug or ID: " identifier
@@ -679,7 +687,7 @@ engagement_manager_menu() {
                 run_engagement_helper revise "$identifier" --config "$config_path"
                 ;;
             [Xx]) return 0 ;;
-            *) echo -e "${Y}Choose C, U, P, N, W, B, I, V, S, R, or X.${X}" ;;
+            *) echo -e "${Y}Choose C, F, U, P, N, W, B, I, V, S, R, or X.${X}" ;;
         esac
         echo
         read -r -p "Press Enter to continue..."

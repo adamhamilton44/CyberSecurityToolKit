@@ -70,6 +70,31 @@ ACTIONS = (
     "log.tampering",
     "destructive",
 )
+ACTION_LABELS = {
+    "recon.passive": "Gather public information without probing targets",
+    "network.discovery": "Discover hosts and network services",
+    "vulnerability.scan": "Scan for possible vulnerabilities",
+    "web.passive": "Review web information using passive checks",
+    "web.active": "Send active web test requests",
+    "credential.offline": "Test passwords or hashes offline",
+    "credential.online": "Attempt approved logins against services",
+    "exploit.validation": "Validate whether a suspected vulnerability can be exploited",
+    "payload.generate": "Create test payloads",
+    "payload.deliver": "Send test payloads to approved targets",
+    "post_exploitation": "Perform approved checks after gaining access",
+    "persistence": "Establish access that survives a restart",
+    "credential.access": "Access credentials on a target",
+    "command_and_control": "Operate a remote command channel",
+    "data.access": "Read target data",
+    "data.exfiltration": "Transfer target data outside its system",
+    "social_engineering": "Test people through approved social-engineering scenarios",
+    "wireless": "Test wireless systems",
+    "physical": "Test physical access",
+    "availability.disruption": "Perform tests that may interrupt service",
+    "data.modification": "Change target data",
+    "log.tampering": "Change or remove target logs",
+    "destructive": "Perform tests that may cause damage",
+}
 SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 DNS_RE = re.compile(r"^(?=.{1,253}\.?$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.?$", re.I)
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
@@ -1288,16 +1313,44 @@ def prompt(label: str, *, required: bool = True, default: str | None = None) -> 
             return default
         if value or not required:
             return value
-        print("A value is required.")
+        print("Please enter an answer.")
 
 
 def choice(label: str, values: tuple[str, ...], default: str | None = None) -> str:
-    rendered = "/".join(values)
+    print(label + ':')
+    accepted = {}
+    for index, value in enumerate(values, 1):
+        descriptions = {
+            "not_applicable": "Does not apply to this test",
+            "required_pending": "Permission is needed but has not been confirmed yet",
+            "confirmed": "The required written permission has been confirmed",
+            "both_required": "Both the domain name and its resolved IP addresses must be approved",
+            "hostname_authorized": "Use the approved domain-name policy",
+            "ip_authorized": "Use the approved IP-address policy",
+            "manual_review_on_change": "DNS changes require manual review",
+            "deny": "Do not follow redirects",
+            "same_host_only": "Follow redirects only within the same host",
+            "validate_every_hop": "Check scope before each redirect",
+            "denied_stop_on_flag": "No automatic exploitation; stop at a suspected vulnerability",
+            "manual_approval_each": "Require operator approval for each attempt",
+            "explicitly_allowed": "Explicitly permitted by the written agreement",
+            "strictly_forbidden": "Not permitted",
+            "passive_low_impact_only": "Passive or low-impact checks only",
+            "standard_non_destructive": "Standard checks that avoid deliberate damage",
+            "not_notified_with_authorization": "The client approved testing without notifying its monitoring team",
+        }
+        friendly = descriptions.get(value, value.replace('_', ' '))
+        print(f"  {index}. {friendly}")
+        for alias in (value, value.replace('_', ' '), friendly):
+            accepted[alias.lower()] = value
+    selected_default = str(values.index(default) + 1) if default in values else None
     while True:
-        value = prompt(f"{label} ({rendered})", default=default).lower()
-        if value in values:
-            return value
-        print("Choose one of the displayed values.")
+        value = prompt("Choose a number (or type the option name)", default=selected_default).lower()
+        if value.isdigit() and 1 <= int(value) <= len(values):
+            return values[int(value) - 1]
+        if value in accepted:
+            return accepted[value]
+        print("Choose one of the listed numbers or option names.")
 
 
 def yes_no(label: str, default: bool = True) -> bool:
@@ -1312,6 +1365,31 @@ def yes_no(label: str, default: bool = True) -> bool:
             return False
 
 
+def number_prompt(label, *, default=None, integer=False, minimum=0, optional=False):
+    while True:
+        value = prompt(label, required=not optional, default=default)
+        if not value and optional:
+            return None
+        try:
+            number = int(value) if integer else float(value)
+            if not math.isfinite(number) or number < minimum:
+                raise ValueError
+            return number
+        except (ValueError, OverflowError):
+            kind = "whole number" if integer else "number"
+            print(f"Enter a {kind} of at least {minimum}; do not include units.")
+
+
+def datetime_prompt(label):
+    while True:
+        value = prompt(label)
+        try:
+            parse_datetime(value)
+            return value
+        except ValueError:
+            print("Use date, time and UTC offset, for example 2026-11-02T09:00:00-06:00 (or Z for UTC).")
+
+
 def comma_values(label: str) -> list[str]:
     value = prompt(label, required=False)
     return [item.strip() for item in value.split(",") if item.strip()]
@@ -1320,6 +1398,7 @@ def comma_values(label: str) -> list[str]:
 def collect_targets(label: str, *, require_one: bool) -> list[dict[str, Any]]:
     print(f"\n{label}")
     print("Types: " + ", ".join(TARGET_TYPES))
+    print("ip = one address; cidr = a network such as 192.0.2.0/28; dns = a domain name; url = a full web address.")
     targets: list[dict[str, Any]] = []
     while True:
         target_type = prompt("Target type (blank to finish)", required=False).lower()
@@ -1346,7 +1425,7 @@ def collect_targets(label: str, *, require_one: bool) -> list[dict[str, Any]]:
 def collect_actions() -> dict[str, list[str]]:
     print("\nAction policy")
     for index, action in enumerate(ACTIONS, start=1):
-        print(f"{index:2d} - {action}")
+        print(f"{index:2d} - {ACTION_LABELS.get(action, action)}")
 
     def select_numbers(label: str) -> set[str]:
         while True:
@@ -1363,11 +1442,11 @@ def collect_actions() -> dict[str, list[str]]:
                 continue
             return {ACTIONS[index - 1] for index in indexes}
 
-    allowed = select_numbers("Allowed action numbers")
-    confirmed = select_numbers("Confirm-each-run action numbers")
-    overlap = allowed & confirmed
-    if overlap:
-        raise EngagementError("actions selected in both allow and confirm: " + ", ".join(sorted(overlap)))
+    allowed = select_numbers("Approved actions: numbers separated by commas")
+    confirmed = select_numbers("Actions that need your approval every time: numbers separated by commas")
+    while allowed & confirmed:
+        print("An action cannot be in both groups. Choose again which actions need approval each time.")
+        confirmed = select_numbers("Actions needing approval each time: numbers separated by commas")
     denied = set(ACTIONS) - allowed - confirmed
     return {
         "allow": sorted(allowed),
@@ -1377,9 +1456,10 @@ def collect_actions() -> dict[str, list[str]]:
 
 
 def interactive_config() -> dict[str, Any]:
-    print("CSTK engagement creation wizard")
-    print(f"Every mandatory question in {QUESTIONNAIRE_NAME} is asked below.")
-    print("The engagement is saved as a draft. Activation is a separate reviewed step.\n")
+    print("Set up a new engagement")
+    print("These questions record what you may test, when testing is allowed, and who to contact.")
+    print("Your answers are saved as a draft; testing is not enabled automatically.\n")
+    print("[1/6] Basic details and written permission")
     name = prompt("Engagement name")
     client = prompt("Client/system owner name", required=False)
     engagement_type = choice(
@@ -1389,14 +1469,17 @@ def interactive_config() -> dict[str, Any]:
     )
     tester_name = prompt("Lead tester name")
     tester_role = prompt("Lead tester role", default="lead tester")
-    authorization_reference = prompt("Authorization/SOW/ROE reference")
+    authorization_reference = prompt("Written permission or agreement reference (for example, a signed approval or contract number)")
     system_owner = prompt("System owner")
-    authorized_by = prompt("Authorizing person and role")
-    valid_from = prompt("Authorization starts (ISO 8601 with offset)")
-    valid_until = prompt("Authorization ends (ISO 8601 with offset)")
-    timezone = prompt("Engagement time zone", default="UTC")
+    authorized_by = prompt("Who approved the test? Name and job title")
+    valid_from = datetime_prompt("Permission starts: date and time with UTC offset (example: 2026-11-02T09:00:00-06:00)")
+    valid_until = datetime_prompt("Permission ends: date and time with UTC offset (example: 2026-11-03T17:00:00-06:00)")
+    while parse_datetime(valid_until) <= parse_datetime(valid_from):
+        print("The end of permission must be after its start.")
+        valid_until = datetime_prompt("When does permission end? Date, time and UTC offset")
+    timezone = prompt("Engagement time zone (for example UTC or America/Chicago)", default="UTC")
     third_party = choice(
-        "Third-party consent",
+        "Permission from a hosting provider or other third party",
         ("not_applicable", "required_pending", "confirmed"),
         "not_applicable",
     )
@@ -1426,24 +1509,37 @@ def interactive_config() -> dict[str, Any]:
             )
             if not yes_no("Add another third-party provider", False):
                 break
-    evidence_location = prompt("Authorization evidence location/reference", required=False)
-    evidence_sha256 = prompt("Authorization evidence SHA-256", required=False).lower() or None
-    primary_name = prompt("Primary point-of-contact name and title")
-    primary_method = prompt("Primary point-of-contact method")
+    print("Written permission: enter the document path or approval-record reference. You can finish this later with G -> F.")
+    evidence_location = prompt("Where is the written approval saved? (file path or reference)", required=False)
+    evidence_sha256 = None
+    if evidence_location and Path(evidence_location).expanduser().is_file() and not Path(evidence_location).expanduser().is_symlink():
+        if yes_no("Calculate this document's SHA-256 fingerprint automatically? Nothing is uploaded", True):
+            from engagement_wizard import document_sha256
+            try: evidence_sha256 = document_sha256(evidence_location)
+            except (OSError, ValueError) as error: print(str(error))
+    if evidence_sha256 is None:
+        while True:
+            evidence_sha256 = prompt("Document SHA-256 fingerprint: 64 hexadecimal characters (optional for now)", required=False).lower() or None
+            if evidence_sha256 is None or SHA256_RE.fullmatch(evidence_sha256): break
+            print("Use exactly 64 hexadecimal characters, or leave blank and finish this later with G -> F.")
+    print("\n[2/6] People to contact")
+    primary_name = prompt("Main client contact: name and job title")
+    primary_method = prompt("How can the main client contact be reached? Phone or approved contact method")
     technical_name = prompt("Technical contact name")
     technical_method = prompt("Technical contact method")
-    emergency_name = prompt("Emergency/stop contact name")
-    emergency_method = prompt("Emergency/stop contact method")
-    breach_name = prompt("Breach-escalation contact name and title")
-    breach_method = prompt("Breach-escalation contact method")
+    emergency_name = prompt("Who can order an immediate stop? Name")
+    emergency_method = prompt("How can the emergency contact be reached immediately?")
+    breach_name = prompt("Who should be told if you find a real break-in? Name and job title")
+    breach_method = prompt("How can that incident contact be reached?")
     soc_notification = choice(
-        "SOC/incident-response notification",
+        "Who on the monitoring or incident-response team knows about this test?",
         ("notified", "limited_notice", "not_notified_with_authorization", "not_applicable"),
         "notified",
     )
-    breach_procedure = prompt("Breach discovery escalation procedure")
-    include = collect_targets("In-scope targets", require_one=True)
-    exclude = collect_targets("Explicit exclusions", require_one=False)
+    breach_procedure = prompt("What should you do if you find signs of a real break-in?")
+    print("\n[3/6] Targets and permitted activities")
+    include = collect_targets("Targets you have permission to test", require_one=True)
+    exclude = collect_targets("Targets or endpoints you must not test", require_one=False)
     scan_intensity = choice(
         "Scan intensity",
         ("passive_low_impact_only", "standard_non_destructive", "intrusive_explicit", "custom"),
@@ -1487,11 +1583,12 @@ def interactive_config() -> dict[str, Any]:
         actions["deny"].append("availability.disruption")
     for policy in actions.values():
         policy.sort()
+    print("\n[4/6] Testing hours, source addresses and traffic limits")
     days = comma_values("Testing days (mon,tue,wed,thu,fri,sat,sun)") or ["mon", "tue", "wed", "thu", "fri"]
     window_start = prompt("Daily start time (HH:MM)", default="08:00")
     window_end = prompt("Daily end time (HH:MM)", default="18:00")
     source_ips = comma_values("Approved source IPs/CIDRs (comma separated; blank if none specified)")
-    source_ip_reason = None if source_ips else prompt("Why source IP identification is not applicable")
+    source_ip_reason = None if source_ips else prompt("Why do testing source IP restrictions not apply here?")
     use_custom_header = yes_no("Use a custom HTTP header to identify testing traffic", False)
     custom_header = {
         "enabled": use_custom_header,
@@ -1505,25 +1602,25 @@ def interactive_config() -> dict[str, Any]:
         "monitor_only",
     )
     port_values = comma_values("TCP ports/ranges (comma separated; blank if all contract-approved ports)")
-    max_rate = float(prompt("Maximum requests per second", default="5"))
-    bandwidth_text = prompt("Maximum bandwidth in Mbps (blank if not specified)", required=False)
-    max_bandwidth = float(bandwidth_text) if bandwidth_text else None
-    max_concurrency = int(prompt("Maximum concurrency", default="4"))
+    max_rate = number_prompt("Maximum requests per second (how fast tools may send requests)", default="5", minimum=0.001)
+    max_bandwidth = number_prompt("Maximum bandwidth in Mbps (blank if not specified)", optional=True, minimum=0.001)
+    max_concurrency = number_prompt("Maximum simultaneous requests or connections", default="4", integer=True, minimum=1)
     redirect_policy = choice("Redirect policy", ("deny", "same_host_only", "validate_every_hop"), "deny")
     dns_policy = choice(
         "DNS policy",
         ("hostname_authorized", "ip_authorized", "both_required", "manual_review_on_change"),
         "both_required",
     )
-    stop_conditions = comma_values("Stop conditions (comma separated)")
+    stop_conditions = comma_values("When must testing stop immediately? Separate conditions with commas")
     if not stop_conditions:
         stop_conditions = [
             "Unexpected service instability or availability impact",
             "A target cannot be positively matched to approved scope",
             "The system owner or emergency contact requests a stop",
         ]
+    print("\n[5/6] Handling reports, evidence and sensitive information")
     classification = choice("Data classification", ("public", "internal", "confidential", "restricted"), "confidential")
-    retention_days = int(prompt("Retention days", default="30"))
+    retention_days = number_prompt("How many days should reports and evidence be kept?", default="30", integer=True)
     out_of_scope_storage = choice(
         "Out-of-scope storage",
         ("none", "minimal_fingerprint", "approved_quarantine"),
@@ -1532,15 +1629,16 @@ def interactive_config() -> dict[str, Any]:
     secret_storage = choice("Secret storage", ("redact", "encrypted_only", "prohibited"), "redact")
     sensitive_actions = ("mask_and_continue", "stop_and_notify", "encrypted_capture_authorized", "prohibited")
     sensitive_data_policy = {
-        "pii": choice("PII handling", sensitive_actions, "stop_and_notify"),
-        "pci": choice("PCI/card-data handling", sensitive_actions, "stop_and_notify"),
-        "phi": choice("PHI/health-data handling", sensitive_actions, "stop_and_notify"),
+        "pii": choice("How should personal information be handled?", sensitive_actions, "stop_and_notify"),
+        "pci": choice("How should payment-card information be handled?", sensitive_actions, "stop_and_notify"),
+        "phi": choice("How should health information be handled?", sensitive_actions, "stop_and_notify"),
     }
     encryption_required = yes_no("Require encryption for stored/exported engagement data", True)
-    encryption_standard = prompt("Approved output encryption standard/method")
+    encryption_standard = prompt("How should reports and evidence be encrypted? Approved method")
+    print("\n[6/6] Reporting and delivery")
     report_format = prompt("Report format", default="PDF plus encrypted evidence archive")
-    delivery_method = prompt("Approved report delivery method")
-    critical_deadline = int(prompt("Critical-finding notification deadline in minutes", default="60"))
+    delivery_method = prompt("How should the final report be delivered?")
+    critical_deadline = number_prompt("How quickly must a critical finding be reported? Minutes", default="60", integer=True)
     red_team: dict[str, Any] | None = None
     if engagement_type in ("red_team", "purple_team"):
         red_team = {
@@ -1657,6 +1755,8 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     create = subparsers.add_parser("create", help="create a draft engagement")
     create.add_argument("--config", type=Path, help="JSON draft; omit for the interactive wizard")
+    resume = subparsers.add_parser("resume", help="finish only missing answers in a saved draft; no JSON editing needed")
+    resume.add_argument("identifier")
     revise = subparsers.add_parser("revise", help="create the next immutable revision")
     revise.add_argument("identifier")
     revise.add_argument("--config", required=True, type=Path)
@@ -1692,6 +1792,9 @@ def main(argv: list[str] | None = None) -> int:
             config = read_json(args.config) if args.config else interactive_config()
             created = create_engagement(root, config)
             print(created.name)
+        elif args.command == "resume":
+            from engagement_wizard import resume_engagement
+            resume_engagement(sys.modules[__name__], root, args.identifier)
         elif args.command == "revise":
             revised = revise_engagement(root, args.identifier, read_json(args.config))
             print(revised)

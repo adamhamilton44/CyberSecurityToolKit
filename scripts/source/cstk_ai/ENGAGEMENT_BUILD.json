@@ -1,0 +1,12 @@
+{
+  "python": "3.14.7",
+  "pyinstaller": "6.22.3",
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+  "sha256": {
+    "scripts/source/cstk_ai/cstk_engagement.py": "2dd2575c08a74ba6d782683942e13fc2104af0517116116ba67ca1d1d331e9d2",
+    "scripts/source/cstk_ai/engagement_wizard.py": "3a112e661f467f2bbea7e055b1ae0f60b7eb49d2af773d241ccf756269cb5d32",
+    "scripts/source/cstk_ai/engagement_runtime.py": "5201623ae835e6590af4f809ad5141beb0c9b322205619054959faf0090a0978",
+    "scripts/source/cstk_ai/engagement_scoping_cheat_sheet.md": "77a897b6aa100cd8304aad944f7684d41206caaa393b5d7b3078bd652c4012d5",
+    "scripts/bin/Etc_engagement": "40c3d1ac2d690b91e3cfe1f45e685f068810b8fbd658cc6d6ed818ecbfefc40a"
+  }
+}
