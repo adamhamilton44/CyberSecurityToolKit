@@ -197,11 +197,9 @@ AX="Post Exploit ==> " # /PostEx
 AE="Etc ==> " # /Etc
 user=$(echo "${SUDO_USER:-$(whoami)}") # USER NAME
 DATE=$(date) # Today's DATE
-if [ -h /usr/local/bin/cstk ]; then
-    home_dir="$(dirname "$(realpath /usr/local/bin/cstk)")" # soft link to true directory of cstk
-else
-    home_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)" # print the directory path of cstk home
-fi
+# Resolve this entrypoint, including symlinks, so a development checkout never
+# combines its menu with helpers from a different installed checkout.
+home_dir="$(dirname -- "$(realpath -e -- "${BASH_SOURCE[0]}")")" || exit 1
 export home_dir  # allow cstk home directory for all scripts
 
 security_checks="$home_dir/Other/SecurityChecks" # directory for security checking user password and sha256sum files of cstk executables
@@ -609,7 +607,6 @@ engagement_manager_menu() {
         clear
         printf '%b\n' "${C}CSTK ENGAGEMENT - set up once, select by number${X}" \
             "${g}A draft stores your answers. Review and activation are separate steps.${X}"
-        show_engagement_status || true
         printf '%b\n' "${C}SETUP AND REPORTING${X}" \
             '1 - Create / resume questionnaire (answers save automatically)' \
             '2 - Select an active engagement (choose from a list)' \
@@ -693,7 +690,7 @@ open_engagement_reporting() {
     [[ -n "$identifier" ]] || { echo 'An engagement ID is required.' >&2; return 2; }
     stop_engagement_hud
     tput csr 0 "$(( $(tput lines 2>/dev/null || echo 24) - 1 ))" 2>/dev/null || true
-    engagement_reporting_frame
+    clear
     run_engagement_helper report "$identifier"
     rc=$?
     start_engagement_hud
@@ -709,15 +706,9 @@ stop_engagement_hud() {
 }
 
 start_engagement_hud() {
+    # Status is rendered by clear()/the menu. A background runuser writer can
+    # race hidden password prompts and leave delayed session teardown output.
     stop_engagement_hud
-    if [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" && -t 1 ]]; then
-        if [[ "$user" == root ]]; then
-            "$engagement_helper" --root "$CSTK_ENGAGEMENTS_DIR" hud "$CSTK_ENGAGEMENT_SLUG" &
-        else
-            runuser -u "$user" -- "$engagement_helper" --root "$CSTK_ENGAGEMENTS_DIR" hud "$CSTK_ENGAGEMENT_SLUG" &
-        fi
-        CSTK_HUD_PID=$!
-    fi
 }
 
 show_engagement_status() {
@@ -730,19 +721,14 @@ show_engagement_status() {
     fi
 }
 
-# Every CSTK clear/redraw restores the current engagement status.
+# Use the entire terminal for each page; never reserve scrolling rows over prompts.
 clear() {
     local rows
     rows="$(tput lines 2>/dev/null || echo 24)"
     tput csr 0 "$((rows - 1))" 2>/dev/null || true
     command clear 2>/dev/null || true
-    if [[ -n "${CSTK_ENGAGEMENT_ID:-}" && -t 1 && "$rows" -ge 16 ]]; then
-        # Reserve the top six rows across CSTK menus and ordinary terminal output.
-        show_engagement_status | head -n 6 | cut -c "1-$(tput cols 2>/dev/null || echo 80)"
-        tput csr 6 "$((rows - 1))" 2>/dev/null || true
-        tput cup 6 0 2>/dev/null || true
-    else
-        show_engagement_status || true
+    if [[ -n "${CSTK_ENGAGEMENT_ID:-}" ]]; then
+        show_engagement_status | head -n 2
     fi
 }
 
@@ -774,8 +760,10 @@ engagement_dispatch_guard() {
 
 run_guarded_operation() {
     local adapter="$1" target ports confirm
+    stop_engagement_hud
     [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" ]] || { echo "Select an active engagement with G first."; return 1; }
-    show_engagement_status || return 1
+    clear
+    show_engagement_status >/dev/null || return 1
     read -r -p "Target (TCP: explicit IP/CIDR; web: full HTTP(S) URL): " target
     ports="443"
     if [[ "$adapter" == tcp ]]; then
@@ -787,7 +775,7 @@ run_guarded_operation() {
     tput csr 0 "$(( $(tput lines 2>/dev/null || echo 24) - 1 ))" 2>/dev/null || true
     run_engagement_helper run "$CSTK_ENGAGEMENT_SLUG" --adapter "$adapter" --target "$target" --ports "$ports" --confirm
     local rc=$?
-    clear
+    # Keep errors and run-record paths visible until the menu pause is read.
     start_engagement_hud
     return "$rc"
 }

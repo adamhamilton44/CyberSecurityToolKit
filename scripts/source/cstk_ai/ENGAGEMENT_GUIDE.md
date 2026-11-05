@@ -109,3 +109,20 @@ scope-enforcing adapters. They start no tool. Reordering menus never makes
 unsupported tools safe for an engagement or changes the approved scope.
 Legacy C/U/B/N/W aliases remain accepted. Main-menu X still returns; advanced
 inspect, validation, revision, pause and state changes remain under letters.
+
+## Testing a separate development checkout
+
+Run `sudo bash /absolute/path/to/development-checkout/cstk.sh` to test that
+checkout. CSTK resolves its helpers from the entrypoint you run, including when
+launched through a symlink. The installed `sudo cstk` command continues to use
+its installed checkout. Each checkout requires its own valid runtime integrity
+manifest; do not copy another checkout's manifest or disable verification.
+
+Engagement status refreshes when menus redraw. No background status process
+writes over notebook passphrases or target prompts. Guarded operation errors
+and saved run paths remain visible until you press Enter to return.
+
+Notebook passphrase prompts and reporting actions start on a fresh terminal
+page. Reporting questions display one question per page with progress.
+Engagement menus use a compact status heading and the full scrolling area.
+Redirected output keeps its text without terminal clearing codes.

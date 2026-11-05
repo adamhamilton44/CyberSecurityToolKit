@@ -43,3 +43,12 @@ Installer/update/uninstall behavior is unchanged: no new dependency, service or
 network action is added, and the entire Engagements tree (including .drafts) is
 retained in private backups and across uninstall. Root-owned installed interfaces
 and runtime hashes must be synchronized when deploying the reviewed change.
+
+## Clean terminal pages — November 3, 2026
+
+Notebook security prompts reset scrolling and clear the terminal before hidden
+input. Reporting actions begin on a fresh page; reporting metadata questions
+show progress one per page. Shell menus use two status lines without a reserved
+scroll region. Redirected output has no added screen controls. Maintained
+Etc_engagement and cstk-reporting executables were rebuilt for these changes.
+No report layout, permissions, authorization, retention or encryption changes.

@@ -4,6 +4,7 @@ import contextlib
 import io
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +24,43 @@ class EngagementUsabilityTests(unittest.TestCase):
         self.capture.__enter__()
         self.addCleanup(self.capture.__exit__, None, None, None)
         self.addCleanup(setattr, engine, "_WIZARD", None)
+
+    def test_entrypoint_uses_its_own_helpers_directly_and_through_symlink(self):
+        repo = Path(__file__).resolve().parents[2]
+        source = (repo / "cstk.sh").read_text()
+        start = source.index("# Resolve this entrypoint")
+        end = source.index("export home_dir", start)
+        checkout = Path(self.temp.name) / "development copy"
+        checkout.mkdir()
+        script = checkout / "cstk.sh"
+        script.write_text(source[start:end] + 'printf "%s" "$home_dir"\n')
+        link = Path(self.temp.name) / "cstk-link"
+        link.symlink_to(script)
+        for entrypoint in (script, link):
+            result = subprocess.run(
+                ["bash", str(entrypoint)], capture_output=True, text=True, check=True
+            )
+            self.assertEqual(result.stdout, str(checkout))
+        self.assertNotIn("realpath /usr/local/bin/cstk", source)
+
+    def test_status_refresh_never_spawns_a_background_terminal_writer(self):
+        repo = Path(__file__).resolve().parents[2]
+        source = (repo / "cstk.sh").read_text()
+        start = source.index("start_engagement_hud() {")
+        end = source.index("\nshow_engagement_status()", start)
+        body = source[start:end]
+        result = subprocess.run(
+            ["bash", "-c", "stop_engagement_hud() { echo stopped; };\n" + body
+             + "\nstart_engagement_hud; jobs -p"],
+            capture_output=True, text=True, check=True,
+        )
+        self.assertEqual(result.stdout, "stopped\n")
+        start = source.index("run_guarded_operation() {")
+        end = source.index("\nverify_integrity_refresh_key()", start)
+        operation = source[start:end]
+        self.assertLess(operation.index("stop_engagement_hud"), operation.index("read -r"))
+        self.assertLess(operation.index("\n    clear\n"), operation.index("read -r"))
+        self.assertNotIn("\n    clear\n", operation[operation.index("local rc=$?"):])
 
     def test_choices_use_numbers_and_friendly_labels(self):
         with patch("builtins.input", side_effect=["bad", "2"]):

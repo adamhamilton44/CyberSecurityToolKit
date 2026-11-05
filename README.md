@@ -626,3 +626,12 @@ explains fields and lists available values. All actions start denied. Review,
 validation and explicit activation remain separate. Existing immutable scope
 revisions, notebooks and authorization checks are preserved. See the
 [step-by-step engagement guide](scripts/source/cstk_ai/ENGAGEMENT_GUIDE.md).
+
+Engagement status is refreshed on menu redraws so background output cannot
+overwrite notebook passphrase or target prompts. Guarded run results stay
+visible until the return prompt is acknowledged.
+
+Notebook passphrase prompts and reporting actions start on a fresh terminal
+page. Reporting questions display one question per page with progress.
+Engagement menus use a compact status heading and the full scrolling area.
+Redirected output keeps its text without terminal clearing codes.
