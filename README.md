@@ -185,9 +185,7 @@ The combined updater:
 After a CSTK self-update, the already-running trusted launcher privately
 requests maintenance authorization, refreshes installed interfaces, rebuilds
 and verifies the local checksum manifest, and only then starts the updated
-launcher. After reviewed local maintenance, `sudo cstk --refresh-hashes` uses
-the same interactive private-key authorization to synchronize interfaces and
-rebuild the manifest. Never place private keys on a command line.
+launcher. Never place private keys on a command line.
 
 Update logs are written beneath `log/updates/`.
 
@@ -229,9 +227,6 @@ CSTK does **not** automatically delete itself.
 4. The integrity-screen deletion removes CSTK launchers and core program files
    while preserving local data, collected results, logs, wordlists, and
    installed system packages.
-5. Authorized maintenance can run `sudo cstk --refresh-hashes`; it requires
-   an interactive terminal and the private integrity refresh key.
-
 An unexpected integrity warning should be treated seriously. Quit, review the
 changed files, and restore them from a trusted signed commit unless the change
 was intentional.
@@ -635,3 +630,18 @@ Notebook passphrase prompts and reporting actions start on a fresh terminal
 page. Reporting questions display one question per page with progress.
 Engagement menus use a compact status heading and the full scrolling area.
 Redirected output keeps its text without terminal clearing codes.
+### Finish an incomplete engagement
+
+Open `sudo cstk --engagements` (main menu **G**). **C** starts a new engagement;
+**F — Finish missing answers** resumes a saved one. Enter its saved name, such
+as `testing-test`. Only missing requirements are asked again; existing answers
+are kept. Type `:later` at a question to stop. Completed answers are saved in new
+draft revisions, so earlier revisions stay available. This does not mark an
+engagement active or grant additional permissions.
+
+For written permission, enter the approval document's path or record reference.
+Its SHA-256 is a fingerprint of that document. If the document is a local regular
+file up to 64 MiB, CSTK can calculate it without uploading the document. Otherwise
+enter the 64-character fingerprint yourself. Keep passwords and private keys out
+of the questionnaire. **V** shows remaining requirements; **R** still imports
+reviewed JSON for advanced edits. Notebook/reporting setup under **B** is separate.

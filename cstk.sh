@@ -55,6 +55,7 @@
 #/                         encrypted notes, guarded capture, review and Word/PDF reports
 #/                 -G, --engagements
 #/                         manage engagements, scope, lifecycle and guarded operations
+#/                         choose C for a new draft, or F to finish only missing answers
 #/                 --use ID [class tool]
 #/                         select an active engagement for this process
 #/    EXECUTION MODES:
@@ -139,7 +140,7 @@
 #//S  [ sudo cstk --engagement-import /path/form.json ] Import as draft only
 #//S  [ sudo cstk --engagement-resume ] Resume saved questionnaire answers
 #//S  [ sudo cstk --report ID ] Encrypted notes, guarded capture and reviewed reports
-#//S  [ sudo cstk --engagements ] Manage engagements and guarded operations
+#//S  [ sudo cstk --engagements ] Manage engagements; C starts a draft, F finishes missing answers
 #//S  [ sudo cstk --use ID ] Select an active engagement for the menu session
 #//S  [ sudo cstk -On ] OR  [ sudo cstk --osint --nmap      ]  Run OSINT nmap helper
 #//S  [ sudo cstk -Pn ] OR  [ sudo cstk --payload --netcat  ]  Run payload netcat helper
@@ -621,6 +622,7 @@ engagement_manager_menu() {
             '10 - DEFENSE: guarded HTTP(S) request' \
             "${C}MANAGEMENT${X}" \
             'P - Pause selected engagement' \
+            'F - Finish missing answers in a saved engagement' \
             'I - Inspect a saved engagement' \
             'V - Check what is missing before activation' \
             'R - Revise scope from an edited JSON file' \
@@ -656,6 +658,10 @@ engagement_manager_menu() {
                 else
                     echo 'No selected engagement. Choose 2 first.'
                 fi
+                ;;
+            [Ff])
+                identifier="$(run_engagement_helper pick)" || continue
+                run_engagement_helper finish "$identifier"
                 ;;
             [Ii]|[Vv]|[Rr]|[Ss])
                 identifier="$(run_engagement_helper pick)" || continue

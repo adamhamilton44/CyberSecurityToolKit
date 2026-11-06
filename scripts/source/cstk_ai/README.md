@@ -87,3 +87,24 @@ questionnaires, numbered engagement selection and offline JSON forms. See
 [ENGAGEMENT_GUIDE.md](ENGAGEMENT_GUIDE.md). Reporting and setup metadata never
 change authorization without explicit reviewed activation. The unchanged
 questionnaire fingerprint continues to bind existing revisions.
+## Guided completion in the engagement manager
+
+Main menu G → F resumes only missing activation requirements in a saved draft.
+The policy CLI also accepts `--root /path/to/Engagements finish NAME_OR_ID`.
+The wizard lives in engagement_wizard.py, saves immutable draft revisions through
+the existing policy API, and never activates a record. Each completed answer or
+record is saved; `:later`, EOF and Ctrl+C preserve earlier completed steps. A
+conflicting revision written by another session stops the save rather than
+replacing its answers. The existing testing-test record was inspected read-only;
+no permission document or fingerprint was invented for it.
+
+Rebuild only the affected packaged manager (the reporting executable is unchanged):
+
+```bash
+bash scripts/tools/build_engagement_reporting.sh /absolute/build-env/bin/python --engagement-only
+```
+
+The build records source/binary checksums in ENGAGEMENT_BUILD.json. The optional
+AI chat questionnaire still captures review candidates separately; its answers
+do not silently become scope authorization. Completion key F is an interactive
+menu key, not a new global cstk flag, so shell option completion is unchanged.

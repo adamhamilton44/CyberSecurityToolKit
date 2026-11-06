@@ -69,6 +69,31 @@ ACTIONS = (
     "log.tampering",
     "destructive",
 )
+ACTION_LABELS = {
+    "recon.passive": "Gather public information without probing targets",
+    "network.discovery": "Discover hosts and network services",
+    "vulnerability.scan": "Scan for possible vulnerabilities",
+    "web.passive": "Review web information using passive checks",
+    "web.active": "Send active web test requests",
+    "credential.offline": "Test passwords or hashes offline",
+    "credential.online": "Attempt approved logins against services",
+    "exploit.validation": "Validate whether a suspected vulnerability can be exploited",
+    "payload.generate": "Create test payloads",
+    "payload.deliver": "Send test payloads to approved targets",
+    "post_exploitation": "Perform approved checks after gaining access",
+    "persistence": "Establish access that survives a restart",
+    "credential.access": "Access credentials on a target",
+    "command_and_control": "Operate a remote command channel",
+    "data.access": "Read target data",
+    "data.exfiltration": "Transfer target data outside its system",
+    "social_engineering": "Test people through approved social-engineering scenarios",
+    "wireless": "Test wireless systems",
+    "physical": "Test physical access",
+    "availability.disruption": "Perform tests that may interrupt service",
+    "data.modification": "Change target data",
+    "log.tampering": "Change or remove target logs",
+    "destructive": "Perform tests that may cause damage",
+}
 SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 DNS_RE = re.compile(
     r"^(?=.{1,253}\.?$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.?$",
@@ -1475,11 +1500,42 @@ def choice(label: str, values: tuple[str, ...], default: str | None = None) -> s
             value in values
         ):  # Existing machine values remain accepted for compatibility.
             return value
-        ui("Enter one of the displayed numbers.", "yellow")
+        friendly_matches = {}
+        for candidate in values:
+            friendly_matches[friendly(candidate).lower()] = candidate
+            friendly_matches[candidate.replace("_", " ").lower()] = candidate
+        if value in friendly_matches:
+            return friendly_matches[value]
+        ui("Enter one of the displayed numbers or option names.", "yellow")
 
 
 def yes_no(label: str, default: bool = True) -> bool:
     return choice(label, ("yes", "no"), "yes" if default else "no") == "yes"
+
+
+def number_prompt(label, *, default=None, integer=False, minimum=0, optional=False):
+    while True:
+        value = prompt(label, required=not optional, default=default)
+        if not value and optional:
+            return None
+        try:
+            number = int(value) if integer else float(value)
+            if not math.isfinite(number) or number < minimum:
+                raise ValueError
+            return number
+        except (ValueError, OverflowError):
+            kind = "whole number" if integer else "number"
+            print(f"Enter a {kind} of at least {minimum}; do not include units.")
+
+
+def datetime_prompt(label):
+    while True:
+        value = prompt(label)
+        try:
+            parse_datetime(value)
+            return value
+        except ValueError:
+            print("Use date, time and UTC offset, for example 2026-11-02T09:00:00-06:00 (or Z for UTC).")
 
 
 def comma_values(label: str) -> list[str]:
@@ -1623,12 +1679,15 @@ def interactive_config() -> dict[str, Any]:
     print("Example timestamp: 2026-10-29T09:00:00-05:00 (date, time and UTC offset).")
     authorization_reference = prompt("Written permission / contract reference")
     system_owner = prompt("System owner")
-    authorized_by = prompt("Authorizing person and role")
-    valid_from = prompt("Authorization starts (ISO 8601 with offset)")
-    valid_until = prompt("Authorization ends (ISO 8601 with offset)")
-    timezone = prompt("Engagement time zone", default="UTC")
+    authorized_by = prompt("Who approved the test? Name and job title")
+    valid_from = datetime_prompt("Permission starts: date and time with UTC offset (example: 2026-11-02T09:00:00-06:00)")
+    valid_until = datetime_prompt("Permission ends: date and time with UTC offset (example: 2026-11-03T17:00:00-06:00)")
+    while parse_datetime(valid_until) <= parse_datetime(valid_from):
+        print("The end of permission must be after its start.")
+        valid_until = datetime_prompt("When does permission end? Date, time and UTC offset")
+    timezone = prompt("Engagement time zone (for example UTC or America/Chicago)", default="UTC")
     third_party = choice(
-        "Third-party consent",
+        "Permission from a hosting provider or other third party",
         ("not_applicable", "required_pending", "confirmed"),
         "not_applicable",
     )
@@ -1678,10 +1737,10 @@ def interactive_config() -> dict[str, Any]:
     primary_method = prompt("Primary point-of-contact method")
     technical_name = prompt("Technical contact name")
     technical_method = prompt("Technical contact method")
-    emergency_name = prompt("Emergency/stop contact name")
-    emergency_method = prompt("Emergency/stop contact method")
-    breach_name = prompt("Breach-escalation contact name and title")
-    breach_method = prompt("Breach-escalation contact method")
+    emergency_name = prompt("Who can order an immediate stop? Name")
+    emergency_method = prompt("How can the emergency contact be reached immediately?")
+    breach_name = prompt("Who should be told if you find a real break-in? Name and job title")
+    breach_method = prompt("How can that incident contact be reached?")
     soc_notification = choice(
         "Security monitoring / incident-response team notification",
         (
@@ -1839,7 +1898,7 @@ def interactive_config() -> dict[str, Any]:
         ),
         "both_required",
     )
-    stop_conditions = comma_values("Stop conditions (comma separated)")
+    stop_conditions = comma_values("When must testing stop immediately? Separate conditions with commas")
     if not stop_conditions:
         stop_conditions = [
             "Unexpected service instability or availability impact",
@@ -2392,6 +2451,10 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("create-menu", help="start or resume a saved questionnaire")
     subparsers.add_parser("offline", help="save or import a private offline JSON form")
     subparsers.add_parser("resume", help="choose an unfinished questionnaire")
+    finish = subparsers.add_parser(
+        "finish", help="finish missing answers in an existing engagement draft"
+    )
+    finish.add_argument("identifier")
     template = subparsers.add_parser(
         "form-template", help="save a blank offline JSON form"
     )
@@ -2456,6 +2519,10 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "resume":
             path = pick_saved_file(root, ".answers.json")
             return wizard_create(root, path) if path else 0
+        elif args.command == "finish":
+            from engagement_wizard import resume_engagement
+
+            resume_engagement(sys.modules[__name__], root, args.identifier)
         elif args.command == "pick":
             selected = pick_engagement(root, active_only=args.active_only)
             if not selected:

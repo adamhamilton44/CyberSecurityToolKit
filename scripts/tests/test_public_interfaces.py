@@ -65,7 +65,7 @@ class PublicInterfaceTests(unittest.TestCase):
         readme=(ROOT/'README.md').read_text()
         self.assertIn('compatibility alias',readme)
         self.assertIn('Lynis',readme)
-        self.assertIn('sudo cstk --refresh-hashes',readme)
+        self.assertNotIn('sudo cstk --refresh-hashes',readme)
         for stale in ('There is no public integrity-refresh command','has no Linux audit executable','through the local control API'):
             self.assertNotIn(stale,readme)
 
