@@ -15,6 +15,21 @@ from test_notebook import PASSWORD, scope
 
 
 class CLITests(unittest.TestCase):
+    def test_fresh_prompt_page_resets_scroll_region_before_heading(self):
+        output = io.StringIO()
+        terminal = Console(file=output, force_terminal=True, color_system=None)
+        with patch.object(cli, "console", terminal), patch.object(cli.sys.stdin, "isatty", return_value=True):
+            cli.screen("Unlock encrypted notebook", "Input is hidden.")
+        self.assertTrue(output.getvalue().startswith("\033[r\033[2J\033[H"))
+        self.assertIn("Unlock encrypted notebook", output.getvalue())
+
+    def test_redirected_prompt_page_has_no_screen_control_codes(self):
+        output = io.StringIO()
+        with patch.object(cli, "console", Console(file=output, force_terminal=False)):
+            cli.screen("Reporting questions | 1/22")
+        self.assertNotIn("\033", output.getvalue())
+        self.assertIn("1/22", output.getvalue())
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)

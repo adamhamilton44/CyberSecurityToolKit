@@ -8,10 +8,10 @@ run-as-user route. Feature-branch installation is separate from the main checkou
 ## Operator workflow
 
 1. Create and authorize the engagement with the existing scope questionnaire.
-2. Open G → B, or `cstk --report ID`, to create a private encrypted notebook and
+2. Open G → 4 (B), or `cstk --report ID`, to create a private encrypted notebook and
    answer the reporting questions. These answers never modify authorization.
 3. T/W inside reporting run guarded TCP/HTTP checks using the unlocked notebook.
-   G → N/W unlock the notebook separately for each run. No passphrase is accepted
+   G → 6/10 (N/W) unlock the notebook separately for each run. No passphrase is accepted
    in arguments or environment; no background daemon/key service is installed.
 4. Review and explicitly import a newer immutable scope snapshot before further
    testing after a scope revision. Declining import still permits old-note review.

@@ -45,10 +45,17 @@
 #/                         list local engagement records (compatibility alias; no API service required)
 #/                 --refresh-hashes
 #/                         interactively authorize and rebuild the local integrity manifest
+#/                 --engagement-template
+#/                         export a private JSON questionnaire to edit offline
+#/                 --engagement-import FILE.json
+#/                         import an edited JSON form as a draft (never activates)
+#/                 --engagement-resume
+#/                         resume an automatically saved questionnaire by number
 #/                 --report ENGAGEMENT_ID
 #/                         encrypted notes, guarded capture, review and Word/PDF reports
 #/                 -G, --engagements
 #/                         manage engagements, scope, lifecycle and guarded operations
+#/                         choose C for a new draft, or F to finish only missing answers
 #/                 --use ID [class tool]
 #/                         select an active engagement for this process
 #/    EXECUTION MODES:
@@ -129,8 +136,11 @@
 #//S  [ sudo cstk -Dp /absolute/project/path ] Trivy dependency, secret, IaC and license audit
 #//S  [ sudo cstk -Ei ] Open AI Analyst; type /setup to configure your provider
 #//S  [ sudo cstk -Dl ] OR [ sudo cstk --defense --linux-audit ] Linux audit
+#//S  [ sudo cstk --engagement-template ] Save an offline JSON form
+#//S  [ sudo cstk --engagement-import /path/form.json ] Import as draft only
+#//S  [ sudo cstk --engagement-resume ] Resume saved questionnaire answers
 #//S  [ sudo cstk --report ID ] Encrypted notes, guarded capture and reviewed reports
-#//S  [ sudo cstk --engagements ] Manage engagements and guarded operations
+#//S  [ sudo cstk --engagements ] Manage engagements; C starts a draft, F finishes missing answers
 #//S  [ sudo cstk --use ID ] Select an active engagement for the menu session
 #//S  [ sudo cstk -On ] OR  [ sudo cstk --osint --nmap      ]  Run OSINT nmap helper
 #//S  [ sudo cstk -Pn ] OR  [ sudo cstk --payload --netcat  ]  Run payload netcat helper
@@ -188,11 +198,9 @@ AX="Post Exploit ==> " # /PostEx
 AE="Etc ==> " # /Etc
 user=$(echo "${SUDO_USER:-$(whoami)}") # USER NAME
 DATE=$(date) # Today's DATE
-if [ -h /usr/local/bin/cstk ]; then
-    home_dir="$(dirname "$(realpath /usr/local/bin/cstk)")" # soft link to true directory of cstk
-else
-    home_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)" # print the directory path of cstk home
-fi
+# Resolve this entrypoint, including symlinks, so a development checkout never
+# combines its menu with helpers from a different installed checkout.
+home_dir="$(dirname -- "$(realpath -e -- "${BASH_SOURCE[0]}")")" || exit 1
 export home_dir  # allow cstk home directory for all scripts
 
 security_checks="$home_dir/Other/SecurityChecks" # directory for security checking user password and sha256sum files of cstk executables
@@ -588,101 +596,98 @@ apply_engagement_selection() {
 
 choose_engagement_for_session() {
     local identifier
-
-    if [[ ! -t 0 || ! -t 1 ]]; then
-        echo -e "${R}[ ERROR ] A non-interactive run must specify --use ENGAGEMENT_ID.${X}" >&2
-        return 2
-    fi
-    while true; do
-        clear
-        echo -e "${O}CSTK Engagement Selection${X}"
-        echo
-        run_engagement_helper list --format table || return 1
-        echo
-        echo "Enter an active engagement slug or ID."
-        echo "C - Create/manage engagements"
-        echo "X - Exit"
-        read -r -p "Engagement ==> " identifier
-        case "$identifier" in
-            [Cc]) engagement_manager_menu ;;
-            [Xx]) return 2 ;;
-            "") continue ;;
-            *) apply_engagement_selection "$identifier" && return 0 ;;
-        esac
-        echo
-        read -r -p "Press Enter to continue..."
-    done
+    [[ -t 0 && -t 1 ]] || { echo 'Use --use ENGAGEMENT_ID for non-interactive selection.' >&2; return 2; }
+    identifier="$(run_engagement_helper pick --active-only)" || return 2
+    apply_engagement_selection "$identifier"
 }
 
 engagement_manager_menu() {
     local choice identifier state config_path
-
-    if [[ ! -t 0 || ! -t 1 ]]; then
-        echo -e "${R}[ ERROR ] Engagement management requires an interactive terminal.${X}" >&2
-        return 2
-    fi
+    [[ -t 0 && -t 1 ]] || { echo 'Engagement management needs an interactive terminal.' >&2; return 2; }
     while true; do
         clear
-        echo -e "${O}CSTK Engagement Manager${X}"
-        echo
-        run_engagement_helper list --format table || return 1
-        echo
-        show_engagement_status || true
-        echo "C - Create a draft with the guided questionnaire"
-        echo "U - Use an active engagement for this session"
-        echo "P - Pause the selected engagement"
-        echo "N - Guarded TCP port check (explicit IP/CIDR, max 256 addresses)"
-        echo "W - Guarded HTTP(S) request (scope checked on every redirect)"
-        echo "B - Encrypted notebook, guarded capture and report review"
-        echo "I - Inspect the current revision"
-        echo "V - Validate activation requirements"
-        echo "S - Change state (ready/active/paused/closed/archived)"
-        echo "R - Create a new revision from a reviewed JSON file"
-        echo "X - Return"
-        echo
-        read -r -p "Engagement Manager ==> " choice
+        printf '%b\n' "${C}CSTK ENGAGEMENT - set up once, select by number${X}" \
+            "${g}A draft stores your answers. Review and activation are separate steps.${X}"
+        printf '%b\n' "${C}SETUP AND REPORTING${X}" \
+            '1 - Create / resume questionnaire (answers save automatically)' \
+            '2 - Select an active engagement (choose from a list)' \
+            '3 - Review saved scope and activate with written permission' \
+            '4 - Encrypted notes, findings and final reports' \
+            '5 - Offline JSON form: export, edit later, import' \
+            "${C}ASSESSMENT TOOLS - same order as the main menu${X}" \
+            '6 - OSINT: guarded TCP connectivity check' \
+            '7 - PAYLOADS: unavailable in scoped engagement mode' \
+            '8 - POST EXPLOIT: unavailable in scoped engagement mode' \
+            '9 - ETC: AI Analyst (optional, operator-controlled)' \
+            '10 - DEFENSE: guarded HTTP(S) request' \
+            "${C}MANAGEMENT${X}" \
+            'P - Pause selected engagement' \
+            'F - Finish missing answers in a saved engagement' \
+            'I - Inspect a saved engagement' \
+            'V - Check what is missing before activation' \
+            'R - Revise scope from an edited JSON file' \
+            'S - Advanced lifecycle state changes' \
+            'X - Return'
+        read -r -p 'Engagement ==> ' choice || return 0
         case "$choice" in
-            [Uu])
-                read -r -p "Engagement slug or ID: " identifier
-                apply_engagement_selection "$identifier"
+            1|[Cc])
+                if ! run_engagement_helper create-menu; then
+                    printf '%b\n' "${Y}Setup did not create an engagement. Read the message above; saved answers/forms are retained.${X}"
+                fi
                 ;;
+            2|[Uu])
+                identifier="$(run_engagement_helper pick --active-only)" && apply_engagement_selection "$identifier"
+                ;;
+            3)
+                identifier="$(run_engagement_helper pick)" && run_engagement_helper prepare "$identifier"
+                ;;
+            4|[Bb])
+                identifier="$(run_engagement_helper pick)" && open_engagement_reporting "$identifier"
+                ;;
+            5) run_engagement_helper offline ;;
+            6|[Nn]) run_guarded_operation tcp ;;
+            7|8)
+                printf '%b\n' "${Y}These tools do not yet have scope-enforcing adapters. No tool was started.${X}" \
+                    'Use the supported guarded checks or record a separately performed assessment in the notebook.'
+                ;;
+            9) cstk_ai_analyst ;;
+            10|[Ww]) run_guarded_operation web ;;
             [Pp])
-                [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" ]] && run_engagement_helper transition "$CSTK_ENGAGEMENT_SLUG" paused
+                if [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" ]]; then
+                    run_engagement_helper transition "$CSTK_ENGAGEMENT_SLUG" paused
+                else
+                    echo 'No selected engagement. Choose 2 first.'
+                fi
                 ;;
-            [Bb])
-                read -r -p "Engagement slug or ID [${CSTK_ENGAGEMENT_SLUG:-}]: " identifier
-                identifier="${identifier:-${CSTK_ENGAGEMENT_SLUG:-}}"
-                open_engagement_reporting "$identifier"
+            [Ff])
+                identifier="$(run_engagement_helper pick)" || continue
+                run_engagement_helper finish "$identifier"
                 ;;
-            [Nn]) run_guarded_operation tcp ;;
-            [Ww]) run_guarded_operation web ;;
-            [Cc])
-                run_engagement_helper create
-                echo "Next: open B to set up encrypted notes and reporting questions for the new engagement."
-                ;;
-            [Ii])
-                read -r -p "Engagement slug or ID: " identifier
-                run_engagement_helper show "$identifier"
-                ;;
-            [Vv])
-                read -r -p "Engagement slug or ID: " identifier
-                run_engagement_helper validate "$identifier"
-                ;;
-            [Ss])
-                read -r -p "Engagement slug or ID: " identifier
-                read -r -p "New state: " state
-                run_engagement_helper transition "$identifier" "$state"
-                ;;
-            [Rr])
-                read -r -p "Engagement slug or ID: " identifier
-                read -r -p "Reviewed JSON file path: " config_path
-                run_engagement_helper revise "$identifier" --config "$config_path"
+            [Ii]|[Vv]|[Rr]|[Ss])
+                identifier="$(run_engagement_helper pick)" || continue
+                case "$choice" in
+                    [Ii]) run_engagement_helper show "$identifier" ;;
+                    [Vv]) run_engagement_helper validate "$identifier" ;;
+                    [Rr])
+                        echo 'Keep the original immutable scope intact. Edit a separate JSON copy and import a new revision.'
+                        read -r -p 'Reviewed JSON file path: ' config_path
+                        run_engagement_helper revise "$identifier" --config "$config_path"
+                        ;;
+                    [Ss])
+                        printf '%s\n' '1 - ready' '2 - active' '3 - paused' '4 - closed' '5 - archived' '0 - Cancel'
+                        read -r -p 'New state number: ' state
+                        case "$state" in
+                            1) state=ready ;; 2) state=active ;; 3) state=paused ;;
+                            4) state=closed ;; 5) state=archived ;; *) continue ;;
+                        esac
+                        run_engagement_helper transition "$identifier" "$state"
+                        ;;
+                esac
                 ;;
             [Xx]) return 0 ;;
-            *) echo -e "${Y}Choose C, U, P, N, W, B, I, V, S, R, or X.${X}" ;;
+            *) printf '%b\n' "${Y}Choose a displayed number or letter.${X}" ;;
         esac
-        echo
-        read -r -p "Press Enter to continue..."
+        read -r -p 'Press Enter to continue...' || return 0
     done
 }
 
@@ -691,7 +696,7 @@ open_engagement_reporting() {
     [[ -n "$identifier" ]] || { echo 'An engagement ID is required.' >&2; return 2; }
     stop_engagement_hud
     tput csr 0 "$(( $(tput lines 2>/dev/null || echo 24) - 1 ))" 2>/dev/null || true
-    engagement_reporting_frame
+    clear
     run_engagement_helper report "$identifier"
     rc=$?
     start_engagement_hud
@@ -707,15 +712,9 @@ stop_engagement_hud() {
 }
 
 start_engagement_hud() {
+    # Status is rendered by clear()/the menu. A background runuser writer can
+    # race hidden password prompts and leave delayed session teardown output.
     stop_engagement_hud
-    if [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" && -t 1 ]]; then
-        if [[ "$user" == root ]]; then
-            "$engagement_helper" --root "$CSTK_ENGAGEMENTS_DIR" hud "$CSTK_ENGAGEMENT_SLUG" &
-        else
-            runuser -u "$user" -- "$engagement_helper" --root "$CSTK_ENGAGEMENTS_DIR" hud "$CSTK_ENGAGEMENT_SLUG" &
-        fi
-        CSTK_HUD_PID=$!
-    fi
 }
 
 show_engagement_status() {
@@ -728,19 +727,14 @@ show_engagement_status() {
     fi
 }
 
-# Every CSTK clear/redraw restores the current engagement status.
+# Use the entire terminal for each page; never reserve scrolling rows over prompts.
 clear() {
     local rows
     rows="$(tput lines 2>/dev/null || echo 24)"
     tput csr 0 "$((rows - 1))" 2>/dev/null || true
     command clear 2>/dev/null || true
-    if [[ -n "${CSTK_ENGAGEMENT_ID:-}" && -t 1 && "$rows" -ge 16 ]]; then
-        # Reserve the top six rows across CSTK menus and ordinary terminal output.
-        show_engagement_status | head -n 6 | cut -c "1-$(tput cols 2>/dev/null || echo 80)"
-        tput csr 6 "$((rows - 1))" 2>/dev/null || true
-        tput cup 6 0 2>/dev/null || true
-    else
-        show_engagement_status || true
+    if [[ -n "${CSTK_ENGAGEMENT_ID:-}" ]]; then
+        show_engagement_status | head -n 2
     fi
 }
 
@@ -772,8 +766,10 @@ engagement_dispatch_guard() {
 
 run_guarded_operation() {
     local adapter="$1" target ports confirm
+    stop_engagement_hud
     [[ -n "${CSTK_ENGAGEMENT_SLUG:-}" ]] || { echo "Select an active engagement with G first."; return 1; }
-    show_engagement_status || return 1
+    clear
+    show_engagement_status >/dev/null || return 1
     read -r -p "Target (TCP: explicit IP/CIDR; web: full HTTP(S) URL): " target
     ports="443"
     if [[ "$adapter" == tcp ]]; then
@@ -785,7 +781,7 @@ run_guarded_operation() {
     tput csr 0 "$(( $(tput lines 2>/dev/null || echo 24) - 1 ))" 2>/dev/null || true
     run_engagement_helper run "$CSTK_ENGAGEMENT_SLUG" --adapter "$adapter" --target "$target" --ports "$ports" --confirm
     local rc=$?
-    clear
+    # Keep errors and run-record paths visible until the menu pause is read.
     start_engagement_hud
     return "$rc"
 }
@@ -2892,6 +2888,19 @@ if [[ "$1" == "--use" ]]; then
     [[ $# -ge 2 ]] || { echo "--use requires an engagement ID" >&2; exit 2; }
     apply_engagement_selection "$2" || exit 1
     shift 2
+fi
+if [[ "${1:-}" == --engagement-template || "${1:-}" == --engagement-resume ]]; then
+    [[ $# -eq 1 ]] || { echo "This option takes no arguments." >&2; exit 2; }
+    case "$1" in
+        --engagement-template) run_engagement_helper form-template ;;
+        --engagement-resume) run_engagement_helper resume ;;
+    esac
+    exit $?
+fi
+if [[ "${1:-}" == --engagement-import ]]; then
+    [[ $# -eq 2 ]] || { echo "Usage: cstk --engagement-import /absolute/path/to/form.json" >&2; exit 2; }
+    run_engagement_helper create --config "$2"
+    exit $?
 fi
 if [[ "${1:-}" == --report ]]; then
     [[ $# -eq 2 ]] || { echo "Usage: cstk --report ENGAGEMENT_ID" >&2; exit 2; }

@@ -2,7 +2,7 @@
 # shellcheck shell=bash disable=SC2154,SC2207
 _cstk_global_options() {
     printf '%s\n' --osint --payload --postx --etc --defense --help --version --tty \
-        --check-updates --update --private-data --control --engagements --report --use \
+        --check-updates --update --private-data --control --engagements --engagement-template --engagement-import --engagement-resume --report --use \
         --refresh-hashes -O -P -X -E -D -h -H -v -V -T -C -U -G
 }
 _cstk_tool_options() {
@@ -41,6 +41,8 @@ _cstk_bash_completion() {
         mapfile -t COMPREPLY < <(compgen -W "$options" -- "$cur")
     elif [[ "$prev" == --project || "$prev" == -Dp || "$prev" == p || "$prev" == -p ]]; then
         mapfile -t COMPREPLY < <(compgen -d -- "$cur")
+    elif [[ "$prev" == --engagement-import ]]; then
+        mapfile -t COMPREPLY < <(compgen -f -- "$cur")
     else
         options="$(_cstk_tool_options "$prev")"
         mapfile -t COMPREPLY < <(compgen -W "$options" -- "$cur")
@@ -63,6 +65,9 @@ _cstk_zsh_completion() {
         while IFS= read -r item; do choices+=("$item"); done < <(_cstk_global_options)
     elif [[ "$prev" == --project || "$prev" == -Dp || "$prev" == p || "$prev" == -p ]]; then
         _files -/
+        return
+    elif [[ "$prev" == --engagement-import ]]; then
+        _files
         return
     else
         while IFS= read -r item; do choices+=("$item"); done < <(_cstk_tool_options "$prev")

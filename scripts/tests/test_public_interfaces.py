@@ -40,7 +40,7 @@ class PublicInterfaceTests(unittest.TestCase):
     def test_global_aliases_and_engagement_prefixed_completion(self):
         for shell in ('bash','zsh'):
             options=self.complete(shell,['cstk',''])
-            self.assertTrue({'-h','-H','-v','-V','--refresh-hashes','--use','--report'}<=options)
+            self.assertTrue({'-h','-H','-v','-V','--refresh-hashes','--use','--report','--engagement-template','--engagement-import','--engagement-resume'}<=options)
             self.assertEqual(self.complete(shell,['cstk','--use','client','-D']),{'-Dl','-Dw','-Dc','-Dp'})
             self.assertEqual(self.complete(shell,['cstk','--use','client','--defense','']),{'--linux-audit','--web-tls','--web-check','--project'})
     def test_help_output_matches_current_public_routes(self):
@@ -53,7 +53,7 @@ class PublicInterfaceTests(unittest.TestCase):
             self.assertIn('-Dp',proc.stdout)
             self.assertNotIn('local API',proc.stdout)
         manual=(ROOT/'scripts/lib/cstk.1').read_text().replace('\\-','-')
-        for option in ('--web-check','--project','--refresh-hashes','--engagements','--use','--report','--cnc'):
+        for option in ('--web-check','--project','--refresh-hashes','--engagements','--use','--report','--engagement-template','--engagement-import','--engagement-resume','--cnc'):
             self.assertIn(option,manual)
         self.assertNotIn('inventory|tcp-connect',manual)
     def test_all_defense_frames_have_working_option_examples(self):
@@ -65,7 +65,7 @@ class PublicInterfaceTests(unittest.TestCase):
         readme=(ROOT/'README.md').read_text()
         self.assertIn('compatibility alias',readme)
         self.assertIn('Lynis',readme)
-        self.assertIn('sudo cstk --refresh-hashes',readme)
+        self.assertNotIn('sudo cstk --refresh-hashes',readme)
         for stale in ('There is no public integrity-refresh command','has no Linux audit executable','through the local control API'):
             self.assertNotIn(stale,readme)
 

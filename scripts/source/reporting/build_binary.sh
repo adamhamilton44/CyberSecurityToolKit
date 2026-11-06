@@ -8,6 +8,8 @@ here=$(cd -- "$(dirname -- "$0")" && pwd -P)
 mkdir -p -- "$destination"
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
+# Concurrent builds must not clean each other's binary cache.
+export PYINSTALLER_CONFIG_DIR="$stage/pyinstaller-cache"
 # python-docx resolves parts/../templates through the real filesystem.
 # PyInstaller's module archive alone does not create the intermediate directory.
 : > "$stage/docx-parts-directory.marker"
